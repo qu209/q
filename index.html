@@ -2,18 +2,23 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
   <title>小手机</title>
   <style>
     :root {
-      --bg: #d3d3d3;
-      --page: #ffffff;
+      --bg: #ffffff;
       --top: #f3f3f3;
-      --line: #efefef;
+      --line: #ececec;
       --text: #111111;
-      --sub: #a8acb3;
-      --muted: #bfbfbf;
-      --cover: #ababab;
+      --sub: #adb3bd;
+      --cover: #a8a8a8;
+      --tab-h: 54px; 
+      --chatbar-h: 70px;
+      --safe-top: env(safe-area-inset-top);
+      --safe-bottom: env(safe-area-inset-bottom);
     }
 
     * {
@@ -21,161 +26,112 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    html, body {
-      margin: 0;
-      height: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB",
-        "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-      background: var(--bg);
-    }
-
+    html,
     body {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    .phone {
-      position: relative;
-      width: min(100vw, 390px);
-      height: 100dvh;
-      max-height: 844px;
-      background: var(--page);
+      margin: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
-      border-radius: 28px 28px 24px 24px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    }
-
-    .page {
-      position: absolute;
-      inset: 0 0 76px 0;
       background: #fff;
-      display: none;
-    }
-
-    .page.active {
-      display: block;
-    }
-
-    .window-pill {
-      position: absolute;
-      top: 44px;
-      left: 18px;
-      z-index: 20;
-      background: #fff;
-      border-radius: 999px;
-      padding: 10px 14px;
-      display: flex;
-      gap: 8px;
-      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-    }
-
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-    }
-
-    .dot.red { background: #f56e63; }
-    .dot.yellow { background: #f3c94b; }
-    .dot.green { background: #79c96a; }
-
-    .tabbar {
-      position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      height: 76px;
-      background: #fff;
-      border-top: 1px solid var(--line);
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      z-index: 15;
-    }
-
-    .tab-item {
-      border: 0;
-      background: transparent;
-      color: #7f8490;
-      font-size: 18px;
-      font-weight: 600;
-    }
-
-    .tab-item.active {
-      color: #111;
-    }
-
-    .home-arc {
-      position: absolute;
-      right: 12px;
-      bottom: 8px;
-      width: 42px;
-      height: 26px;
-      border-right: 6px solid #111;
-      border-bottom: 6px solid #111;
-      border-bottom-right-radius: 28px;
-      z-index: 16;
-      pointer-events: none;
-    }
-
-    .toast {
-      position: absolute;
-      left: 50%;
-      bottom: 90px;
-      transform: translateX(-50%) translateY(8px);
-      background: rgba(20, 20, 20, 0.82);
-      color: #fff;
-      font-size: 14px;
-      padding: 10px 14px;
-      border-radius: 12px;
-      opacity: 0;
-      pointer-events: none;
-      transition: 0.22s ease;
-      z-index: 30;
-      white-space: nowrap;
-    }
-
-    .toast.show {
-      opacity: 1;
-      transform: translateX(-50%) translateY(0);
-    }
-
-    /* 通用顶部 */
-    .top-strip {
-      height: 108px;
-      background: var(--top);
-      box-shadow: inset 0 -1px 0 rgba(0,0,0,0.03);
-    }
-
-    /* 好友页 */
-    .friends-header {
-      position: relative;
-      height: 108px;
-      background: var(--top);
-    }
-
-    .friends-title {
-      position: absolute;
-      top: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      font-size: 20px;
-      font-weight: 800;
+      font-family: -apple-system, BlinkMacSystemFont, "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
       color: var(--text);
     }
 
-    .plus-btn {
+    body {
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100svh;
+    }
+
+    button,
+    input,
+    textarea {
+      font: inherit;
+    }
+
+    .app {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      height: 100dvh;
+      min-height: 100svh;
+      background: #fff;
+      overflow: hidden;
+    }
+
+    .screen {
       position: absolute;
-      top: 34px;
-      right: 18px;
-      width: 44px;
-      height: 44px;
+      inset: 0;
+      display: none;
+      background: #fff;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .top-screen {
+      padding-bottom: calc(var(--tab-h) + var(--safe-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+    }
+
+    /* 顶栏调整 */
+    .header {
+      position: sticky;
+      top: 0;
+      z-index: 8;
+      height: calc(54px + var(--safe-top)); 
+      padding-top: var(--safe-top);
+      background: var(--top);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .header-bar {
+      height: 54px;
+      display: grid;
+      grid-template-columns: 50px 1fr 50px;
+      align-items: center;
+    }
+
+    .header-title {
+      text-align: center;
+      font-size: 17px; 
+      font-weight: 600; 
+      letter-spacing: 0.2px;
+    }
+
+    .header-btn,
+    .icon-text-btn {
+      appearance: none;
       border: 0;
       background: transparent;
-      font-size: 34px;
       color: #111;
-      line-height: 1;
+      width: 50px;
+      height: 50px;
+      display: grid;
+      place-items: center;
       cursor: pointer;
+      padding: 0;
+    }
+
+    .back-char {
+      font-size: 36px;
+      line-height: 1;
+      transform: translateY(-1px);
+      font-weight: 300;
+    }
+
+    .plus-icon {
+      transition: transform 0.45s cubic-bezier(0.25, 1, 0.3, 1);
+      transform-origin: center center; 
+    }
+
+    .header-btn.open .plus-icon {
+      transform: rotate(180deg);
     }
 
     .friend-list {
@@ -183,182 +139,203 @@
     }
 
     .friend-item {
+      width: 100%;
       display: flex;
       align-items: center;
       gap: 14px;
-      padding: 18px 22px;
+      padding: 16px 18px;
+      border: 0;
       border-bottom: 1px solid var(--line);
+      background: #fff;
+      text-align: left;
       cursor: pointer;
     }
 
-    .avatar-default {
+    .friend-avatar {
       width: 58px;
       height: 58px;
-      border-radius: 16px;
+      border-radius: 30px; 
       background: linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%);
       position: relative;
       overflow: hidden;
       flex: 0 0 auto;
     }
 
-    .avatar-default::before {
+    .friend-avatar::before {
       content: "";
       position: absolute;
       width: 24px;
       height: 24px;
       border-radius: 50%;
-      background: #f0f0f0;
+      background: #ededed;
       top: 10px;
       left: 50%;
       transform: translateX(-50%);
     }
 
-    .avatar-default::after {
+    .friend-avatar::after {
       content: "";
       position: absolute;
-      width: 44px;
-      height: 24px;
-      border-radius: 24px 24px 0 0;
+      width: 42px;
+      height: 22px;
+      border-radius: 22px 22px 0 0;
       background: #efefef;
       left: 50%;
       bottom: 0;
       transform: translateX(-50%);
     }
 
-    .friend-name {
-      font-size: 20px;
-      color: #111;
-      font-weight: 500;
-      line-height: 1.2;
+    .friend-main {
+      min-width: 0;
+      flex: 1;
+    }
+
+    /* 新增：好友名称和时间的同行布局 */
+    .friend-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 4px;
     }
 
+    .friend-name {
+      font-size: 16px; 
+      font-weight: 600;
+      color: #111;
+      line-height: 1.25;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      flex: 1;
+    }
+
+    /* 新增：时间样式 */
+    .friend-time {
+      font-size: 12px;
+      color: #b2b2b2;
+      font-weight: 400;
+      margin-left: 8px;
+      flex-shrink: 0;
+    }
+
     .friend-sub {
-      font-size: 14px;
-      color: #b9bcc2;
+      font-size: 13px;
+      color: #9ea5b0;
+      line-height: 1.35;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .empty-list {
+      padding: 90px 24px 0;
+      text-align: center;
+      color: #bcc2cb;
+      font-size: 15px;
     }
 
     /* 朋友圈页 */
     .moments-cover {
       position: relative;
-      height: 300px;
-      background: var(--cover);
+      height: calc(290px + var(--safe-top));
+      padding-top: var(--safe-top);
+      background: #b2b2b2;
     }
 
-    .moments-setting {
+    .moments-cam {
       position: absolute;
-      top: 50px;
-      right: 20px;
-      width: 30px;
-      height: 30px;
-      border: 2px dashed rgba(0,0,0,0.25);
-      border-radius: 50%;
-      color: rgba(0,0,0,0.35);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 14px;
-      background: transparent;
-      cursor: pointer;
+      top: calc(16px + var(--safe-top));
+      right: 16px;
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
     }
 
     .moments-profile {
       position: absolute;
-      right: 14px;
-      bottom: -30px;
+      right: 16px;
+      bottom: -22px;
       display: flex;
       align-items: flex-end;
-      gap: 12px;
+      gap: 16px;
     }
 
     .moments-name {
       color: #fff;
-      font-size: 20px;
-      font-weight: 800;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.25);
-      padding-bottom: 16px;
+      font-size: 19px;
+      font-weight: 700;
+      padding-bottom: 24px;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
     }
 
-    .avatar-cute {
-      width: 78px;
-      height: 78px;
-      border-radius: 16px;
-      background: linear-gradient(180deg, #ffffff 0%, #fff8dc 100%);
-      box-shadow: 0 8px 18px rgba(0,0,0,0.1);
-      display: grid;
-      place-items: center;
-      font-size: 34px;
-      overflow: hidden;
-      flex: 0 0 auto;
+    .moments-avatar {
+      width: 68px;
+      height: 68px;
+      border-radius: 12px;
+      background: #333;
+      border: 2px solid #fff;
     }
 
     .moments-body {
-      height: calc(100% - 300px);
-      background: #fff;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      min-height: calc(100dvh - 290px - var(--tab-h) - var(--safe-bottom));
       padding-top: 110px;
-      color: #b7b7b7;
-      font-size: 18px;
+      text-align: center;
+      color: #b7bcc5;
+      font-size: 15px;
+      background: #fff;
     }
 
-    /* 我 页 */
+    /* 我 - 页面重构 */
     .me-profile {
-      padding: 18px 22px 18px;
-      border-bottom: 1px solid var(--line);
+      padding: calc(64px + var(--safe-top)) 24px 20px;
       background: #fff;
     }
 
     .me-avatar {
-      width: 96px;
-      height: 96px;
-      border-radius: 20px;
-      background: linear-gradient(180deg, #ffffff 0%, #fff8dc 100%);
-      display: grid;
-      place-items: center;
-      font-size: 42px;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: #333;
       margin-bottom: 16px;
-      box-shadow: 0 8px 18px rgba(0,0,0,0.06);
     }
 
-    .name-row {
+    .me-row {
       display: flex;
       align-items: center;
       gap: 12px;
-      margin-bottom: 4px;
       flex-wrap: wrap;
+      margin-bottom: 6px;
     }
 
     .me-name {
-      font-size: 26px;
-      font-weight: 800;
-      color: #222;
+      font-size: 22px;
+      font-weight: 700;
+      color: #111;
       line-height: 1.1;
     }
 
     .status-pill {
-      height: 38px;
-      padding: 0 16px;
+      height: 28px;
+      padding: 0 10px;
       border-radius: 999px;
       border: 1px solid #ededed;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       color: #666;
-      font-size: 16px;
+      font-size: 12px;
       background: #fff;
     }
 
     .status-dot {
-      width: 10px;
-      height: 10px;
+      width: 8px;
+      height: 8px;
       border-radius: 50%;
       background: #37d05f;
     }
 
     .handle {
-      font-size: 18px;
+      font-size: 15px;
       color: #adb1b8;
     }
 
@@ -370,165 +347,1312 @@
     }
 
     .menu li {
-      height: 88px;
+      height: 60px;
       display: flex;
       align-items: center;
-      padding: 0 22px;
-      font-size: 22px;
+      padding: 0 24px;
+      font-size: 16px;
       color: #111;
-      border-bottom: 1px solid var(--line);
+      border-bottom: 1px solid #f5f5f5;
+      cursor: pointer;
+    }
+    
+    .menu li:active {
+      background: #f9f9f9;
+    }
+
+    /* ----- 新增设置页样式 ----- */
+    .settings-body {
+      padding: 16px;
+      background: #f2f2f6;
+      min-height: calc(100% - 54px);
+    }
+    .set-card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .set-field label {
+      display: block;
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .set-input {
+      width: 100%;
+      border: none;
+      outline: none;
+      font-size: 15px;
+      color: #111;
+      padding: 4px 0;
+    }
+    .set-input::placeholder { color: #ccc; }
+    .set-line {
+      height: 1px;
+      background: #eee;
+      margin: 12px 0;
+    }
+    .set-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .set-row label {
+      font-size: 15px;
+      color: #333;
+    }
+    .set-btn-small {
+      appearance: none;
+      border: none;
+      background: #f0f0f0;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+    }
+    .set-select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-top: 12px;
+      background: #fff;
+      outline: none;
+    }
+    .set-desc {
+      font-size: 12px;
+      color: #999;
+      line-height: 1.4;
+      margin-top: 8px;
+      margin-bottom: 12px;
+    }
+    .set-slider {
+      width: 100%;
+      margin-top: 8px;
+      accent-color: #111;
+    }
+    .set-title-bold {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111;
+    }
+    .set-btn-block {
+      width: 100%;
+      appearance: none;
+      border: none;
+      background: #f5f5f5;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      cursor: pointer;
+      margin-top: 12px;
+    }
+    /* 对话预览框 */
+    .preview-chat-box {
+      background: #f2f2f2;
+      border-radius: 12px;
+      padding: 16px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      cursor: pointer;
+      font-size: 15px; /* 默认预览字体大小 */
+    }
+    .preview-msg {
+      display: flex;
+      flex-direction: column;
+      max-width: 85%;
+    }
+    .preview-msg.right {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .preview-msg.left {
+      align-self: flex-start;
+      align-items: flex-start;
+    }
+    .preview-bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      line-height: 1.4;
+      word-break: break-word;
+    }
+    .preview-bubble.dark {
+      background: #8e8e93;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+    .preview-bubble.light {
+      background: #fff;
+      color: #111;
+      border-bottom-left-radius: 4px;
+    }
+    .preview-time {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    /* 底栏调整 */
+    .tabbar {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 10;
+      height: calc(var(--tab-h) + var(--safe-bottom));
+      padding-bottom: var(--safe-bottom);
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      background: #fff;
+      border-top: 1px solid var(--line);
+    }
+
+    .tabbar.hidden {
+      display: none;
+    }
+
+    .tab-item {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #7e8390;
+      font-size: 13px; 
+      font-weight: 400; 
       cursor: pointer;
     }
 
-    .menu li:last-child {
-      border-bottom: none;
+    .tab-item.active {
+      color: #111;
+      font-weight: 600; 
     }
 
-    /* 小屏兼容 */
-    @media (max-width: 390px) {
-      .phone {
-        width: 100vw;
-        height: 100dvh;
-        max-height: none;
-        border-radius: 0;
+    /* 侧边竖半屏（抽屉菜单）样式 */
+    .drawer-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.35);
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s ease, visibility 0.3s ease;
+    }
+
+    .drawer-mask.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .side-drawer {
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 75vw;
+      max-width: 340px;
+      background: var(--bg);
+      transform: translateX(-100%);
+      transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+      display: flex;
+      flex-direction: column;
+      box-shadow: 4px 0 24px rgba(0,0,0,0.08);
+      overflow-y: auto;
+    }
+
+    .drawer-mask.show .side-drawer {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: calc(30px + var(--safe-top)) 24px 24px;
+      background: var(--top);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .drawer-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e0e0e0, #c4c4c4);
+      margin-bottom: 16px;
+      position: relative;
+    }
+    
+    .drawer-avatar::after {
+      content: "";
+      position: absolute;
+      inset: 2px;
+      border-radius: 50%;
+      border: 2px solid #fff;
+    }
+
+    .drawer-name {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .drawer-desc {
+      font-size: 13px;
+      color: var(--sub);
+      margin-bottom: 16px;
+    }
+
+    .drawer-stats {
+      display: flex;
+      gap: 20px;
+      font-size: 13px;
+      color: #666;
+      font-weight: 500;
+    }
+
+    .drawer-list {
+      padding: 12px 0;
+      flex: 1;
+    }
+
+    .drawer-item {
+      display: flex;
+      align-items: center;
+      padding: 16px 24px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .drawer-item:active {
+      background: #f7f7f7;
+    }
+
+    .drawer-item-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 14px;
+      background: var(--top);
+      display: grid;
+      place-items: center;
+      margin-right: 16px;
+      color: #444;
+      flex-shrink: 0;
+    }
+
+    .drawer-item-text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .dit-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .dit-sub {
+      font-size: 12px;
+      color: var(--sub);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* 弹窗调整 */
+    .modal-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 40;
+      background: rgba(0, 0, 0, 0.34);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-mask.show {
+      display: flex;
+    }
+
+    .modal {
+      width: min(620px, calc(100vw - 48px));
+      background: #fff;
+      border-radius: 28px;
+      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.18);
+      padding: 26px 26px 24px;
+    }
+
+    .field {
+      margin-bottom: 20px;
+    }
+
+    .field label {
+      display: block;
+      font-size: 15px; 
+      font-weight: 600;
+      margin-bottom: 8px; 
+      color: #222;
+    }
+
+    .input,
+    .textarea {
+      width: 100%;
+      border: 1px solid #d0d5dd; 
+      border-radius: 999px;
+      outline: none;
+      background: #fff;
+      color: #111;
+      padding: 0 16px;
+      font-size: 15px;
+    }
+
+    .input {
+      height: 48px; 
+    }
+
+    .textarea {
+      border-radius: 24px;
+      min-height: 120px;
+      resize: none;
+      padding: 14px 16px;
+      line-height: 1.5;
+    }
+
+    .input::placeholder,
+    .textarea::placeholder {
+      color: #b8bec9;
+    }
+
+    .modal-error {
+      min-height: 20px;
+      margin: -6px 0 8px;
+      font-size: 13px;
+      color: #df3b3b;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 16px;
+      margin-top: 4px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      height: 48px; 
+      border-radius: 999px;
+      font-size: 15px; 
+      font-weight: 600;
+      cursor: pointer;
+      flex: 1;
+    }
+
+    .btn-light {
+      background: #fff;
+      color: #111;
+      border: 1px solid #d8dde6;
+      max-width: 160px;
+    }
+
+    .btn-dark {
+      background: #000;
+      color: #fff;
+      flex: 1.6;
+    }
+
+    /* 聊天页 */
+    .chat-screen {
+      background: #fff;
+    }
+
+    .chat-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 5;
+      height: calc(54px + var(--safe-top));
+      padding-top: var(--safe-top);
+      background: #fff;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .chat-header-bar {
+      height: 54px;
+      display: grid;
+      grid-template-columns: 50px 1fr 50px;
+      align-items: center;
+    }
+
+    .chat-title {
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .chat-body {
+      position: absolute;
+      top: calc(54px + var(--safe-top));
+      left: 0;
+      right: 0;
+      bottom: calc(var(--chatbar-h) + var(--safe-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      background: #fff;
+      padding: 16px 14px 20px;
+    }
+
+    .chat-empty {
+      height: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 40px;
+      color: #c5ccd6;
+      font-size: 15px;
+      text-align: center;
+    }
+
+    .messages {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .message-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .message-row.ai {
+      justify-content: flex-start;
+    }
+
+    .message-row.me {
+      justify-content: flex-end;
+    }
+
+    .bubble {
+      max-width: min(76vw, 560px);
+      border-radius: 18px;
+      padding: 12px 14px;
+      font-size: 15px;
+      line-height: 1.5;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+
+    .message-row.ai .bubble {
+      background: #f3f5f8;
+      color: #111;
+      border-top-left-radius: 8px;
+    }
+
+    .message-row.me .bubble {
+      background: #111;
+      color: #fff;
+      border-top-right-radius: 8px;
+    }
+
+    .chatbar {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 6;
+      height: calc(var(--chatbar-h) + var(--safe-bottom));
+      padding: 10px 12px calc(10px + var(--safe-bottom));
+      background: #fff;
+      border-top: 1px solid #f0f0f0;
+    }
+
+    .chatbar-inner {
+      height: 100%;
+      display: grid;
+      grid-template-columns: 40px 1fr 40px 40px;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .icon-img-btn {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      padding: 0;
+      width: 40px;
+      height: 40px;
+      display: grid;
+      place-items: center;
+      cursor: pointer;
+      flex: 0 0 auto;
+    }
+
+    .icon-img-btn img {
+      width: 26px;
+      height: 26px;
+      object-fit: contain;
+      display: block;
+    }
+
+    .chat-input-wrap {
+      position: relative;
+      height: 42px;
+      border-radius: 999px;
+      background: #f7f7f8;
+      overflow: hidden;
+    }
+
+    .chat-input {
+      width: 100%;
+      height: 100%;
+      border: 0;
+      outline: none;
+      background: transparent;
+      padding: 0 44px 0 16px;
+      font-size: 15px;
+      color: #111;
+    }
+
+    .chat-input::placeholder {
+      color: #b8bfca;
+    }
+
+    .inner-icon {
+      position: absolute;
+      right: 6px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 32px;
+      height: 32px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (min-width: 768px) {
+      .friend-name {
+        font-size: 18px;
+      }
+
+      .friend-sub {
+        font-size: 14px;
+      }
+
+      .chat-input {
+        font-size: 16px;
+      }
+
+      .bubble {
+        font-size: 16px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="phone">
-    <div class="window-pill">
-      <span class="dot red"></span>
-      <span class="dot yellow"></span>
-      <span class="dot green"></span>
-    </div>
-
-    <!-- 好友 -->
-    <section class="page active" id="page-friends">
-      <div class="friends-header">
-        <div class="friends-title">好友</div>
-        <button class="plus-btn" id="addFriendBtn">+</button>
-      </div>
-
-      <div class="friend-list">
-        <div class="friend-item" id="friendCard">
-          <div class="avatar-default"></div>
-          <div>
-            <div class="friend-name" id="friendName">()</div>
-            <div class="friend-sub">暂无聊天记录</div>
-          </div>
+  <div class="app">
+    <section class="screen top-screen active" id="screen-friends">
+      <header class="header">
+        <div class="header-bar">
+          <button class="header-btn" id="menuBtn" aria-label="菜单">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="3" y1="12" x2="21" y2="12"></line>
+              <line x1="3" y1="6" x2="21" y2="6"></line>
+              <line x1="3" y1="18" x2="15" y2="18"></line>
+            </svg>
+          </button>
+          <div class="header-title">好友</div>
+          <button class="header-btn" id="addRoleBtn" aria-label="添加角色">
+            <svg class="plus-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+          </button>
         </div>
-      </div>
+      </header>
+
+      <div class="friend-list" id="friendList"></div>
+      <div class="empty-list hidden" id="emptyList">还没有角色，点右上角 + 添加一个</div>
     </section>
 
-    <!-- 朋友圈 -->
-    <section class="page" id="page-moments">
+    <section class="screen top-screen" id="screen-moments">
       <div class="moments-cover">
-        <button class="moments-setting" id="momentsBtn">◎</button>
+        <img class="moments-cam" src="https://i.postimg.cc/XvxCSB82/IMG-3174.png" alt="相机" />
         <div class="moments-profile">
-          <div class="moments-name" id="momentsName">{{user}}</div>
-          <div class="avatar-cute">😾</div>
+          <div class="moments-name">{{user}}</div>
+          <div class="moments-avatar"></div>
         </div>
       </div>
       <div class="moments-body">暂时没有动态</div>
     </section>
 
-    <!-- 我 -->
-    <section class="page" id="page-me">
-      <div class="top-strip"></div>
-
+    <section class="screen top-screen" id="screen-me">
       <div class="me-profile">
-        <div class="me-avatar">😾</div>
-        <div class="name-row">
-          <div class="me-name" id="meName">{{user}}</div>
+        <div class="me-avatar"></div>
+        <div class="me-row">
+          <div class="me-name">{{user}}</div>
           <div class="status-pill">
             <span class="status-dot"></span>
             <span>状态</span>
           </div>
         </div>
-        <div class="handle" id="meHandle">@user_ai</div>
+        <div class="handle">@user_ai</div>
       </div>
 
-      <ul class="menu">
-        <li data-name="钱包">钱包</li>
-        <li data-name="记录">记录</li>
-        <li data-name="世界书">世界书</li>
-        <li data-name="设置">设置</li>
+<ul class="menu">
+        <li>钱包</li>
+        <li>个人资料</li>
+        <li id="goSettingsBtn">设置</li>
       </ul>
     </section>
 
-    <div class="tabbar">
-      <button class="tab-item active" data-page="friends">好友</button>
-      <button class="tab-item" data-page="moments">朋友圈</button>
-      <button class="tab-item" data-page="me">我</button>
+    <section class="screen top-screen" id="screen-settings">
+      <header class="header">
+        <div class="header-bar">
+          <button class="header-btn" id="settingsBackBtn" aria-label="返回">
+            <span class="back-char">‹</span>
+          </button>
+          <div class="header-title">设置</div>
+          <div style="width: 50px;"></div>
+        </div>
+      </header>
+
+      <div class="settings-body">
+        <div class="set-card">
+          <div class="set-field">
+            <label>反代地址 (API URL)</label>
+            <input type="text" placeholder="https://api.openai.com/v1" class="set-input" />
+          </div>
+          <div class="set-line"></div>
+          <div class="set-field">
+            <label>API Key 密钥</label>
+            <input type="password" placeholder="sk-..." class="set-input" />
+          </div>
+        </div>
+
+        <div class="set-card">
+          <div class="set-row">
+            <label>AI 模型选择</label>
+            <button class="set-btn-small">拉取模型</button>
+          </div>
+          <select class="set-select">
+            <option>gpt-4o-mini</option>
+          </select>
+        </div>
+
+        <div class="set-card">
+          <div class="set-row">
+            <label>随机性 (Temperature): <span id="tempValueDisplay">1.0</span></label>
+          </div>
+          <div class="set-desc">控制AI输出随机性的参数，较高的温度值会产生更多样化和创造性的回答，较低的温度值则产生更确定和一致的回答。范围 0 ~ 2。</div>
+          <input type="range" min="0" max="2" step="0.1" value="1" class="set-slider" id="tempSlider" />
+        </div>
+
+        <div class="set-card">
+          <div class="set-title-bold">字体设置</div>
+          <div class="set-row" style="margin-top: 12px;">
+            <input type="text" placeholder="输入字体链接 (.ttf/.woff)" class="set-input" style="flex:1; margin-right: 12px; margin-top:0;" />
+            <button class="set-btn-small">应用</button>
+          </div>
+          <button class="set-btn-block" style="margin-top: 12px;">📁 从手机文件选择字体</button>
+          
+          <div class="set-row" style="margin-top: 20px;">
+            <label>字体大小: <span id="fontSizeDisplay">15</span> px</label>
+          </div>
+          <input type="range" min="10" max="30" step="1" value="15" class="set-slider" id="fontSizeSlider" />
+
+          <div class="preview-chat-box" id="fontPreviewBox" title="点击切换中英文预览">
+            <div class="preview-msg right">
+              <div class="preview-bubble dark">我太自私了，想让你的世界只有我</div>
+              <div class="preview-time">21:48 已读</div>
+            </div>
+            <div class="preview-msg left">
+              <div class="preview-bubble light">是愿望的话<br>已经实现了</div>
+              <div class="preview-time">21:50</div>
+            </div>
+          </div>
+
+          <div class="set-row" style="margin-top: 20px;">
+            <select class="set-select" style="flex: 1;">
+              <option>选择预设</option>
+            </select>
+          </div>
+          <div class="set-row" style="margin-top: 12px; gap: 12px;">
+            <button class="set-btn-block" style="margin-top: 0; background: #f0f0f0;">保存预设</button>
+            <button class="set-btn-block" style="margin-top: 0; background: #fff0f0; color: #d93b3b;">删除预设</button>
+          </div>
+          
+          <button class="set-btn-block" id="testNotifyBtn" style="margin-top: 16px; background: #f4f6ff; color: #4b6eed;">
+            🔔 测试后台推送功能
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen chat-screen" id="screen-chat">
+      <div class="chat-header">
+        <div class="chat-header-bar">
+          <button class="header-btn" id="chatBackBtn" aria-label="返回">
+            <span class="back-char">‹</span>
+          </button>
+          <div class="chat-title" id="chatTitle">()</div>
+          <div></div>
+        </div>
+      </div>
+
+      <div class="chat-body" id="chatBody">
+        <div class="chat-empty" id="chatEmpty">开始与 AI 好友聊天吧</div>
+        <div class="messages hidden" id="messages"></div>
+      </div>
+
+      <div class="chatbar">
+        <div class="chatbar-inner">
+          <button class="icon-img-btn" id="chatExtraBtn" aria-label="更多">
+            <img src="https://i.postimg.cc/7hx0JsFP/IMG-3064.png" alt="" />
+          </button>
+
+          <div class="chat-input-wrap">
+            <input
+              class="chat-input"
+              id="chatInput"
+              type="text"
+              placeholder="恨天地生万物而非仅你我"
+              autocomplete="off"
+            />
+            <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情">
+              <img src="https://i.postimg.cc/y8pZRN6H/IMG-3205.png" alt="" />
+            </button>
+          </div>
+
+          <button class="icon-img-btn" id="voiceBtn" aria-label="语音">
+            <img src="https://i.postimg.cc/zvJKHtsG/IMG-3063.png" alt="" />
+          </button>
+
+          <button class="icon-img-btn" id="sendBtn" aria-label="发送">
+            <img src="https://i.postimg.cc/JnMYDd8b/IMG-4835.png" alt="" />
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <nav class="tabbar" id="tabbar">
+      <button class="tab-item active" data-tab="friends">好友</button>
+      <button class="tab-item" data-tab="moments">朋友圈</button>
+      <button class="tab-item" data-tab="me">我</button>
+    </nav>
+
+    <div class="drawer-mask" id="drawerMask">
+      <div class="side-drawer" id="sideDrawer" aria-label="侧边菜单">
+        <div class="drawer-header">
+          <div class="drawer-avatar"></div>
+          <div class="drawer-name">user</div>
+          <div class="drawer-desc">文本文本文本文本</div>
+          <div class="drawer-stats">
+            <span>0关注</span>
+            <span>0粉丝</span>
+            <span>100小时</span>
+          </div>
+        </div>
+        <div class="drawer-list">
+          <div class="drawer-item">
+            <div class="drawer-item-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+            </div>
+            <div class="drawer-item-text">
+              <div class="dit-title">我喜欢的音乐</div>
+              <div class="dit-sub">2首</div>
+            </div>
+          </div>
+          <div class="drawer-item">
+            <div class="drawer-item-icon">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            </div>
+            <div class="drawer-item-text">
+              <div class="dit-title">新建歌单</div>
+            </div>
+          </div>
+          <div class="drawer-item">
+            <div class="drawer-item-icon">
+               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </div>
+            <div class="drawer-item-text">
+              <div class="dit-title">导入外部歌单</div>
+              <div class="dit-sub">轻松导入其他 APP 里的歌单</div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <div class="home-arc"></div>
-    <div class="toast" id="toast"></div>
+    <div class="modal-mask" id="modalMask">
+      <div class="modal" role="dialog" aria-modal="true" aria-label="添加角色">
+        <div class="field">
+          <label for="remarkInput">备注</label>
+          <input class="input" id="remarkInput" type="text" placeholder="给TA的备注" />
+        </div>
+
+        <div class="field">
+          <label for="realNameInput">真名</label>
+          <input class="input" id="realNameInput" type="text" placeholder="TA知道自己叫什么" />
+        </div>
+
+        <div class="field">
+          <label for="personaInput">人设(AI Persona)</label>
+          <textarea
+            class="textarea"
+            id="personaInput"
+            placeholder="输入TA的人物设定，TA会严格遵守"
+          ></textarea>
+        </div>
+
+        <div class="modal-error" id="modalError"></div>
+
+        <div class="modal-actions">
+          <button class="btn btn-light" id="cancelModalBtn">取消</button>
+          <button class="btn btn-dark" id="saveRoleBtn">保存联系人</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
-    const config = {
-      userName: "小克",
-      userId: "@user_ai",
-      friendName: "()"
+    // 辅助函数：获取当前时间格式 (例如 "21:04")
+    function getCurrentTime() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    const state = {
+      currentTab: "friends",
+      activeContactId: null,
+      contacts: [
+        {
+          id: makeId(),
+          remark: "哥",
+          realName: "",
+          persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
+          lastTime: "22:36", // 模拟时间
+          messages: []
+        },
+        {
+          id: makeId(),
+          remark: "()",
+          realName: "",
+          persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
+          lastTime: "昨天", // 模拟时间
+          messages: []
+        }
+      ]
     };
 
-    const pages = {
-      friends: document.getElementById("page-friends"),
-      moments: document.getElementById("page-moments"),
-      me: document.getElementById("page-me")
+    const screens = {
+      friends: document.getElementById("screen-friends"),
+      moments: document.getElementById("screen-moments"),
+      me: document.getElementById("screen-me"),
+      chat: document.getElementById("screen-chat"),
+      settings: document.getElementById("screen-settings") // 新增注册
     };
 
+    const tabbar = document.getElementById("tabbar");
     const tabs = document.querySelectorAll(".tab-item");
-    const toast = document.getElementById("toast");
+    const friendList = document.getElementById("friendList");
+    const emptyList = document.getElementById("emptyList");
 
-    // 填充数据
-    document.getElementById("momentsName").textContent = config.userName;
-    document.getElementById("meName").textContent = config.userName;
-    document.getElementById("meHandle").textContent = config.userId;
-    document.getElementById("friendName").textContent = config.friendName;
+    const addRoleBtn = document.getElementById("addRoleBtn");
+    const modalMask = document.getElementById("modalMask");
+    const cancelModalBtn = document.getElementById("cancelModalBtn");
+    const saveRoleBtn = document.getElementById("saveRoleBtn");
+    const remarkInput = document.getElementById("remarkInput");
+    const realNameInput = document.getElementById("realNameInput");
+    const personaInput = document.getElementById("personaInput");
+    const modalError = document.getElementById("modalError");
 
-    function switchTab(name) {
-      Object.keys(pages).forEach(key => {
-        pages[key].classList.toggle("active", key === name);
-      });
+    const chatBackBtn = document.getElementById("chatBackBtn");
+    const chatTitle = document.getElementById("chatTitle");
+    const chatBody = document.getElementById("chatBody");
+    const chatEmpty = document.getElementById("chatEmpty");
+    const messagesEl = document.getElementById("messages");
+    const chatInput = document.getElementById("chatInput");
+    const sendBtn = document.getElementById("sendBtn");
 
-      tabs.forEach(tab => {
-        tab.classList.toggle("active", tab.dataset.page === name);
+    const menuBtn = document.getElementById("menuBtn");
+    const drawerMask = document.getElementById("drawerMask");
+
+    // ----- 新增设置页逻辑相关的 DOM 获取 -----
+    const goSettingsBtn = document.getElementById("goSettingsBtn");
+    const settingsBackBtn = document.getElementById("settingsBackBtn");
+    
+    const tempSlider = document.getElementById("tempSlider");
+    const tempValueDisplay = document.getElementById("tempValueDisplay");
+    
+    const fontSizeSlider = document.getElementById("fontSizeSlider");
+    const fontSizeDisplay = document.getElementById("fontSizeDisplay");
+    const fontPreviewBox = document.getElementById("fontPreviewBox");
+    
+    const testNotifyBtn = document.getElementById("testNotifyBtn");
+
+    // 1. 打开设置页
+    goSettingsBtn.addEventListener("click", () => {
+      screens.me.classList.remove("active");
+      screens.settings.classList.add("active");
+      tabbar.classList.add("hidden");
+    });
+
+    // 2. 从设置页返回
+    settingsBackBtn.addEventListener("click", () => {
+      screens.settings.classList.remove("active");
+      switchTab("me");
+    });
+
+    // 3. 监听温度滑块
+    tempSlider.addEventListener("input", (e) => {
+      tempValueDisplay.textContent = Number(e.target.value).toFixed(1);
+    });
+
+    // 4. 监听字体大小滑块
+    fontSizeSlider.addEventListener("input", (e) => {
+      const size = e.target.value;
+      fontSizeDisplay.textContent = size;
+      // 动态修改预览区的字体大小，如果要改全局可以后期操作 document.body.style.fontSize
+      fontPreviewBox.style.fontSize = size + "px"; 
+    });
+
+    // 5. 监听中英文字体预览切换
+    let isPreviewEnglish = false;
+    fontPreviewBox.addEventListener("click", () => {
+      isPreviewEnglish = !isPreviewEnglish;
+      const darkBubble = fontPreviewBox.querySelector(".dark");
+      const lightBubble = fontPreviewBox.querySelector(".light");
+      
+      if (isPreviewEnglish) {
+        darkBubble.innerHTML = "I'm so selfish, I want your world to be only me.";
+        lightBubble.innerHTML = "If it's a wish,<br>it has already come true.";
+      } else {
+        darkBubble.innerHTML = "我太自私了，想让你的世界只有我";
+        lightBubble.innerHTML = "是愿望的话<br>已经实现了";
+      }
+    });
+
+    // 6. 监听测试推送功能 (9秒延时系统弹窗)
+    testNotifyBtn.addEventListener("click", () => {
+      // 请求通知权限 (H5 Notification API)
+      if (Notification.permission !== "granted") {
+        Notification.requestPermission();
+      }
+
+      testNotifyBtn.textContent = "⏳ 9秒后触发弹窗...";
+      testNotifyBtn.style.pointerEvents = "none";
+      testNotifyBtn.style.opacity = "0.6";
+
+      setTimeout(() => {
+        // 恢复按钮状态
+        testNotifyBtn.textContent = "🔔 测试后台推送功能";
+        testNotifyBtn.style.pointerEvents = "auto";
+        testNotifyBtn.style.opacity = "1";
+        
+        // 发送真实系统级推送
+        if (Notification.permission === "granted") {
+          new Notification("a. 天使投资哥", {
+            body: "我太自私了，想让你的世界只有我",
+            icon: "https://i.postimg.cc/XvxCSB82/IMG-3174.png" // 用朋友圈的头像模拟
+          });
+        } else {
+          alert("测试失败：请在浏览器或系统设置中允许此站点的通知权限，才能看到后台弹窗哦！");
+        }
+      }, 9000);
+    });
+
+    function makeId() {
+      return "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+    }
+
+    function getDisplayName(contact) {
+      return contact.remark?.trim() || contact.realName?.trim() || "未命名角色";
+    }
+
+    function getContact(id) {
+      return state.contacts.find(item => item.id === id);
+    }
+
+    function switchTab(tab) {
+      state.currentTab = tab;
+
+      screens.friends.classList.toggle("active", tab === "friends");
+      screens.moments.classList.toggle("active", tab === "moments");
+      screens.me.classList.toggle("active", tab === "me");
+      screens.chat.classList.remove("active");
+      screens.settings.classList.remove("active"); // 新增：切换Tab时必须关闭设置页
+
+      tabbar.classList.remove("hidden");
+
+      tabs.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.tab === tab);
       });
     }
 
-    function showToast(text) {
-      toast.textContent = text;
-      toast.classList.add("show");
-      clearTimeout(showToast.timer);
-      showToast.timer = setTimeout(() => {
-        toast.classList.remove("show");
-      }, 1400);
+    function renderContacts() {
+      friendList.innerHTML = "";
+
+      if (!state.contacts.length) {
+        emptyList.classList.remove("hidden");
+        return;
+      }
+
+      emptyList.classList.add("hidden");
+
+      state.contacts.forEach(contact => {
+        const item = document.createElement("button");
+        item.className = "friend-item";
+        item.dataset.id = contact.id;
+
+        const avatar = document.createElement("div");
+        avatar.className = "friend-avatar";
+
+        const main = document.createElement("div");
+        main.className = "friend-main";
+
+        // 构建同行显示的名字和时间
+        const titleRow = document.createElement("div");
+        titleRow.className = "friend-title-row";
+
+        const name = document.createElement("div");
+        name.className = "friend-name";
+        name.textContent = getDisplayName(contact);
+
+        const time = document.createElement("div");
+        time.className = "friend-time";
+        time.textContent = contact.lastTime || ""; // 显示最后时间
+
+        titleRow.appendChild(name);
+        titleRow.appendChild(time);
+
+        const sub = document.createElement("div");
+        sub.className = "friend-sub";
+        sub.textContent = contact.messages.length
+          ? contact.messages[contact.messages.length - 1].text
+          : "[系统消息：开始与 AI 好友聊天吧]";
+
+        main.appendChild(titleRow);
+        main.appendChild(sub);
+        
+        item.appendChild(avatar);
+        item.appendChild(main);
+
+        item.addEventListener("click", () => openChat(contact.id));
+        friendList.appendChild(item);
+      });
     }
 
-    tabs.forEach(tab => {
-      tab.addEventListener("click", () => switchTab(tab.dataset.page));
-    });
+    function openAddModal() {
+      modalMask.classList.add("show");
+      addRoleBtn.classList.add("open");
+      modalError.textContent = "";
+      setTimeout(() => remarkInput.focus(), 20);
+    }
 
-    document.getElementById("addFriendBtn").addEventListener("click", () => {
-      showToast("这里可以接“添加好友”功能");
-    });
+    function closeAddModal() {
+      modalMask.classList.remove("show");
+      addRoleBtn.classList.remove("open");
+      modalError.textContent = "";
+    }
 
-    document.getElementById("momentsBtn").addEventListener("click", () => {
-      showToast("这里可以接“朋友圈设置”");
-    });
+    function clearModalForm() {
+      remarkInput.value = "";
+      realNameInput.value = "";
+      personaInput.value = "";
+    }
 
-    document.getElementById("friendCard").addEventListener("click", () => {
-      showToast("点击了好友卡片");
-    });
+    function saveRole() {
+      const remark = remarkInput.value.trim();
+      const realName = realNameInput.value.trim();
+      const persona = personaInput.value.trim();
 
-    document.querySelectorAll(".menu li").forEach(item => {
-      item.addEventListener("click", () => {
-        showToast("打开：" + item.dataset.name);
+      if (!remark && !realName) {
+        modalError.textContent = "至少填写备注或真名";
+        return;
+      }
+
+      const newContact = {
+        id: makeId(),
+        remark,
+        realName,
+        persona,
+        lastTime: getCurrentTime(), // 新联系人默认当前时间
+        messages: []
+      };
+
+      state.contacts.unshift(newContact);
+      renderContacts();
+      closeAddModal();
+      clearModalForm();
+    }
+
+    function openChat(contactId) {
+      state.activeContactId = contactId;
+
+      screens.friends.classList.remove("active");
+      screens.moments.classList.remove("active");
+      screens.me.classList.remove("active");
+      screens.chat.classList.add("active");
+      tabbar.classList.add("hidden");
+
+      renderChat();
+      setTimeout(() => chatInput.focus(), 30);
+    }
+
+    function backToFriends() {
+      screens.chat.classList.remove("active");
+      switchTab("friends");
+    }
+
+    function renderChat() {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+
+      chatTitle.textContent = getDisplayName(contact);
+      messagesEl.innerHTML = "";
+
+      if (!contact.messages.length) {
+        chatEmpty.classList.remove("hidden");
+        messagesEl.classList.add("hidden");
+        return;
+      }
+
+      chatEmpty.classList.add("hidden");
+      messagesEl.classList.remove("hidden");
+
+      contact.messages.forEach(msg => {
+        const row = document.createElement("div");
+        row.className = "message-row " + (msg.from === "me" ? "me" : "ai");
+
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = msg.text;
+
+        row.appendChild(bubble);
+        messagesEl.appendChild(row);
       });
+
+      requestAnimationFrame(() => {
+        chatBody.scrollTop = chatBody.scrollHeight;
+      });
+
+      renderContacts();
+    }
+
+    function sendMessage() {
+      const text = chatInput.value.trim();
+      const contact = getContact(state.activeContactId);
+      if (!contact || !text) return;
+
+      contact.messages.push({
+        from: "me",
+        text
+      });
+      contact.lastTime = getCurrentTime(); // 更新最后发送时间
+
+      chatInput.value = "";
+      renderChat();
+
+      const reply = buildReply(contact, text);
+
+      setTimeout(() => {
+        const latest = getContact(contact.id);
+        if (!latest) return;
+
+        latest.messages.push({
+          from: "ai",
+          text: reply
+        });
+        latest.lastTime = getCurrentTime(); // 更新最后回复时间
+
+        if (state.activeContactId === latest.id) {
+          renderChat();
+        } else {
+          renderContacts();
+        }
+      }, 500);
+    }
+
+    function buildReply(contact, text) {
+      const name = getDisplayName(contact);
+      const persona = (contact.persona || "").trim();
+
+      if (/你好|嗨|hello|hi/i.test(text)) {
+        return `${name}：你好，我在。`;
+      }
+
+      if (/你是谁|叫什么/i.test(text)) {
+        return `${name}：我是你的 AI 好友。`;
+      }
+
+      if (persona) {
+        return `${name}：收到，我会按这个设定和你聊天。你刚刚说的是「${text}」`;
+      }
+
+      return `${name}：收到，你刚刚说的是「${text}」`;
+    }
+
+    tabs.forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
     });
+
+    addRoleBtn.addEventListener("click", openAddModal);
+    cancelModalBtn.addEventListener("click", closeAddModal);
+    saveRoleBtn.addEventListener("click", saveRole);
+
+    modalMask.addEventListener("click", (e) => {
+      if (e.target === modalMask) closeAddModal();
+    });
+
+    chatBackBtn.addEventListener("click", backToFriends);
+
+    sendBtn.addEventListener("click", sendMessage);
+    chatInput.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.getElementById("chatExtraBtn").addEventListener("click", () => {
+      chatInput.focus();
+    });
+
+    document.getElementById("emojiBtn").addEventListener("click", () => {
+      chatInput.value += "🙂";
+      chatInput.focus();
+    });
+
+    document.getElementById("voiceBtn").addEventListener("click", () => {
+      chatInput.focus();
+    });
+
+    menuBtn.addEventListener("click", () => {
+      drawerMask.classList.add("show");
+    });
+    
+    drawerMask.addEventListener("click", (e) => {
+      if (e.target === drawerMask) {
+        drawerMask.classList.remove("show");
+      }
+    });
+
+    renderContacts();
+    switchTab("friends");
   </script>
 </body>
 </html>

@@ -213,12 +213,6 @@
                         </div>
                         <span class="text-xs text-gray-600 font-bold drop-shadow-md">微信</span>
                     </div>
-                    <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openRecordApp()">
-                        <div class="app-icon bg-[#5c5c5c] w-[60px] h-[60px] rounded-[15px] shadow-sm overflow-hidden p-0">
-                            <img id="icon-placeholder2" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="w-full h-full object-cover rounded-[15px]" style="background-color: #5c5c5c;">
-                        </div>
-                        <span class="text-xs text-gray-600 font-bold drop-shadow-md">记录</span>
-                    </div>
                 </div>
             </div>
 
@@ -820,9 +814,14 @@ openPlaylist();">
             <div id="me-detail-title" class="flex-1 text-center font-bold"></div>
             <div class="w-6"></div>
         </div>
-        <div class="flex-1 flex flex-center justify-center items-center text-gray-400 italic">
-            这里暂时空空如也...
+<div class="flex-1 bg-[#f0f0f0]">
+    <div class="mt-4 bg-white">
+        <div class="wx-menu-item" onclick="openRecordApp()">
+            <span class="text-[16px]">记录</span>
+            <span class="wx-chevron" style="display: block;">〉</span>
         </div>
+    </div>
+</div>
     </div>
 
     <div id="lorebook-screen" class="fixed inset-0 bg-[#f0f0f0] hidden flex flex-col z-[80]">

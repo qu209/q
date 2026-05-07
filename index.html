@@ -232,16 +232,7 @@ openPlaylist();">
                 </div>
             </div>
     
-        </div> </div>         <div class="px-6 pb-[30px] w-full z-20">
-        <div class="glass-card w-full p-4 flex justify-between items-center relative">
-            <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openAppearanceApp()">
-                <div class="app-icon overflow-hidden p-0 w-[60px] h-[60px] rounded-[15px] shadow-sm">
-                    <img id="icon-appearance" src="https://i.postimg.cc/NftxzkF0/IMG_3165.png" class="w-full h-full object-cover rounded-[15px]">
-                </div>
-            </div>
-        </div>
-    </div>
-
+        </div> </div>         
 
     <div id="chat-screen" class="fixed inset-0 bg-[#ededed] hidden flex flex-col z-50">
         <div id="wechat-header" class="h-12 bg-[#ededed] flex items-center px-4 border-b border-gray-200 transition-all">
@@ -995,39 +986,6 @@ openPlaylist();">
         </div>
     </div>
 
-    <div id="appearance-app-screen" class="page-layer slide-hidden flex flex-col z-[90]">
-        <div class="h-12 bg-white flex items-center px-4 border-b">
-            <button onclick="closeAppearanceApp()" class="back-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M15 18L9 12L15 6" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-            </button>
-            <div class="flex-1 text-center font-bold text-[17px]">外观设置</div>
-            <button onclick="saveAppearanceApp()" class="text-black font-bold text-[15px] w-12 text-right">保存</button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-5 bg-[#f2f2f6]">
-            <h3 class="text-gray-500 text-xs font-bold mb-2 ml-2 uppercase">桌面壁纸</h3>
-            <div class="bg-white rounded-xl p-4 mb-6 shadow-sm flex flex-col items-center">
-                <div class="w-32 h-48 border-4 border-gray-100 rounded-xl mb-3 overflow-hidden shadow-inner bg-gray-200">
-                    <img id="preview-wallpaper" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="w-full h-full object-cover">
-                </div>
-                <button onclick="document.getElementById('wallpaper-input').click()" class="bg-gray-100 text-black px-6 py-2 rounded-full text-[14px] font-bold">更换主屏幕壁纸</button>
-                <input type="file" id="wallpaper-input" class="hidden" accept="image/*" onchange="handleWallpaperSelect(this)">
-            </div>
-            <h3 class="text-gray-500 text-xs font-bold mb-2 ml-2 uppercase mt-6">全局聊天背景 (所有好友)</h3>
-            <div class="bg-white rounded-xl p-4 mb-6 shadow-sm flex items-center gap-4">
-                <div class="w-16 h-24 border-2 border-gray-100 rounded-lg overflow-hidden shadow-inner bg-gray-50 flex items-center justify-center shrink-0">
-                    <img id="preview-global-chat-bg" src="" class="w-full h-full object-cover hidden">
-                    <span id="global-chat-bg-hint" class="text-[10px] text-gray-400">无背景</span>
-                </div>
-                <div class="flex flex-col gap-2 flex-1">
-                    <button onclick="document.getElementById('global-chat-bg-input').click()" class="w-full bg-gray-100 text-black py-2 rounded-lg text-[13px] font-bold active:scale-95">更换全局背景</button>
-                    <button onclick="clearGlobalChatBg()" class="w-full bg-red-50 text-red-500 py-2 rounded-lg text-[13px] font-bold active:scale-95">清除</button>
-                </div>
-                <input type="file" id="global-chat-bg-input" class="hidden" accept="image/*" onchange="handleGlobalChatBg(this)">
-            </div>
-        </div>
-    </div>
     <div id="emoji-panel" class="fixed inset-x-0 bottom-0 bg-[#f7f7f7] z-[120] rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 flex flex-col" style="height: 50vh;">
         <div class="h-12 border-b flex items-center px-4 bg-white rounded-t-2xl shrink-0">
             <button onclick="closeEmojiPanel()" class="text-gray-600 text-[15px] font-medium w-[40px] text-left">取消</button>
@@ -1973,12 +1931,6 @@ let config = {
 // 新增：用来存储保存过的字体预设
 let fontPresets = JSON.parse(localStorage.getItem('fontPresets_data')) || {};
 
-// 新增：用于暂存外观设置的变量
-let tempAppearance = {
-    wallpaper: '',
-    icons: {},
-    names: {} // 新增：用来暂存改过的名字
-};
 let currentEditingIconId = '';
 
 // 新增：专门修改外观设置里APP名称的函数

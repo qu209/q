@@ -176,35 +176,8 @@
 
         <div class="min-w-full flex-shrink-0 snap-center p-6 flex flex-col items-center">
             <div class="w-full flex flex-col" style="transform: translateY(-35px);">
-            <div class="widget-card mb-12 mt-4">
-                <div class="flex items-start gap-10">
-                    <div class="flex flex-col items-center gap-1">
-                        <span class="widget-emoji" onclick="editEmoji('left')">(⸝⸝๑  ̫ ๑⸝⸝)</span>
-                        <img id="avatar-left" class="widget-avatar" src="" onclick="changeAvatar('left')">
-                    </div>
-                    <div class="flex flex-col items-center gap-1">
-                        <span class="widget-emoji" onclick="editEmoji('right')">(˶⁃ ω ⁃˶)</span>
-                        <img id="avatar-right" class="widget-avatar" src="" onclick="changeAvatar('right')">
-                    </div>
-                </div>
-                <div id="widget-text" class="widget-text" onclick="editWidgetText()">我不想隔着屏幕和你说话</div>
-            </div>
 
             <div class="flex w-full px-1 gap-5 mt-2 justify-between items-start z-10">
-<div class="left-widget w-[160px] h-[160px] rounded-[24px] p-2.5 flex flex-col relative transition-transform active:scale-95 cursor-default">
-                    <div class="flex-1 bg-transparent rounded-[16px] flex items-center justify-center mb-2.5 overflow-hidden relative cursor-pointer" onclick="changeAnyImage(this)">
-                        
-                    </div>
-                    <div class="h-[42px] flex gap-2">
-                        <div class="flex-1 border-[1px] border-[#DEDEDE] rounded-[14px] flex flex-col justify-center items-start pl-2 pr-1 text-[11px] font-bold text-[#333] leading-[1.2]">
-                            <div id="widget-date-display" class="tracking-widest">♥ 月 - 日</div>
-                            <div id="widget-time-display" class="tracking-widest mt-[2px]">★ 时 : 分</div>
-                        </div>
-                        <div id="widget-text-btn" class="w-[42px] border-[1px] border-[#DEDEDE] rounded-full flex items-center justify-center text-[11px] font-bold text-[#333] cursor-pointer hover:bg-gray-100 transition-colors" onclick="editAnyText('widget-text-btn')">
-                            文本
-                        </div>
-                    </div>
-                </div>
 
                                 <div class="flex-1 flex flex-col items-end pt-0 pr-1">
                     <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openChat()">
@@ -216,33 +189,6 @@
                 </div>
             </div>
 
-            <div class="w-full mt-10 relative px-2">
-                <div class="flex justify-between px-10 mb-4">
-                    <div class="flex flex-col items-center relative translate-x-[35px] -translate-y-[3px]">
-                        <span id="badge-char" class="absolute -left-[55px] -top-[3px] text-[11px] italic text-gray-600 bg-white shadow-sm flex items-center justify-center cursor-pointer" style="border-radius: 50%; width: 37px; height: 23px;" onclick="editAnyText('badge-char')">char</span>
-                        <div class="w-[55px] h-[55px] rounded-full bg-transparent flex items-center justify-center cursor-pointer overflow-hidden" onclick="changeAnyImage(this)">
-                            
-                        </div>
-                    </div>
-                    <div class="flex flex-col items-center relative -translate-x-[35px] -translate-y-[3px]">
-                        <span id="badge-user" class="absolute -right-[55px] -top-[3px] text-[11px] italic text-gray-600 bg-white shadow-sm flex items-center justify-center cursor-pointer" style="border-radius: 50%; width: 37px; height: 23px;" onclick="editAnyText('badge-user')">user</span>
-                        <div class="w-[55px] h-[55px] rounded-full bg-transparent flex items-center justify-center cursor-pointer overflow-hidden" onclick="changeAnyImage(this)">
-                            
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="w-full flex flex-col gap-3">
-                    <div class="flex items-end gap-1 ml-4">
-                        <div id="mock-msg-1" class="bg-white shadow-sm rounded-full px-4 py-0.5 text-[13px] text-[#333] tracking-wider w-fit max-w-[75%] break-words cursor-pointer" onclick="editAnyText('mock-msg-1')">文本文本文本文本文本文本</div>
-                        <span id="mock-status-1" class="text-[9px] text-gray-400 mb-0 whitespace-nowrap cursor-pointer" onclick="editAnyText('mock-status-1')">已读</span>
-                    </div>
-                    <div class="flex items-end justify-end gap-1 mr-4">
-                        <span id="mock-status-2" class="text-[9px] text-gray-400 mb-0 whitespace-nowrap cursor-pointer" onclick="editAnyText('mock-status-2')">未读</span>
-                        <div id="mock-msg-2" class="bg-black shadow-sm rounded-full px-4 py-0.5 text-[13px] text-white tracking-wider w-fit max-w-[75%] break-words cursor-pointer" onclick="editAnyText('mock-msg-2')">文本文本文本文本文本</div>
-                    </div>
-                 </div>
-            </div>
         </div>
         </div> <div class="min-w-full flex-shrink-0 snap-center p-6 flex flex-col items-center">
 

@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -813,177 +812,6 @@
         font-size: 16px;
       }
     }
-
-    /* ==== 新增设置页样式 ==== */
-    .settings-screen {
-      background: #f2f2f6; /* 偏iOS设置页的底色 */
-    }
-    
-    .settings-container {
-      padding: 16px;
-    }
-
-    .set-card {
-      background: #fff;
-      border-radius: 12px;
-      padding: 16px;
-      margin-bottom: 16px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-    }
-
-    .set-title {
-      font-size: 14px;
-      color: #888;
-      margin-bottom: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .set-input {
-      width: 100%;
-      border: 0;
-      border-bottom: 1px solid #eee;
-      padding: 10px 0;
-      font-size: 15px;
-      color: #333;
-      outline: none;
-      background: transparent;
-    }
-    .set-input:last-child {
-      border-bottom: none;
-    }
-
-    .set-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 12px;
-    }
-
-    .set-btn-small {
-      appearance: none;
-      border: 0;
-      background: #f0f0f0;
-      color: #333;
-      padding: 6px 12px;
-      border-radius: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-    }
-
-    .set-select {
-      width: 100%;
-      padding: 10px;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      font-size: 15px;
-      background: #fff;
-      outline: none;
-      margin-top: 8px;
-    }
-
-    .set-desc {
-      font-size: 12px;
-      color: #aaa;
-      line-height: 1.4;
-      margin-top: 8px;
-    }
-
-    .range-slider {
-      width: 100%;
-      margin: 12px 0;
-      accent-color: #000;
-    }
-
-    .file-btn-wrap {
-      display: flex;
-      gap: 10px;
-      margin-top: 12px;
-    }
-
-    .file-btn {
-      flex: 1;
-      background: #f4f5f7;
-      border: 0;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: #333;
-      cursor: pointer;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* 聊天预览区域（还原图2气泡样式） */
-    .font-preview-box {
-      background: #f5f5f5;
-      border-radius: 8px;
-      padding: 16px;
-      margin-top: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      cursor: pointer;
-      transition: all 0.2s;
-    }
-    .font-preview-box:active {
-      opacity: 0.8;
-    }
-
-    .preview-msg {
-      max-width: 85%;
-      padding: 10px 14px;
-      font-size: 15px;
-      line-height: 1.5;
-      position: relative;
-    }
-
-    .preview-msg.right {
-      align-self: flex-end;
-      background: #808080;
-      color: #fff;
-      border-radius: 18px 4px 18px 18px;
-    }
-
-    .preview-msg.left {
-      align-self: flex-start;
-      background: #fff;
-      color: #111;
-      border-radius: 4px 18px 18px 18px;
-    }
-
-    .preview-time-right {
-      display: block;
-      text-align: right;
-      font-size: 11px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-    .preview-time-left {
-      display: block;
-      text-align: left;
-      font-size: 11px;
-      color: #aaa;
-      margin-top: 4px;
-    }
-
-    .test-notify-btn {
-      width: 100%;
-      background: #f4f6fd;
-      color: #4a6ee0;
-      border: 1px solid #e2e8f9;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      margin-top: 16px;
-    }
   </style>
 </head>
 <body>
@@ -1043,86 +871,43 @@
       </ul>
     </section>
 
-    <section class="screen top-screen settings-screen" id="screen-settings">
-      <header class="header">
-        <div class="header-bar">
+    <section class="screen chat-screen" id="screen-settings">
+      <div class="chat-header">
+        <div class="chat-header-bar">
           <button class="header-btn" id="settingsBackBtn" aria-label="返回">
             <span class="back-char">‹</span>
           </button>
-          <div class="header-title">设置</div>
-          <button class="header-btn" style="font-size: 15px; font-weight: 600; width: auto; padding-right: 16px;">保存</button>
+          <div class="chat-title">API 设置</div>
+          <button class="header-btn" id="saveSettingsBtn" style="font-size: 15px; color: #111; width: auto; padding-right: 16px;">保存</button>
         </div>
-      </header>
-
-      <div class="settings-container">
-        <div class="set-card">
-          <div class="set-title">反代地址 (API URL)</div>
-          <input class="set-input" type="text" placeholder="https://api.openai.com/v1" />
-          <div class="set-title" style="margin-top: 16px;">API Key 密钥</div>
-          <input class="set-input" type="password" placeholder="sk-..." />
-        </div>
-
-        <div class="set-card">
-          <div class="set-title">
-            <span>AI 模型选择</span>
-            <button class="set-btn-small">拉取模型</button>
+      </div>
+      <div class="chat-body" style="padding: 24px; background: #f7f7f7;">
+        <div style="background: #fff; border-radius: 12px; padding: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.04);">
+          <div class="field">
+            <label for="apiUrlInput">反代地址 (API URL)</label>
+            <input class="input" id="apiUrlInput" type="text" placeholder="例如: https://api.openai.com/v1" />
           </div>
-          <select class="set-select">
-            <option>gpt-4o-mini</option>
-            <option>gpt-4</option>
-            <option>claude-3-haiku</option>
-          </select>
-        </div>
-
-        <div class="set-card">
-          <div class="set-title">随机性 (Temperature): <span id="tempVal">1</span></div>
-          <div class="set-desc">控制AI输出随机性的参数，较高的温度值会产生更多样化和创造性的回答，较低的温度值则产生更确定和一致的回答。范围 0 ~ 2。</div>
-          <input type="range" class="range-slider" id="tempSlider" min="0" max="2" step="0.1" value="1" />
-        </div>
-
-        <div class="set-card">
-          <div class="set-title" style="color: #111; font-weight: 700; font-size: 15px;">字体设置</div>
-          
-          <div style="display: flex; gap: 8px; margin-top: 12px;">
-            <input class="set-select" style="margin-top:0;" type="text" placeholder="输入字体链接 (.ttf/.woff)" />
-            <button class="set-btn-small" style="padding: 0 16px;">应用</button>
+          <div class="field">
+            <label for="apiKeyInput">密钥 (API Key)</label>
+            <input class="input" id="apiKeyInput" type="password" placeholder="sk-..." />
           </div>
-          
-          <div class="file-btn-wrap">
-            <button class="file-btn">📁 从手机文件选择字体</button>
-            <input type="file" style="display:none;" />
+          <div class="field" style="display: flex; gap: 12px; margin-bottom: 20px;">
+            <button class="btn btn-dark" id="fetchModelsBtn" style="flex: 1;">拉取模型</button>
           </div>
-
-          <div class="set-title" style="margin-top: 16px;">字体大小: <span id="fontSizeVal">15</span> px</div>
-          <input type="range" class="range-slider" id="fontSizeSlider" min="12" max="24" step="1" value="15" />
-
-          <div class="font-preview-box" id="fontPreviewBox" title="点击切换中英文预览">
-            <div style="display:flex; flex-direction:column; gap:8px;" id="previewContent">
-              <div class="preview-msg right">我太自私了，想让你的世界只有我</div>
-              <span class="preview-time-right">21:48 已读</span>
-              
-              <div class="preview-msg left">是愿望的话<br>已经实现了</div>
-              <span class="preview-time-left">21:50</span>
-              
-              <div class="preview-msg right">我们的命运轨迹会在同一条线上吗</div>
-              <span class="preview-time-right">21:53 已读</span>
-              
-              <div class="preview-msg left">你牵住我的时候就会</div>
-              <span class="preview-time-left">21:56</span>
-            </div>
-          </div>
-
-          <div class="set-row" style="margin-top: 24px;">
-            <select class="set-select" style="margin-top:0; flex:1;">
-              <option>选择预设</option>
+          <div class="field">
+            <label for="modelSelect">选择模型</label>
+            <select class="input" id="modelSelect" style="appearance: auto; padding-right: 12px;">
+              <option value="">请先拉取模型</option>
             </select>
           </div>
-          <div style="display: flex; gap: 12px; margin-top: 12px;">
-            <button class="file-btn" style="background:#f4f5f7;">保存预设</button>
-            <button class="file-btn" style="background:#fdf2f2; color:#d93b3b;">删除预设</button>
+          <div class="field">
+            <label for="tempInput" style="display: flex; justify-content: space-between;">
+              <span>温度 (Temperature)</span>
+              <span id="tempValueDisplay">1.0</span>
+            </label>
+            <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; margin-top: 8px;" />
+            <div style="font-size: 12px; color: #9ea5b0; margin-top: 6px; line-height: 1.4;">控制AI输出随机性的参数，较高的温度值会产生更多样化和创造性的回答，较低的温度值则产生更确定和一致的回答。</div>
           </div>
-
-          <button class="test-notify-btn" id="testNotifyBtn">🔔 测试后台推送功能</button>
         </div>
       </div>
     </section>
@@ -1263,9 +1048,16 @@
     }
 
     const state = {
+      apiSettings: {
+        url: "",
+        key: "",
+        model: "",
+        temperature: 1.0
+      },
       currentTab: "friends",
       activeContactId: null,
       contacts: [
+
         {
           id: makeId(),
           remark: "哥",
@@ -1290,7 +1082,7 @@
       moments: document.getElementById("screen-moments"),
       me: document.getElementById("screen-me"),
       chat: document.getElementById("screen-chat"),
-      settings: document.getElementById("screen-settings") // 注册设置页
+      settings: document.getElementById("screen-settings")
     };
 
     const tabbar = document.getElementById("tabbar");
@@ -1587,25 +1379,32 @@
       drawerMask.classList.add("show");
     });
     
-        drawerMask.addEventListener("click", (e) => {
+    drawerMask.addEventListener("click", (e) => {
       if (e.target === drawerMask) {
         drawerMask.classList.remove("show");
       }
     });
 
-    // ==== 设置页逻辑 ====
+    // 设置页面逻辑
     const openSettingsBtn = document.getElementById("openSettingsBtn");
     const settingsBackBtn = document.getElementById("settingsBackBtn");
-    const tempSlider = document.getElementById("tempSlider");
-    const tempVal = document.getElementById("tempVal");
-    const fontSizeSlider = document.getElementById("fontSizeSlider");
-    const fontSizeVal = document.getElementById("fontSizeVal");
-    const fontPreviewBox = document.getElementById("fontPreviewBox");
-    const previewContent = document.getElementById("previewContent");
-    const testNotifyBtn = document.getElementById("testNotifyBtn");
+    const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+    const apiUrlInput = document.getElementById("apiUrlInput");
+    const apiKeyInput = document.getElementById("apiKeyInput");
+    const fetchModelsBtn = document.getElementById("fetchModelsBtn");
+    const modelSelect = document.getElementById("modelSelect");
+    const tempInput = document.getElementById("tempInput");
+    const tempValueDisplay = document.getElementById("tempValueDisplay");
 
-    // 打开/关闭设置页
     openSettingsBtn.addEventListener("click", () => {
+      apiUrlInput.value = state.apiSettings.url;
+      apiKeyInput.value = state.apiSettings.key;
+      tempInput.value = state.apiSettings.temperature;
+      tempValueDisplay.textContent = state.apiSettings.temperature;
+      if (state.apiSettings.model && modelSelect.options.length <= 1) {
+        modelSelect.innerHTML = `<option value="${state.apiSettings.model}">${state.apiSettings.model}</option>`;
+      }
+      
       screens.me.classList.remove("active");
       screens.settings.classList.add("active");
       tabbar.classList.add("hidden");
@@ -1617,73 +1416,49 @@
       tabbar.classList.remove("hidden");
     });
 
-    // 监听温度滑块
-    tempSlider.addEventListener("input", (e) => {
-      tempVal.textContent = e.target.value;
+    tempInput.addEventListener("input", (e) => {
+      tempValueDisplay.textContent = Number(e.target.value).toFixed(1);
     });
 
-    // 监听字体大小滑块，实时改变全局和预览
-    fontSizeSlider.addEventListener("input", (e) => {
-      const size = e.target.value;
-      fontSizeVal.textContent = size;
-      // 预览区域字体大小
-      previewContent.style.fontSize = size + "px";
-      // 全局字体大小 (这里通过修改根节点变量或直接修改body)
-      document.body.style.fontSize = size + "px";
-    });
-
-    // 点击切换预览文本 (中/英)
-    let isEnPreview = false;
-    fontPreviewBox.addEventListener("click", () => {
-      isEnPreview = !isEnPreview;
-      if (isEnPreview) {
-        previewContent.innerHTML = `
-          <div class="preview-msg right">I'm so selfish, I want your world to only have me.</div>
-          <span class="preview-time-right">21:48 Read</span>
-          <div class="preview-msg left">If that's a wish...<br>It has already come true.</div>
-          <span class="preview-time-left">21:50</span>
-          <div class="preview-msg right">Will our destinies intersect on the same path?</div>
-          <span class="preview-time-right">21:53 Read</span>
-          <div class="preview-msg left">They will, when you hold my hand.</div>
-          <span class="preview-time-left">21:56</span>
-        `;
-      } else {
-        previewContent.innerHTML = `
-          <div class="preview-msg right">我太自私了，想让你的世界只有我</div>
-          <span class="preview-time-right">21:48 已读</span>
-          <div class="preview-msg left">是愿望的话<br>已经实现了</div>
-          <span class="preview-time-left">21:50</span>
-          <div class="preview-msg right">我们的命运轨迹会在同一条线上吗</div>
-          <span class="preview-time-right">21:53 已读</span>
-          <div class="preview-msg left">你牵住我的时候就会</div>
-          <span class="preview-time-left">21:56</span>
-        `;
+    fetchModelsBtn.addEventListener("click", async () => {
+      const url = apiUrlInput.value.trim();
+      const key = apiKeyInput.value.trim();
+      if (!url || !key) {
+        alert("请先填写反代地址和密钥");
+        return;
+      }
+      fetchModelsBtn.textContent = "拉取中...";
+      try {
+        const endpoint = url.endsWith('/') ? url + 'models' : url + '/models';
+        const res = await fetch(endpoint, {
+          headers: { "Authorization": `Bearer ${key}` }
+        });
+        if (!res.ok) throw new Error("网络请求失败");
+        const data = await res.json();
+        if (data.data && data.data.length > 0) {
+          modelSelect.innerHTML = data.data.map(m => `<option value="${m.id}">${m.id}</option>`).join("");
+          alert("模型拉取成功！");
+        } else {
+          alert("未获取到模型列表，请检查接口返回格式");
+        }
+      } catch (err) {
+        alert("拉取模型失败，请检查地址和密钥是否正确。\n" + err.message);
+      } finally {
+        fetchModelsBtn.textContent = "拉取模型";
       }
     });
 
-    // 测试后台推送 (使用 Web Notification API)
-    testNotifyBtn.addEventListener("click", () => {
-      if (Notification.permission === "default") {
-        Notification.requestPermission().then(perm => {
-          if (perm === "granted") sendDelayedNotification();
-          else alert("需要允许通知权限才能测试后台推送哦");
-        });
-      } else if (Notification.permission === "granted") {
-        sendDelayedNotification();
-      } else {
-        alert("你已在系统设置中禁用了通知权限，请开启后再试。");
-      }
+    saveSettingsBtn.addEventListener("click", () => {
+      state.apiSettings.url = apiUrlInput.value.trim();
+      state.apiSettings.key = apiKeyInput.value.trim();
+      state.apiSettings.model = modelSelect.value;
+      state.apiSettings.temperature = parseFloat(tempInput.value);
+      alert("设置已保存");
+      
+      screens.settings.classList.remove("active");
+      screens.me.classList.add("active");
+      tabbar.classList.remove("hidden");
     });
-
-    function sendDelayedNotification() {
-      alert("将在 9 秒后发送系统推送，请把页面切换到后台或锁屏等待。");
-      setTimeout(() => {
-        new Notification("新消息", {
-          body: "你牵住我的时候就会",
-          icon: "https://i.postimg.cc/XvxCSB82/IMG-3174.png" // 用朋友圈那个相机图标代替一下
-        });
-      }, 9000);
-    }
 
     renderContacts();
     switchTab("friends");

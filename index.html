@@ -65,6 +65,22 @@
             color:#555;
             cursor:pointer;
         }
+
+        /* 论坛专有样式 */
+        .tweet-card { border-bottom: 1px solid #eff3f4; padding: 12px 16px; background: white; }
+        .tweet-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
+        .fab-btn { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; border-radius: 28px; background: #000000; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 24px; z-index: 60; cursor: pointer; transition: transform 0.1s; }
+        .fab-btn:active { transform: scale(0.9); }
+        .btn-disabled { background-color: #cccccc !important; cursor: not-allowed !important; opacity: 0.6; }
+        .action-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 4px; opacity: 0.6; }
+        .nav-sync-icon { width: 24px; height: 24px; object-fit: contain; }
+        .back-icon { font-size: 20px; font-weight: 400; color: #000000; line-height: 1; display: flex; align-items: center; justify-content: center; }
+
+        /* 论坛主页样式扩展 */
+        .profile-banner { width: 100%; height: 120px; background: #cfd9de; cursor: pointer; object-fit: cover; }
+        .profile-avatar-main { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; margin-top: -40px; margin-left: 15px; position: relative; cursor: pointer; object-fit: cover; background: white; }
+        .tab-active { border-bottom: 4px solid #000000; color: #000; font-weight: bold;
+        }
         
         /* 进场动画 */
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
@@ -218,6 +234,11 @@ openPlaylist();">
     
         </div> </div>         <div class="px-6 pb-[30px] w-full z-20">
         <div class="glass-card w-full p-4 flex justify-between items-center relative">
+            <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openAppearanceApp()">
+                <div class="app-icon overflow-hidden p-0 w-[60px] h-[60px] rounded-[15px] shadow-sm">
+                    <img id="icon-appearance" src="https://i.postimg.cc/NftxzkF0/IMG_3165.png" class="w-full h-full object-cover rounded-[15px]">
+                </div>
+            </div>
         </div>
     </div>
 
@@ -569,6 +590,10 @@ openPlaylist();">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-[14px] text-gray-700">拉黑惩罚时长：</span>
                     <div><input type="number" id="os-block-duration" class="w-12 border-b border-gray-300 text-center outline-none text-[15px] font-bold text-red-500" value="60"> <span class="text-[13px] text-gray-500">分钟</span></div>
+                </div>
+                <div class="flex items-center justify-between">
+                    <span class="text-[14px] text-gray-700">允许短信求和间隔：</span>
+                    <div><input type="number" id="os-block-sms" class="w-12 border-b border-gray-300 text-center outline-none text-[15px] font-bold" value="10"> <span class="text-[13px] text-gray-500">分钟/次</span></div>
                 </div>
             </div>
 
@@ -970,6 +995,39 @@ openPlaylist();">
         </div>
     </div>
 
+    <div id="appearance-app-screen" class="page-layer slide-hidden flex flex-col z-[90]">
+        <div class="h-12 bg-white flex items-center px-4 border-b">
+            <button onclick="closeAppearanceApp()" class="back-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M15 18L9 12L15 6" stroke="black" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+            </button>
+            <div class="flex-1 text-center font-bold text-[17px]">外观设置</div>
+            <button onclick="saveAppearanceApp()" class="text-black font-bold text-[15px] w-12 text-right">保存</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 bg-[#f2f2f6]">
+            <h3 class="text-gray-500 text-xs font-bold mb-2 ml-2 uppercase">桌面壁纸</h3>
+            <div class="bg-white rounded-xl p-4 mb-6 shadow-sm flex flex-col items-center">
+                <div class="w-32 h-48 border-4 border-gray-100 rounded-xl mb-3 overflow-hidden shadow-inner bg-gray-200">
+                    <img id="preview-wallpaper" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="w-full h-full object-cover">
+                </div>
+                <button onclick="document.getElementById('wallpaper-input').click()" class="bg-gray-100 text-black px-6 py-2 rounded-full text-[14px] font-bold">更换主屏幕壁纸</button>
+                <input type="file" id="wallpaper-input" class="hidden" accept="image/*" onchange="handleWallpaperSelect(this)">
+            </div>
+            <h3 class="text-gray-500 text-xs font-bold mb-2 ml-2 uppercase mt-6">全局聊天背景 (所有好友)</h3>
+            <div class="bg-white rounded-xl p-4 mb-6 shadow-sm flex items-center gap-4">
+                <div class="w-16 h-24 border-2 border-gray-100 rounded-lg overflow-hidden shadow-inner bg-gray-50 flex items-center justify-center shrink-0">
+                    <img id="preview-global-chat-bg" src="" class="w-full h-full object-cover hidden">
+                    <span id="global-chat-bg-hint" class="text-[10px] text-gray-400">无背景</span>
+                </div>
+                <div class="flex flex-col gap-2 flex-1">
+                    <button onclick="document.getElementById('global-chat-bg-input').click()" class="w-full bg-gray-100 text-black py-2 rounded-lg text-[13px] font-bold active:scale-95">更换全局背景</button>
+                    <button onclick="clearGlobalChatBg()" class="w-full bg-red-50 text-red-500 py-2 rounded-lg text-[13px] font-bold active:scale-95">清除</button>
+                </div>
+                <input type="file" id="global-chat-bg-input" class="hidden" accept="image/*" onchange="handleGlobalChatBg(this)">
+            </div>
+        </div>
+    </div>
     <div id="emoji-panel" class="fixed inset-x-0 bottom-0 bg-[#f7f7f7] z-[120] rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 flex flex-col" style="height: 50vh;">
         <div class="h-12 border-b flex items-center px-4 bg-white rounded-t-2xl shrink-0">
             <button onclick="closeEmojiPanel()" class="text-gray-600 text-[15px] font-medium w-[40px] text-left">取消</button>
@@ -1915,6 +1973,23 @@ let config = {
 // 新增：用来存储保存过的字体预设
 let fontPresets = JSON.parse(localStorage.getItem('fontPresets_data')) || {};
 
+// 新增：用于暂存外观设置的变量
+let tempAppearance = {
+    wallpaper: '',
+    icons: {},
+    names: {} // 新增：用来暂存改过的名字
+};
+let currentEditingIconId = '';
+
+// 新增：专门修改外观设置里APP名称的函数
+function editAppearanceAppName(iconId, currentName) {
+    const newName = prompt("修改APP名称：", currentName);
+    if (newName !== null && newName.trim() !== '') {
+        document.getElementById(`preview-name-${iconId}`).innerText = newName.trim();
+        tempAppearance.names[iconId] = newName.trim();
+    }
+}
+
 // 【修改开始】让个人资料每次从手机记忆里读取，读不到才用默认的
 let userProfile = JSON.parse(localStorage.getItem('os_user_profile')) || {
     name: "{{user}}",
@@ -1943,9 +2018,13 @@ function performGlobalSave() {
         if (typeof playlist !== 'undefined') localStorage.setItem('os_playlist', JSON.stringify(playlist));
         if (typeof momentLikes !== 'undefined') localStorage.setItem('os_moment_likes', JSON.stringify(momentLikes));
         
-        // 2. 保存朋友圈画面
+        // 2. 保存朋友圈和论坛推文的画面
         const momentsFeed = document.getElementById('moments-feed');
         if (momentsFeed) localStorage.setItem('os_moments_html', momentsFeed.innerHTML);
+        const forumFeed = document.getElementById('forum-feed');
+        if (forumFeed) localStorage.setItem('os_forum_html', forumFeed.innerHTML);
+        const profilePostsFeed = document.getElementById('profile-posts-feed');
+        if (profilePostsFeed) localStorage.setItem('os_profile_posts_html', profilePostsFeed.innerHTML);
 
         // 3. 保存主屏幕换过的壁纸
         const desktopBody = document.getElementById('desktop-body');
@@ -2815,7 +2894,6 @@ function togglePlaceholderMenu() {
     const menu = document.getElementById('placeholder-menu');
     menu.classList.toggle('hidden');
 }
-
 
 // ================= 新增：角色设定页面逻辑 =================
 
@@ -3945,6 +4023,10 @@ function editProfilePart(part){
         }
     }
 }
+
+function openForum(){ document.getElementById('forum-screen').classList.remove('hidden'); }
+function closeForum(){ document.getElementById('forum-screen').classList.add('hidden'); }
+function openCompose(){ 
     document.getElementById('compose-screen').classList.remove('hidden'); 
     document.getElementById('compose-avatar-sync').src = userProfile.avatar;
     validatePostContent(); 
@@ -4448,43 +4530,6 @@ function closePlaceholder() {
     document.getElementById('placeholder-screen').classList.add('hidden');
 }
 
-function updateWidgetTime() {
-    const now = new Date();
-    const month = now.getMonth() + 1;
-    const day = now.getDate();
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
-    
-    const dateEl = document.getElementById('widget-date-display');
-    const timeEl = document.getElementById('widget-time-display');
-    if (dateEl) dateEl.innerText = `♥ ${month} - ${day}`;
-    if (timeEl) timeEl.innerText = `★ ${hours} : ${minutes}`;
-}
-
-function editAnyText(id) {
-    const el = document.getElementById(id);
-    if (!el) return;
-    const res = prompt("修改文本内容", el.innerText);
-    if (res !== null && res.trim() !== '') el.innerText = res;
-}
-
-function changeAnyImage(el) {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.onchange = e => {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = ev => {
-            el.style.backgroundImage = `url(${ev.target.result})`;
-            el.style.backgroundSize = 'cover';
-            el.style.backgroundPosition = 'center';
-            el.innerHTML = '';
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-}
 // ================= 新增：转账功能引擎 =================
 function openTransferModal() {
     document.getElementById('transfer-amount').value = '';
@@ -5296,6 +5341,155 @@ function applySystemFontAndSize() {
     style.innerHTML = fontFaceCss + fontFamilyCss + fontSizeCss;
 }
 
+// ===== 新增：全屏外观设置功能 =====
+function openAppearanceApp() {
+    document.getElementById('appearance-app-screen').classList.remove('slide-hidden');
+    
+    // 获取当前桌面壁纸用于预览
+    const bodyBg = document.getElementById('desktop-body').style.backgroundImage;
+    if (bodyBg && bodyBg !== 'none') {
+        // 提取 url("...") 里的内容
+        const cleanUrl = bodyBg.replace(/^url\(["']?/, '').replace(/["']?\)$/, '');
+        document.getElementById('preview-wallpaper').src = cleanUrl;
+        tempAppearance.wallpaper = cleanUrl;
+    } else {
+        document.getElementById('preview-wallpaper').src = "data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==";
+        document.getElementById('preview-wallpaper').style.backgroundColor = '#d1d5db';
+    }
+
+    // 回显全局聊天背景
+    if (config.globalChatBg) {
+        document.getElementById('preview-global-chat-bg').src = config.globalChatBg;
+        document.getElementById('preview-global-chat-bg').classList.remove('hidden');
+        document.getElementById('global-chat-bg-hint').classList.add('hidden');
+        tempAppearance.chatBg = config.globalChatBg;
+    } else {
+        document.getElementById('preview-global-chat-bg').src = '';
+        document.getElementById('preview-global-chat-bg').classList.add('hidden');
+        document.getElementById('global-chat-bg-hint').classList.remove('hidden');
+    }
+
+    // 获取并显示所有桌面图标当前的状态
+    const iconGrid = document.getElementById('icon-edit-grid');
+    iconGrid.innerHTML = '';
+    const iconsList = [
+        { id: 'icon-wechat', name: '微信' },
+        { id: 'icon-lorebook', name: '世界书' },
+        { id: 'icon-placeholder2', name: '记录' },
+        { id: 'icon-forum', name: '论坛' },
+        { id: 'icon-sms', name: '信息' },
+        { id: 'icon-settings', name: '设置' },
+        { id: 'icon-appearance', name: '外观' },
+        { id: 'icon-placeholder4', name: '查手机' },
+        // === 这里把外卖和默契比心加进去了 ===
+        { id: 'icon-mqbx', name: '默契比心' },
+        { id: 'icon-waimai', name: '外卖' }
+    ];
+
+    // 获取已经保存过的自定义名称
+    const savedAppNames = JSON.parse(localStorage.getItem('os_app_names')) || {};
+
+    iconsList.forEach(icon => {
+        const desktopImg = document.getElementById(icon.id);
+        const currentSrc = tempAppearance.icons[icon.id] || (desktopImg ? desktopImg.src : '');
+        
+        // 决定显示的名字：优先用刚刚暂存的，其次用以前保存过的，最后用默认的
+        const displayName = tempAppearance.names[icon.id] || savedAppNames[icon.id] || icon.name;
+
+        iconGrid.innerHTML += `
+            <div class="flex flex-col items-center gap-1">
+                <div class="w-12 h-12 rounded-[10px] overflow-hidden shadow-sm border border-gray-100 bg-gray-200 cursor-pointer active:scale-95 transition-transform" onclick="triggerIconEdit('${icon.id}')">
+                    <img id="preview-${icon.id}" src="${currentSrc}" class="w-full h-full object-cover">
+                </div>
+                <span id="preview-name-${icon.id}" class="text-[10px] text-gray-500 cursor-pointer hover:text-black underline decoration-gray-300 underline-offset-2 px-1" onclick="editAppearanceAppName('${icon.id}', '${displayName}')">${displayName}</span>
+            </div>
+        `;
+    });
+}
+
+function closeAppearanceApp() {
+    document.getElementById('appearance-app-screen').classList.add('slide-hidden');
+    tempAppearance.icons = {}; // 清除未保存的暂存状态
+    tempAppearance.names = {}; // 新增：清除未保存的文字状态
+}
+
+// 处理壁纸选择
+function handleWallpaperSelect(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const result = e.target.result;
+            document.getElementById('preview-wallpaper').src = result;
+            document.getElementById('preview-wallpaper').style.backgroundColor = 'transparent';
+            tempAppearance.wallpaper = result;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 触发某个图标的选择
+function triggerIconEdit(iconId) {
+    currentEditingIconId = iconId;
+    document.getElementById('icon-file-input').click();
+}
+
+// 处理图标选择
+function handleIconSelect(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const result = e.target.result;
+            // 更新预览界面的小图标
+            document.getElementById(`preview-${currentEditingIconId}`).src = result;
+            // 暂存更改，等点了保存再生效
+            tempAppearance.icons[currentEditingIconId] = result;
+            // 清空 input 允许重复选择同一张
+            input.value = '';
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// 点击保存外观设置
+function saveAppearanceApp() {
+    // 1. 应用壁纸
+    if (tempAppearance.wallpaper) {
+        document.getElementById('desktop-body').style.backgroundImage = `url(${tempAppearance.wallpaper})`;
+    }
+    // 2. 应用所有更改过的图标到真实桌面
+    for (const [iconId, imgSrc] of Object.entries(tempAppearance.icons)) {
+        const desktopImg = document.getElementById(iconId);
+        if (desktopImg) {
+            desktopImg.src = imgSrc;
+            // 如果原本是纯色占位的背景，现在去除了
+            if(desktopImg.style.backgroundColor) desktopImg.style.backgroundColor = 'transparent';
+        }
+    }
+    
+    // 3. 新增：应用所有更改过的名称到真实桌面
+    let savedAppNames = JSON.parse(localStorage.getItem('os_app_names')) || {};
+    for (const [iconId, newName] of Object.entries(tempAppearance.names)) {
+        savedAppNames[iconId] = newName;
+        const desktopImg = document.getElementById(iconId);
+        if (desktopImg) {
+            // 通过图片往上找父元素，再找旁边的文字元素
+            const iconContainer = desktopImg.closest('.app-icon');
+            if (iconContainer && iconContainer.nextElementSibling) {
+                iconContainer.nextElementSibling.innerText = newName;
+            }
+        }
+    }
+    localStorage.setItem('os_app_names', JSON.stringify(savedAppNames));
+    
+    // 保存全局聊天背景到缓存
+    if (tempAppearance.chatBg !== undefined) {
+        config.globalChatBg = tempAppearance.chatBg;
+        localStorage.setItem('globalChatBg', tempAppearance.chatBg);
+    }
+    
+    alert("外观设置已应用到桌面！");
+    closeAppearanceApp();
+}
 // ===============================
 
 updateWidgetTime();
@@ -5327,6 +5521,18 @@ window.onload = () => {
         if (momentsFeed) momentsFeed.innerHTML = savedMoments;
     }
     
+    // 3. 恢复论坛推文长相
+    const savedForum = localStorage.getItem('os_forum_html');
+    if (savedForum) {
+        const forumFeed = document.getElementById('forum-feed');
+        if (forumFeed) forumFeed.innerHTML = savedForum;
+    }
+    const savedProfilePosts = localStorage.getItem('os_profile_posts_html');
+    if (savedProfilePosts) {
+        const profilePostsFeed = document.getElementById('profile-posts-feed');
+        if (profilePostsFeed) profilePostsFeed.innerHTML = savedProfilePosts;
+    }
+
     // 4. 恢复桌面壁纸
     const savedBg = localStorage.getItem('os_desktop_bg');
     if (savedBg) {
@@ -5388,6 +5594,395 @@ window.onload = () => {
 
     // 【重点修复】：删除了原本的 requestNotificationPermission()，完美解决卡死！
 };
+
+// ================= 新增：短信(iMessage)功能模块 =================
+let currentSmsFriendId = null;
+let smsChatHistory = [];
+
+function openSmsApp() {
+    document.getElementById('sms-app-screen').classList.remove('hidden');
+    document.getElementById('sms-list-view').classList.remove('hidden');
+    document.getElementById('sms-chat-view').classList.add('hidden');
+    renderSmsFriendList();
+}
+function closeSmsApp() {
+    document.getElementById('sms-app-screen').classList.add('hidden');
+}
+
+function renderSmsFriendList() {
+    const container = document.getElementById('sms-friend-list');
+    container.innerHTML = '';
+    
+    if(friendList.length === 0) {
+        container.innerHTML = '<div class="text-center text-gray-400 mt-10 text-[14px]">暂无联系人</div>';
+        return;
+    }
+    
+    friendList.forEach(f => {
+        // 同步微信信息，列表样式变更为苹果原生短信风格
+        const lastMsg = (f.smsHistory && f.smsHistory.length > 0) ? f.smsHistory[f.smsHistory.length-1].content.substring(0,20) : '暂无短信';
+        const div = document.createElement('div');
+        div.className = "flex items-center gap-3 py-3 border-b border-gray-100 bg-white cursor-pointer active:bg-gray-50";
+        div.onclick = () => openSmsChat(f.id);
+        div.innerHTML = `
+            <img src="${f.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg'}" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
+            <div class="flex-1 min-w-0">
+                <div class="flex justify-between items-center mb-0.5">
+                    <span class="font-semibold text-[16px] text-black truncate">${f.remark}</span>
+                    <span class="text-[13px] text-gray-400">刚刚</span>
+                </div>
+                <div class="text-[14px] text-gray-500 truncate">${lastMsg.replace(/<img[^>]*>/g, '[图片]')}</div>
+            </div>
+            <div class="text-gray-300 text-xl font-light">›</div>
+        `;
+        container.appendChild(div);
+    });
+}
+
+function openSmsChat(id) {
+    currentSmsFriendId = id;
+    const friend = friendList.find(f => f.id === id);
+    if (!friend.smsHistory) friend.smsHistory = [];
+    smsChatHistory = friend.smsHistory;
+    
+// 修改点：把 friend.remark 改成了 friend.realName，这样顶栏就显示真名了
+// 后面加了个 ||
+// friend.remark 是为了防止你没填真名时报错，没填就会兜底显示备注
+    document.getElementById('sms-chat-name').innerHTML = `${friend.realName || friend.remark} <svg class="w-2.5 h-2.5 text-gray-400 inline-block -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
+    document.getElementById('sms-chat-avatar').src = friend.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg';
+    
+    document.getElementById('sms-list-view').classList.add('hidden');
+    document.getElementById('sms-chat-view').classList.remove('hidden');
+    
+    renderSmsMessages();
+}
+
+function closeSmsChat() {
+    document.getElementById('sms-chat-view').classList.add('hidden');
+    document.getElementById('sms-list-view').classList.remove('hidden');
+    currentSmsFriendId = null;
+    renderSmsFriendList(); // 刷新列表的“最后一条消息”
+}
+
+function renderSmsMessages(isIncremental = false) {
+    const container = document.getElementById('sms-chat-flow');
+    if (!isIncremental) container.innerHTML = '<div class="text-center text-[11px] text-gray-400 my-2">iMessage 信息</div>';
+    
+    const alreadyDrawnCount = isIncremental ? container.querySelectorAll('.sms-bubble-wrapper').length : 0;
+    
+    smsChatHistory.forEach((msg, index) => {
+        if (isIncremental && index < alreadyDrawnCount) return;
+
+        const div = document.createElement('div');
+        div.className = "flex w-full sms-bubble-wrapper " + (msg.role === 'user' ? "justify-end" : "justify-start") + " items-end mb-2 relative";
+        
+        let displayContent = msg.content;
+        if (displayContent.includes('[我发送了一个表情包')) {
+            displayContent = displayContent.replace(/\[我发送了一个表情包.*?\n/, '');
+        }
+
+        if (msg.role === 'user') {
+            div.innerHTML = `<div class="max-w-[70%] bg-[#007aff] text-white px-3.5 py-2 rounded-2xl rounded-br-sm shadow-sm break-words" style="font-size: 15px; line-height: 1.4;">${displayContent}</div>`;
+        } else {
+            div.innerHTML = `<div class="max-w-[70%] bg-[#e5e5ea] text-black px-3.5 py-2 rounded-2xl rounded-bl-sm shadow-sm break-words" style="font-size: 15px; line-height: 1.4;">${displayContent}</div>`;
+        }
+        
+        // 短信长按删除
+        let pressTimer;
+        const startMsgPress = () => {
+            pressTimer = setTimeout(() => {
+                if(confirm("要删除这条短信吗？")) {
+                    smsChatHistory.splice(index, 1);
+                    renderSmsMessages();
+                }
+            }, 600);
+        };
+        const cancelMsgPress = () => clearTimeout(pressTimer);
+        div.addEventListener('touchstart', startMsgPress);
+        div.addEventListener('touchend', cancelMsgPress);
+        div.addEventListener('mousedown', startMsgPress);
+        div.addEventListener('mouseup', cancelMsgPress);
+
+        container.appendChild(div);
+    });
+    
+    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+}
+
+function sendSmsUserMsg() {
+    if(!currentSmsFriendId) return;
+    const input = document.getElementById('sms-input');
+    const text = input.value.trim();
+    
+    // 【核心修改】：输入框为空时点击发送，才会触发AI回复
+    if(!text) {
+        triggerSmsAI();
+        return;
+    }
+    
+    // 有字的时候只负责发送上屏，不叫醒AI
+    smsChatHistory.push({role:'user', content: text});
+    input.value = '';
+    renderSmsMessages(true);
+}
+
+// 修改：发完图片也不自动触发AI了，你可以连发好几张图，最后点一下空白发送键让AI一起看
+function sendSmsImage(input) {
+    if(!currentSmsFriendId) return;
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const base64Img = e.target.result;
+            smsChatHistory.push({role:'user', content: `<img src="${base64Img}" class="max-w-full rounded-xl mt-1 shadow-sm border border-gray-100">`});
+            renderSmsMessages(true);
+        }
+        reader.readAsDataURL(input.files[0]);
+        input.value = ''; 
+    }
+}
+
+async function triggerSmsAI() {
+    if(!currentSmsFriendId || !config.apiKey) return;
+    
+    const titleEl = document.getElementById('sms-chat-name');
+    const originalTitleHtml = titleEl.innerHTML;
+    titleEl.innerHTML = '<span style="color: #999; font-size: 11px;">对方正在输入...</span>';
+    
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    let finalSystemMessage = config.systemPrompt;
+    if (friend && friend.isTranslationEnabled) {
+        finalSystemMessage += `\n\n【强制翻译要求】：你开启了多语言自动翻译。你的每一条回复都必须严格使用以下单行HTML代码包裹（绝对不能在代码中间换行！），只需要把里面的[原语言]和[中文翻译]替换成你的回复即可：\n<div style="display:inline-block;font:13px;color:#333;line-height:1.2;padding:6px 7px;"><div style="margin:0 0 5px 6px;font-size:13px;">[原语言]</div><div id="trans-container"><div style="border-top:1px dashed #ccc;width:calc(100% - 4px);"></div><div style="color:#666;margin:3px 0 0 4px;cursor:pointer;" onclick="this.parentElement.style.display=this.parentElement.style.display==='none'?'block':'none'">[中文翻译]</div></div></div>`;
+    }
+    
+    if(friend) {
+        const now = new Date();
+        const timeString = now.getHours() + "点" + now.getMinutes() + "分";
+        finalSystemMessage += `\n\n你的真实名字是：${friend.realName}。
+你的设定是：${friend.persona}。
+【活人感引擎：当前时间是 ${timeString}】
+【重要提示：你现在正在和用户在苹果“短信(iMessage)”上聊天，不要发微信特有的表情包或功能。短信通常比微信更直接，偏向有事说事或短平快的生活碎片，没有微信那么多寒暄。】
+每次只回复 1 到 2 条简短信息。`;
+
+        // 喂入双端记忆
+        let wxMemoryText = (friend.memoryList && friend.memoryList.length > 0) ? friend.memoryList.join('\n') : (friend.aiMemory || "");
+        if (wxMemoryText) finalSystemMessage += `\n\n【你们在微信的记忆总结】：\n${wxMemoryText}`;
+        
+        let smsMemoryText = (friend.smsMemoryList && friend.smsMemoryList.length > 0) ? friend.smsMemoryList.join('\n') : "";
+        if (smsMemoryText) finalSystemMessage += `\n【你们在短信的记忆总结，请一定记住】：\n${smsMemoryText}`;
+    }
+    
+    try {
+        // 【新增】给短信也装上完全兼容 GPT-4o 等模型的视觉解析核心
+        let formattedMessages = [{role:'system', content:finalSystemMessage}];
+        smsChatHistory.slice(-5).forEach(msg => {
+            const imgMatch = msg.content.match(/<img[^>]+src=["']([^"']+)["']/);
+            if (imgMatch) {
+                const base64Url = imgMatch[1];
+                let textOnly = msg.content.replace(/<img[^>]*>/g, '').trim();
+                if (!textOnly) textOnly = msg.role === 'user' ? "【我发送了一张图片，请你看看图片里有什么，并根据内容回复我】" : "【一张图片】";
+                
+                formattedMessages.push({
+                    role: msg.role,
+                    content: [
+                        { type: "text", text: textOnly },
+                        { type: "image_url", image_url: { url: base64Url } }
+                    ]
+                });
+            } else {
+                formattedMessages.push({ role: msg.role, content: msg.content });
+            }
+        });
+
+        const response=await fetch(`${config.baseUrl}/chat/completions`,{
+            method:'POST',
+            headers:{'Content-Type':'application/json','Authorization':`Bearer ${config.apiKey}`},
+            body:JSON.stringify({
+                model:config.model,
+                messages: formattedMessages,
+                temperature: parseFloat(config.temperature),
+                max_tokens:800
+            })
+        });
+
+        const data=await response.json();
+        const reply=data.choices[0].message.content;
+
+        let newMessages = [];
+        const textLines = reply.split('\n').map(line => line.trim()).filter(line => line.length > 0);
+        textLines.forEach(line => newMessages.push({role:'assistant', content: line}));
+        if (newMessages.length === 0) newMessages.push({role:'assistant', content: reply});
+
+        let msgIndex = 0;
+        function showNextMsg() {
+            if (msgIndex < newMessages.length) {
+                const currentMsg = newMessages[msgIndex];
+                smsChatHistory.push(currentMsg);
+                renderSmsMessages(true);
+                
+                // 【修改重点】：在每发一条短信气泡时，只要界面在后台，就发一次系统弹窗！
+                sendSystemNotification(friend.realName || friend.remark || "新短信", currentMsg.content);
+
+                msgIndex++;
+                setTimeout(showNextMsg, 1200);
+            } else {
+                titleEl.innerHTML = originalTitleHtml;
+                checkAndTriggerSmsAutoSummary();
+            }
+        }
+        showNextMsg();
+    } catch(e) { 
+        smsChatHistory.push({role:'assistant',content:"（短信发送失败）"});
+        renderSmsMessages(true);
+        titleEl.innerHTML = originalTitleHtml;
+    }
+}
+
+// ==== 短信独立记忆管理 ====
+function openSmsMemoryPage() {
+    if (!currentSmsFriendId) return alert('请先进入一个短信聊天');
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    if (!friend) return;
+    
+    if (!friend.smsMemoryList) friend.smsMemoryList = [];
+    document.getElementById('sms-current-msg-count').innerText = smsChatHistory.length;
+    document.getElementById('sms-auto-summary-switch').checked = friend.smsAutoSummary || false;
+    document.getElementById('sms-auto-summary-threshold').value = friend.smsSummaryThreshold || 20;
+    
+    document.getElementById('sms-manual-summary-start').value = 1;
+    document.getElementById('sms-manual-summary-end').value = smsChatHistory.length > 0 ? smsChatHistory.length : 1;
+    
+    renderSmsMemoryBlocks();
+    document.getElementById('sms-memory-page').classList.remove('slide-hidden');
+}
+
+function closeSmsMemoryPage() { document.getElementById('sms-memory-page').classList.add('slide-hidden'); }
+
+function renderSmsMemoryBlocks() {
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    if(!friend) return;
+    
+    const container = document.getElementById('sms-memory-blocks-container');
+    container.innerHTML = '';
+    
+    if(!friend.smsMemoryList || friend.smsMemoryList.length === 0) {
+        container.innerHTML = '<div class="text-[13px] text-gray-400 text-center py-6">短信暂无记忆...</div>';
+        return;
+    }
+
+    friend.smsMemoryList.forEach((mem, index) => {
+        const block = document.createElement('div');
+        block.className = 'bg-gray-50 border border-gray-200 rounded-xl p-3 relative shadow-sm';
+        block.innerHTML = `
+            <div class="text-[13px] text-gray-700 pr-14 whitespace-pre-wrap break-words leading-relaxed">${mem}</div>
+            <div class="absolute top-2 right-2 flex flex-col gap-2">
+                <button onclick="editSmsMemoryBlock(${index})" class="text-green-500 text-[11px] font-bold bg-green-50 px-2 py-1 rounded active:scale-95 transition-transform">编辑</button>
+                <button onclick="deleteSmsMemoryBlock(${index})" class="text-red-500 text-[11px] font-bold bg-red-50 px-2 py-1 rounded active:scale-95 transition-transform">删除</button>
+            </div>
+        `;
+        container.appendChild(block);
+    });
+}
+
+function editSmsMemoryBlock(index) {
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    if(!friend) return;
+    const newMem = prompt("编辑短信记忆：", friend.smsMemoryList[index]);
+    if(newMem !== null && newMem.trim() !== "") {
+        friend.smsMemoryList[index] = newMem.trim();
+        localStorage.setItem('friend_list', JSON.stringify(friendList));
+        renderSmsMemoryBlocks();
+    }
+}
+
+function deleteSmsMemoryBlock(index) {
+    if(confirm("确定要删除这条短信记忆吗？")) {
+        const friend = friendList.find(f => f.id === currentSmsFriendId);
+        if(!friend) return;
+        friend.smsMemoryList.splice(index, 1);
+        localStorage.setItem('friend_list', JSON.stringify(friendList));
+        renderSmsMemoryBlocks();
+    }
+}
+
+function saveSmsMemorySettings() {
+    if (!currentSmsFriendId) return;
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    if (!friend) return;
+    friend.smsAutoSummary = document.getElementById('sms-auto-summary-switch').checked;
+    friend.smsSummaryThreshold = parseInt(document.getElementById('sms-auto-summary-threshold').value) || 20;
+    localStorage.setItem('friend_list', JSON.stringify(friendList));
+}
+
+async function executeSmsSummarize(messagesArray, friend) {
+    if(!messagesArray || messagesArray.length === 0) return;
+    const chatText = messagesArray.map(msg => `${msg.role === 'user' ? '我' : 'TA'}: ${msg.content}`).join('\n');
+    
+    try {
+        const response = await fetch(config.baseUrl + '/chat/completions', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey},
+            body: JSON.stringify({
+                model: config.model,
+                messages: [
+                    {role: 'system', content: '你是一个用于提炼短信记忆的助手。请将以下短信对话提取出核心记忆点。如果无实际意义回复“无”。'},
+                    {role: 'user', content: chatText}
+                ],
+                temperature: 0.3
+            })
+        });
+        const data = await response.json();
+        let summary = data.choices[0].message.content.trim();
+        if(summary !== '无' && summary !== '') {
+            if (!friend.smsMemoryList) friend.smsMemoryList = [];
+            friend.smsMemoryList.push(`[短信记忆]: ${summary}`);
+            if (!document.getElementById('sms-memory-page').classList.contains('slide-hidden')) {
+                renderSmsMemoryBlocks();
+            }
+        }
+        friend.smsLastSummarizedLength = smsChatHistory.length;
+        localStorage.setItem('friend_list', JSON.stringify(friendList));
+    } catch(e) { console.error("短信记忆失败:", e); }
+}
+
+async function manualSmsSummarize() {
+    if (!currentSmsFriendId) return;
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    if (!friend) return;
+    
+    const startIdx = parseInt(document.getElementById('sms-manual-summary-start').value);
+    const endIdx = parseInt(document.getElementById('sms-manual-summary-end').value);
+    if (isNaN(startIdx) || isNaN(endIdx) || startIdx < 1 || endIdx > smsChatHistory.length || startIdx > endIdx) return alert("条数范围错误！");
+
+    const btn = document.getElementById('sms-manual-summary-btn');
+    btn.innerText = "正在提取中...";
+    btn.style.opacity = "0.5";
+    btn.style.pointerEvents = "none";
+    
+    const msgsToSummarize = smsChatHistory.slice(startIdx - 1, endIdx);
+    await executeSmsSummarize(msgsToSummarize, friend);
+    
+    btn.innerText = "开始提取短信记忆";
+    btn.style.opacity = "1";
+    btn.style.pointerEvents = "auto";
+    alert("短信记忆提取完成！");
+}
+
+function checkAndTriggerSmsAutoSummary() {
+    if (!currentSmsFriendId) return;
+    const friend = friendList.find(f => f.id === currentSmsFriendId);
+    if (!friend) return;
+    
+    const countEl = document.getElementById('sms-current-msg-count');
+    if(countEl) countEl.innerText = smsChatHistory.length;
+    
+    if (!friend.smsAutoSummary) return;
+    const threshold = friend.smsSummaryThreshold || 20;
+    const unsummarizedCount = smsChatHistory.length - (friend.smsLastSummarizedLength || 0);
+    if (unsummarizedCount >= threshold) {
+        const msgsToSummarize = smsChatHistory.slice(friend.smsLastSummarizedLength || 0);
+        executeSmsSummarize(msgsToSummarize, friend);
+    }
+}
 
 // ================= 新增：好友专属关联世界书功能 =================
 function openFriendLorebook() {
@@ -5885,6 +6480,8 @@ function openOtherSettings() {
     document.getElementById('os-bg-activity').value = friend.bgActivityInterval || '';
     document.getElementById('os-block-switch').checked = friend.isBlocked || false;
     document.getElementById('os-block-duration').value = friend.blockDuration || 60;
+    document.getElementById('os-block-sms').value = friend.blockSmsInterval || 10;
+
     document.getElementById('other-settings-page').classList.remove('slide-hidden');
 }
 
@@ -5916,10 +6513,11 @@ function saveOtherSettings() {
     const wasBlocked = friend.isBlocked;
     friend.isBlocked = document.getElementById('os-block-switch').checked;
     friend.blockDuration = parseInt(document.getElementById('os-block-duration').value) || 60;
+    friend.blockSmsInterval = parseInt(document.getElementById('os-block-sms').value) || 10;
     
     if (friend.isBlocked && !wasBlocked) {
         friend.blockStartTime = Date.now();
-        
+        friend.lastProactiveSmsTime = Date.now();
     } else if (!friend.isBlocked) {
         friend.blockStartTime = null;
     }
@@ -5933,12 +6531,12 @@ function clearFriendHistory() {
     if (confirm("⚠️ 警告：这将会彻底清空与该角色的所有聊天记录、心声、总结记忆以及短信记录！不可恢复！确定要清空吗？")) {
         const friend = friendList.find(f => f.id === currentFriendId);
         friend.chatHistory = [];
-
+        friend.smsHistory = [];
         friend.memoryList = [];
-
+        friend.smsMemoryList = [];
         friend.aiMemory = "";
         friend.lastSummarizedLength = 0;
-        
+        friend.smsLastSummarizedLength = 0;
         localStorage.setItem('friend_list', JSON.stringify(friendList));
         
         closeOtherSettings();
@@ -6082,7 +6680,15 @@ setInterval(async () => {
             if (now >= blockEnd) {
                 friend.isBlocked = false; // 刑满释放
                 localStorage.setItem('friend_list', JSON.stringify(friendList));
-
+            } else if (friend.blockSmsInterval > 0) {
+                // 在拉黑期间，判断是否该发短信求和了
+                const nextSms = (friend.lastProactiveSmsTime || friend.blockStartTime) + (friend.blockSmsInterval * 60000);
+                if (now >= nextSms) {
+                    friend.lastProactiveSmsTime = now;
+                    localStorage.setItem('friend_list', JSON.stringify(friendList));
+                    await executeProactiveMessage(friend, 'sms');
+                }
+            }
         } 
         // 2. 没被拉黑，且设置了后台活跃发微信
         else if (!friend.isBlocked && friend.bgActivityInterval > 0) {
@@ -6098,8 +6704,9 @@ setInterval(async () => {
 
 async function executeProactiveMessage(friend, type) {
     let prompt = `你是${friend.realName}。你的设定是：${friend.persona}。\n`;
-    {
-
+    if (type === 'sms') {
+        prompt += `【强制任务】：你现在被用户拉黑了，不能发微信。你非常着急或想挽回，所以偷偷通过“短信”发消息。请结合你的人设，写一条发送给用户的短信（比如求和、道歉或傲娇的询问），控制在2句话内。直接输出短信内容。`;
+    } else {
         prompt += `【强制任务】：你们有一段时间没聊天了，你需要主动寻找话题给用户发一条微信。请结合你的人设，发一条自然的主动问候或生活分享，控制在2句话内。直接输出内容。`;
     }
     
@@ -6119,9 +6726,12 @@ async function executeProactiveMessage(friend, type) {
         // 触发主动寻找你的系统通知
         sendSystemNotification(friend.remark || friend.realName || "AI 好友", reply);
         
-        {
+        if (type === 'sms') {
+            if(!friend.smsHistory) friend.smsHistory = [];
+            friend.smsHistory.push({role: 'assistant', content: reply});
+            if (currentSmsFriendId === friend.id) renderSmsMessages(); // 如果恰好停在短信页，刷新一下
+        } else {
             friend.chatHistory.push({role: 'assistant', content: reply});
-
             if (currentFriendId === friend.id) renderAllMessages(true); // 如果恰好在微信页，挤出消息
         }
         localStorage.setItem('friend_list', JSON.stringify(friendList));
@@ -6167,6 +6777,29 @@ function clearSingleChatBg() {
     }
 }
 
+// 3. 处理全局聊天背景上传
+function handleGlobalChatBg(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const result = e.target.result;
+            document.getElementById('preview-global-chat-bg').src = result;
+            document.getElementById('preview-global-chat-bg').classList.remove('hidden');
+            document.getElementById('global-chat-bg-hint').classList.add('hidden');
+            tempAppearance.chatBg = result; // 先暂存，点保存才生效
+        }
+        reader.readAsDataURL(input.files[0]);
+        input.value = '';
+    }
+}
+
+// 4. 清除全局背景
+function clearGlobalChatBg() {
+    document.getElementById('preview-global-chat-bg').src = '';
+    document.getElementById('preview-global-chat-bg').classList.add('hidden');
+    document.getElementById('global-chat-bg-hint').classList.remove('hidden');
+    tempAppearance.chatBg = '';
+}
 // ================= 新增：夜间模式核心逻辑 =================
 function toggleDarkMode(isDark) {
     config.isDarkMode = isDark;
@@ -7924,11 +8557,11 @@ setInterval(() => {
     // 5. 浮窗封面自动跟随换歌切换！每隔0.5秒钟检查一次播放器封面并同步给浮窗
     const coverImg = document.getElementById('player-cover-img');
     const floatingCover = document.getElementById('music-floating-cover');
-    if (coverImg && floatingCover && coverImg.src) {
+    if (coverImg && floatingCover && coverImg.src && coverImg.src !== floatingCover.src) {
         floatingCover.src = coverImg.src;
     }
-}, 500); // 这一行非常重要！用来闭合整个 setInterval 定时器
-
+}, 500);
+// =============== 新增：一起听 & 浮窗功能引擎 2.0升级版 结束 =================
 </script>
 </body>
 </html>

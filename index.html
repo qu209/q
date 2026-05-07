@@ -7924,12 +7924,11 @@ setInterval(() => {
     // 5. 浮窗封面自动跟随换歌切换！每隔0.5秒钟检查一次播放器封面并同步给浮窗
     const coverImg = document.getElementById('player-cover-img');
     const floatingCover = document.getElementById('music-floating-cover');
-    if (coverImg && floatingCover && coverImg.src && coverImg.src !== floatingCover.src) {
+    if (coverImg && floatingCover && coverImg.src) {
         floatingCover.src = coverImg.src;
     }
-}, 500);
-// =============== 新增：一起听 & 浮窗功能引擎 2.0升级版 结束 =================
-        .back-icon { font-size: 20px; font-weight: 400; color: #000000; line-height: 1; display: flex; align-items: center; justify-content: center; }
+}, 500); // 这一行非常重要！用来闭合整个 setInterval 定时器
+
 </script>
 </body>
 </html>

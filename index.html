@@ -213,12 +213,6 @@
                         </div>
                         <span class="text-xs text-gray-600 font-bold drop-shadow-md">微信</span>
                     </div>
-                    <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openLorebook()">
-                        <div class="app-icon overflow-hidden p-0 w-[60px] h-[60px] rounded-[15px] shadow-sm">
-                            <img id="icon-lorebook" src="https://i.postimg.cc/xTQP438J/IMG_3162_r.png" class="w-full h-full object-cover rounded-[15px]">
-                        </div>
-                        <span class="text-xs text-gray-600 font-bold drop-shadow-md">世界书</span>
-                    </div>
                     <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openRecordApp()">
                         <div class="app-icon bg-[#5c5c5c] w-[60px] h-[60px] rounded-[15px] shadow-sm overflow-hidden p-0">
                             <img id="icon-placeholder2" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="w-full h-full object-cover rounded-[15px]" style="background-color: #5c5c5c;">
@@ -373,14 +367,20 @@ openPlaylist();">
                 </div>
                 <div class="wx-divider-thin"></div>
                 <div class="bg-white">
-                    <div class="wx-menu-item" onclick="openMePage('个人资料')">
-                        <span class="text-[16px]">个人资料</span>
-                        <span class="wx-chevron">〉</span>
-                    </div>
-                    <div class="wx-menu-item" onclick="openMePage('设置')">
-                        <span class="text-[16px]">设置</span>
-                        <span class="wx-chevron">〉</span>
-                    </div>
+<div class="wx-menu-item" onclick="openMePage('个人资料')">
+    <span class="text-[16px]">个人资料</span>
+    <span class="wx-chevron">〉</span>
+</div>
+
+<div class="wx-menu-item" onclick="openLorebook()">
+    <span class="text-[16px]">世界书</span>
+    <span class="wx-chevron">〉</span>
+</div>
+
+<div class="wx-menu-item" onclick="openMePage('设置')">
+    <span class="text-[16px]">设置</span>
+    <span class="wx-chevron">〉</span>
+</div>
                 </div>
                 <div class="flex-1 bg-white min-h-[200px]"></div>
             </div>
@@ -2962,314 +2962,6 @@ function togglePlaceholderMenu() {
     menu.classList.toggle('hidden');
 }
 
-// === 新增：全屏外卖APP逻辑 ===
-let wmItems = [];
-let wmCart = []; 
-let wmCurrentItem = null;
-
-function openWaimaiApp() {
-    document.getElementById('waimai-app-screen').classList.remove('hidden');
-    document.getElementById('waimai-user-avatar').src = userProfile.avatar || 'https://i.postimg.cc/Qx8Y1m3R/IMG-2980.jpg';
-    document.getElementById('waimai-user-name').innerText = userProfile.name || '我';
-    renderWaimaiCart();
-    renderWaimaiHistory();
-}
-
-function closeWaimaiApp() {
-    document.getElementById('waimai-app-screen').classList.add('hidden');
-}
-
-function switchWaimaiTab(tab) {
-    if(tab === 'home') {
-        document.getElementById('waimai-home-tab').classList.remove('hidden');
-        document.getElementById('waimai-me-tab').classList.add('hidden');
-        document.getElementById('waimai-nav-home').classList.add('text-black');
-        document.getElementById('waimai-nav-home').classList.remove('text-gray-400');
-        document.getElementById('waimai-nav-me').classList.remove('text-black');
-        document.getElementById('waimai-nav-me').classList.add('text-gray-400');
-    } else {
-        document.getElementById('waimai-me-tab').classList.remove('hidden');
-        document.getElementById('waimai-home-tab').classList.add('hidden');
-        document.getElementById('waimai-nav-me').classList.add('text-black');
-        document.getElementById('waimai-nav-me').classList.remove('text-gray-400');
-        document.getElementById('waimai-nav-home').classList.remove('text-black');
-        document.getElementById('waimai-nav-home').classList.add('text-gray-400');
-        renderWaimaiHistory();
-    }
-}
-
-async function generateWaimaiItems() {
-    if (!config.apiKey) return alert("请先在设置中配置 API Key！");
-    const container = document.getElementById('waimai-items-container');
-    container.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10">正在为您生成附近美食<span class="animate-pulse">...</span></div>';
-    
-    const prompt = "请随机生成15到20个外卖商品（吃的、喝的、奶茶、烧烤等），必须以如下格式严格输出，不要带任何其他废话或前缀。格式每行一个商品：商品名称|价格数字。例如：\n招牌珍珠奶茶|15.5\n麻辣烤串套餐|45.0\n至尊全家桶披萨|88.8";
-
-    try {
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
-            body: JSON.stringify({
-                model: config.model,
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.9
-            })
-        });
-        const data = await response.json();
-        const text = data.choices[0].message.content.trim();
-        
-        wmItems = text.split('\n').filter(line => line.includes('|')).map(line => {
-            let parts = line.split('|');
-            return { name: parts[0].trim(), price: parseFloat(parts[1].trim()) };
-        });
-
-        if(wmItems.length === 0) {
-            container.innerHTML = '<div class="text-center text-gray-400 text-[13px] mt-10">生成失败，请重试</div>';
-            return;
-        }
-
-        container.innerHTML = '<div class="grid grid-cols-2 gap-3 pb-4"></div>';
-        const grid = container.querySelector('.grid');
-
-        wmItems.forEach((item, idx) => {
-            grid.innerHTML += `
-                <div class="bg-white rounded-[20px] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between cursor-pointer active:scale-95 transition-transform border border-gray-50" onclick="openWaimaiItemModal(${idx})">
-                    <div class="w-full aspect-square bg-[#f8f8f8] rounded-[16px] mb-3 flex items-center justify-center overflow-hidden">
-                        <div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center opacity-70">
-                            <svg class="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        </div>
-                    </div>
-                    <div class="font-bold text-[14px] text-gray-800 leading-tight mb-2 truncate">${item.name}</div>
-                    <div class="text-[#ff4a4a] font-bold text-[16px] flex items-center justify-between mt-auto">
-                        <span><span class="text-[11px] mr-0.5">¥</span>${item.price.toFixed(2)}</span>
-                        <div class="w-7 h-7 bg-black rounded-full text-white flex items-center justify-center text-xl pb-[2px] shadow-sm">+</div>
-                    </div>
-                </div>
-            `;
-        });
-
-    } catch(e) {
-        container.innerHTML = '<div class="text-center text-gray-400 text-[13px] mt-10">网络出错啦，请检查配置或重试</div>';
-    }
-}
-
-function openWaimaiItemModal(idx) {
-    wmCurrentItem = wmItems[idx];
-    document.getElementById('wm-modal-name').innerText = wmCurrentItem.name;
-    document.getElementById('wm-modal-price').innerText = wmCurrentItem.price.toFixed(2);
-    document.getElementById('wm-modal-qty').innerText = "1";
-    document.getElementById('waimai-item-modal').classList.remove('hidden');
-}
-
-function closeWaimaiItemModal() {
-    document.getElementById('waimai-item-modal').classList.add('hidden');
-}
-
-function changeWmQty(delta) {
-    let span = document.getElementById('wm-modal-qty');
-    let qty = parseInt(span.innerText);
-    qty += delta;
-    if(qty < 1) qty = 1;
-    span.innerText = qty;
-}
-
-function confirmWaimaiAdd() {
-    let qty = parseInt(document.getElementById('wm-modal-qty').innerText);
-    let exist = wmCart.find(i => i.name === wmCurrentItem.name);
-    if(exist) {
-        exist.qty += qty;
-    } else {
-        wmCart.push({...wmCurrentItem, qty});
-    }
-    closeWaimaiItemModal();
-    renderWaimaiCart();
-}
-
-function renderWaimaiCart() {
-    let totalQty = 0;
-    let totalPrice = 0;
-    wmCart.forEach(i => {
-        totalQty += i.qty;
-        totalPrice += i.price * i.qty;
-    });
-
-    const bar = document.getElementById('waimai-cart-bar');
-    if(totalQty > 0) {
-        bar.classList.remove('hidden');
-        document.getElementById('waimai-cart-badge').innerText = totalQty;
-        document.getElementById('waimai-total-price').innerText = totalPrice.toFixed(2);
-    } else {
-        bar.classList.add('hidden');
-    }
-}
-
-// === 新增：购物车详情列表相关逻辑 ===
-function openWaimaiCartDetails() {
-    if(wmCart.length === 0) return;
-    renderWaimaiCartDetails();
-    document.getElementById('waimai-cart-details-modal').classList.remove('hidden');
-}
-
-function closeWaimaiCartDetails() {
-    document.getElementById('waimai-cart-details-modal').classList.add('hidden');
-}
-
-function renderWaimaiCartDetails() {
-    const list = document.getElementById('waimai-cart-items-list');
-    list.innerHTML = '';
-    wmCart.forEach((item, index) => {
-        list.innerHTML += `
-            <div class="flex justify-between items-center mb-1">
-                <div class="flex flex-col min-w-0 pr-4 flex-1">
-                    <span class="font-bold text-[15px] text-gray-800 truncate">${item.name}</span>
-                    <span class="text-[#ff4a4a] font-bold text-[14px]">¥${item.price.toFixed(2)}</span>
-                </div>
-                <div class="flex items-center gap-4 shrink-0">
-                    <button class="w-8 h-8 rounded-full border border-gray-300 text-gray-600 text-xl flex items-center justify-center active:bg-gray-100 pb-1" onclick="updateWmCartQty(${index}, -1)">-</button>
-                    <span class="text-[16px] font-bold w-4 text-center text-black">${item.qty}</span>
-                    <button class="w-8 h-8 rounded-full bg-black text-white text-xl flex items-center justify-center active:scale-95 pb-1" onclick="updateWmCartQty(${index}, 1)">+</button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function updateWmCartQty(index, delta) {
-    wmCart[index].qty += delta;
-    if (wmCart[index].qty <= 0) {
-        wmCart.splice(index, 1);
-    }
-    renderWaimaiCart();
-    if (wmCart.length === 0) {
-        closeWaimaiCartDetails();
-    } else {
-        renderWaimaiCartDetails();
-    }
-}
-
-function clearWaimaiCart() {
-    wmCart = [];
-    renderWaimaiCart();
-    closeWaimaiCartDetails();
-}
-
-function waimaiCheckout() {
-    if(wmCart.length === 0) return alert("购物车空空的，先点些吃的吧~");
-    document.getElementById('waimai-checkout-modal').classList.remove('hidden');
-}
-
-function closeWaimaiCheckout() {
-    document.getElementById('waimai-checkout-modal').classList.add('hidden');
-}
-
-let waimaiOrders = JSON.parse(localStorage.getItem('waimai_orders')) || [];
-
-function renderWaimaiHistory() {
-    const container = document.getElementById('waimai-order-history');
-    if(waimaiOrders.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-gray-400 text-[13px]">暂无外卖记录</div>';
-        return;
-    }
-    container.innerHTML = '';
-    [...waimaiOrders].reverse().forEach(o => {
-        container.innerHTML += `
-            <div class="border-b border-gray-50 py-3 active:bg-gray-50 transition-colors">
-                <div class="flex justify-between items-center mb-1.5">
-                    <span class="text-[12px] text-gray-400">${o.time}</span>
-                    <span class="font-bold text-[#ff4a4a] text-[15px]"><span class="text-[10px] mr-0.5">¥</span>${o.total.toFixed(2)}</span>
-                </div>
-                <div class="text-[13px] text-gray-800 leading-tight font-medium">
-                    ${o.items}
-                </div>
-            </div>
-        `;
-    });
-}
-
-function getCartSummaryStr() {
-    let sumStr = wmCart.map(i => `${i.name} x${i.qty}`).join('，');
-    let total = wmCart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-    return { sumStr, total };
-}
-
-function clearCartAndRecord(sumStr, total) {
-    const now = new Date();
-    const timeStr = `${now.getMonth()+1}月${now.getDate()}日 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    waimaiOrders.push({time: timeStr, items: sumStr, total});
-    localStorage.setItem('waimai_orders', JSON.stringify(waimaiOrders));
-    wmCart = [];
-    renderWaimaiCart();
-    renderWaimaiHistory();
-}
-
-function waimaiPaySelf() {
-    const { sumStr, total } = getCartSummaryStr();
-    if(walletBalance < total) {
-        alert("啊哦，微信钱包里的零钱不够啦！");
-        return;
-    }
-    addTransaction('外卖点餐: ' + sumStr.substring(0, 10) + '...', total, 'expense');
-    alert("支付成功！已从微信钱包扣除费用。");
-    clearCartAndRecord(sumStr, total);
-    closeWaimaiCheckout();
-}
-
-function waimaiPayTA() {
-    closeWaimaiCheckout();
-    document.getElementById('waimai-char-modal').classList.remove('hidden');
-    
-    const list = document.getElementById('waimai-char-list');
-    list.innerHTML = '';
-    const friends = friendList.filter(f => !f.isGroup);
-    if(friends.length === 0) {
-        list.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">还没添加可以代付的人哦</div>';
-    } else {
-        friends.forEach(f => {
-            list.innerHTML += `
-                <div class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-100 rounded-xl border border-gray-100 bg-white mb-2 active:scale-95 transition-transform" onclick="sendWaimaiCardToChar('${f.id}')">
-                    <img src="${f.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg'}" class="w-12 h-12 rounded-full object-cover border border-gray-100">
-                    <span class="font-bold text-[15px] text-gray-700 flex-1">${f.remark}</span>
-                </div>
-            `;
-        });
-    }
-}
-
-function closeWaimaiCharModal() {
-    document.getElementById('waimai-char-modal').classList.add('hidden');
-}
-
-function sendWaimaiCardToChar(charId) {
-    const { sumStr, total } = getCartSummaryStr();
-    const friend = friendList.find(f => f.id === charId);
-    if(!friend) return;
-
-// 修改：去掉了烦人的文字前缀，并且用隐藏的 <img 标签欺骗系统这是一个无气泡的消息
-// 注意：用 把告诉 AI 的悄悄话藏在了代码里，你看不见，但 AI 能读懂！
-let cardHtml = `
- <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" style="display:none;"
-class="waimai-no-bubble-trigger">
- <div class="bg-white rounded-[16px] shadow-sm border border-gray-200 p-3.5 w-[230px] flex flex-col gap-2 relative">
- <div class="flex items-center gap-2 mb-1 border-b border-gray-50 pb-2">
- <div class="w-7 h-7 bg-[#ff4a4a] rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0">代付</div>
- <span class="text-[14px] font-bold text-gray-800">外卖代付请求</span>
- </div>
- <div class="text-[12px] text-gray-500 leading-tight line-clamp-2 text-left">${sumStr}</div>
- <div class="text-[#ff4a4a] font-bold text-[18px] text-left mt-1">¥${total.toFixed(2)}</div>
- <div class="text-[10px] text-[#07c160] mt-2 text-center bg-[#f0faf5] rounded-full py-1 font-bold">${friend.remark}已成功付款</div>
- </div>
-`;
-
-    friend.chatHistory.push({
-        role: 'user',
-        content: cardHtml
-    });
-
-    localStorage.setItem('friend_list', JSON.stringify(friendList));
-    clearCartAndRecord(sumStr, total);
-    closeWaimaiCharModal();
-    alert(`已成功把代付卡片发给 ${friend.remark} 啦！快去微信聊天界面看看吧！`);
-}
 // ================= 新增：角色设定页面逻辑 =================
 
 function openCharacterSettings() {
@@ -5997,9 +5689,6 @@ function openAppearanceApp() {
         { id: 'icon-settings', name: '设置' },
         { id: 'icon-appearance', name: '外观' },
         { id: 'icon-placeholder4', name: '查手机' },
-        // === 这里把外卖和默契比心加进去了 ===
-        { id: 'icon-mqbx', name: '默契比心' },
-        { id: 'icon-waimai', name: '外卖' }
     ];
 
     // 获取已经保存过的自定义名称

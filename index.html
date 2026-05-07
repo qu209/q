@@ -297,21 +297,6 @@ openPlaylist();">
                     </svg>
                 </div>
             </div>
-
-            <div class="w-full flex gap-6 px-2 mt-6">
-                <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openMqbxApp()">
-                    <div class="app-icon bg-[#5c5c5c] w-[60px] h-[60px] rounded-[15px] shadow-sm overflow-hidden p-0">
-                        <img id="icon-mqbx" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="w-full h-full object-cover rounded-[15px]" style="background-color: #5c5c5c;">
-                    </div>
-                    <span class="text-xs text-gray-600 font-bold drop-shadow-md">默契比心</span>
-                </div>
-                <div class="flex flex-col items-center gap-1 w-[60px]" onclick="openWaimaiApp()">
-                    <div class="app-icon bg-[#5c5c5c] w-[60px] h-[60px] rounded-[15px] shadow-sm overflow-hidden p-0">
-                        <img id="icon-waimai" src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" class="w-full h-full object-cover rounded-[15px]" style="background-color: #5c5c5c;">
-                    </div>
-                    <span class="text-xs text-gray-600 font-bold drop-shadow-md">外卖</span>
-                </div>
-            </div>
     
         </div> </div>         <div class="px-6 pb-[30px] w-full z-20">
         <div class="glass-card w-full p-4 flex justify-between items-center relative">
@@ -1108,10 +1093,6 @@ openPlaylist();">
                 </div>
                 <input type="file" id="global-chat-bg-input" class="hidden" accept="image/*" onchange="handleGlobalChatBg(this)">
             </div>
-            <h3 class="text-gray-500 text-xs font-bold mb-2 ml-2 uppercase">更改桌面图标和名称 (点击图片换图标，点击文字换名称)</h3>
-            <div class="bg-white rounded-xl p-4 mb-6 shadow-sm grid grid-cols-4 gap-4 place-items-center" id="icon-edit-grid">
-                </div>
-            <input type="file" id="icon-file-input" class="hidden" accept="image/*" onchange="handleIconSelect(this)">
         </div>
     </div>
     <div id="emoji-panel" class="fixed inset-x-0 bottom-0 bg-[#f7f7f7] z-[120] rounded-t-2xl shadow-[0_-4px_20px_rgba(0,0,0,0.1)] transform translate-y-full transition-transform duration-300 flex flex-col" style="height: 50vh;">

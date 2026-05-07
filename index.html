@@ -65,22 +65,6 @@
             color:#555;
             cursor:pointer;
         }
-
-        /* 论坛专有样式 */
-        .tweet-card { border-bottom: 1px solid #eff3f4; padding: 12px 16px; background: white; }
-        .tweet-avatar { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; }
-        .fab-btn { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; border-radius: 28px; background: #000000; color: white; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); font-size: 24px; z-index: 60; cursor: pointer; transition: transform 0.1s; }
-        .fab-btn:active { transform: scale(0.9); }
-        .btn-disabled { background-color: #cccccc !important; cursor: not-allowed !important; opacity: 0.6; }
-        .action-icon { width: 18px; height: 18px; display: inline-block; vertical-align: middle; margin-right: 4px; opacity: 0.6; }
-        .nav-sync-icon { width: 24px; height: 24px; object-fit: contain; }
-        .back-icon { font-size: 20px; font-weight: 400; color: #000000; line-height: 1; display: flex; align-items: center; justify-content: center; }
-
-        /* 论坛主页样式扩展 */
-        .profile-banner { width: 100%; height: 120px; background: #cfd9de; cursor: pointer; object-fit: cover; }
-        .profile-avatar-main { width: 80px; height: 80px; border-radius: 50%; border: 4px solid white; margin-top: -40px; margin-left: 15px; position: relative; cursor: pointer; object-fit: cover; background: white; }
-        .tab-active { border-bottom: 4px solid #000000; color: #000; font-weight: bold;
-        }
         
         /* 进场动画 */
         .animate-in { animation: fadeIn 0.4s ease-out forwards; }
@@ -585,10 +569,6 @@ openPlaylist();">
                 <div class="flex items-center justify-between mb-3">
                     <span class="text-[14px] text-gray-700">拉黑惩罚时长：</span>
                     <div><input type="number" id="os-block-duration" class="w-12 border-b border-gray-300 text-center outline-none text-[15px] font-bold text-red-500" value="60"> <span class="text-[13px] text-gray-500">分钟</span></div>
-                </div>
-                <div class="flex items-center justify-between">
-                    <span class="text-[14px] text-gray-700">允许短信求和间隔：</span>
-                    <div><input type="number" id="os-block-sms" class="w-12 border-b border-gray-300 text-center outline-none text-[15px] font-bold" value="10"> <span class="text-[13px] text-gray-500">分钟/次</span></div>
                 </div>
             </div>
 
@@ -1963,13 +1943,9 @@ function performGlobalSave() {
         if (typeof playlist !== 'undefined') localStorage.setItem('os_playlist', JSON.stringify(playlist));
         if (typeof momentLikes !== 'undefined') localStorage.setItem('os_moment_likes', JSON.stringify(momentLikes));
         
-        // 2. 保存朋友圈和论坛推文的画面
+        // 2. 保存朋友圈画面
         const momentsFeed = document.getElementById('moments-feed');
         if (momentsFeed) localStorage.setItem('os_moments_html', momentsFeed.innerHTML);
-        const forumFeed = document.getElementById('forum-feed');
-        if (forumFeed) localStorage.setItem('os_forum_html', forumFeed.innerHTML);
-        const profilePostsFeed = document.getElementById('profile-posts-feed');
-        if (profilePostsFeed) localStorage.setItem('os_profile_posts_html', profilePostsFeed.innerHTML);
 
         // 3. 保存主屏幕换过的壁纸
         const desktopBody = document.getElementById('desktop-body');
@@ -2840,314 +2816,7 @@ function togglePlaceholderMenu() {
     menu.classList.toggle('hidden');
 }
 
-// === 新增：全屏外卖APP逻辑 ===
-let wmItems = [];
-let wmCart = []; 
-let wmCurrentItem = null;
 
-function openWaimaiApp() {
-    document.getElementById('waimai-app-screen').classList.remove('hidden');
-    document.getElementById('waimai-user-avatar').src = userProfile.avatar || 'https://i.postimg.cc/Qx8Y1m3R/IMG-2980.jpg';
-    document.getElementById('waimai-user-name').innerText = userProfile.name || '我';
-    renderWaimaiCart();
-    renderWaimaiHistory();
-}
-
-function closeWaimaiApp() {
-    document.getElementById('waimai-app-screen').classList.add('hidden');
-}
-
-function switchWaimaiTab(tab) {
-    if(tab === 'home') {
-        document.getElementById('waimai-home-tab').classList.remove('hidden');
-        document.getElementById('waimai-me-tab').classList.add('hidden');
-        document.getElementById('waimai-nav-home').classList.add('text-black');
-        document.getElementById('waimai-nav-home').classList.remove('text-gray-400');
-        document.getElementById('waimai-nav-me').classList.remove('text-black');
-        document.getElementById('waimai-nav-me').classList.add('text-gray-400');
-    } else {
-        document.getElementById('waimai-me-tab').classList.remove('hidden');
-        document.getElementById('waimai-home-tab').classList.add('hidden');
-        document.getElementById('waimai-nav-me').classList.add('text-black');
-        document.getElementById('waimai-nav-me').classList.remove('text-gray-400');
-        document.getElementById('waimai-nav-home').classList.remove('text-black');
-        document.getElementById('waimai-nav-home').classList.add('text-gray-400');
-        renderWaimaiHistory();
-    }
-}
-
-async function generateWaimaiItems() {
-    if (!config.apiKey) return alert("请先在设置中配置 API Key！");
-    const container = document.getElementById('waimai-items-container');
-    container.innerHTML = '<div class="text-center text-gray-400 text-sm mt-10">正在为您生成附近美食<span class="animate-pulse">...</span></div>';
-    
-    const prompt = "请随机生成15到20个外卖商品（吃的、喝的、奶茶、烧烤等），必须以如下格式严格输出，不要带任何其他废话或前缀。格式每行一个商品：商品名称|价格数字。例如：\n招牌珍珠奶茶|15.5\n麻辣烤串套餐|45.0\n至尊全家桶披萨|88.8";
-
-    try {
-        const response = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}` },
-            body: JSON.stringify({
-                model: config.model,
-                messages: [{ role: 'user', content: prompt }],
-                temperature: 0.9
-            })
-        });
-        const data = await response.json();
-        const text = data.choices[0].message.content.trim();
-        
-        wmItems = text.split('\n').filter(line => line.includes('|')).map(line => {
-            let parts = line.split('|');
-            return { name: parts[0].trim(), price: parseFloat(parts[1].trim()) };
-        });
-
-        if(wmItems.length === 0) {
-            container.innerHTML = '<div class="text-center text-gray-400 text-[13px] mt-10">生成失败，请重试</div>';
-            return;
-        }
-
-        container.innerHTML = '<div class="grid grid-cols-2 gap-3 pb-4"></div>';
-        const grid = container.querySelector('.grid');
-
-        wmItems.forEach((item, idx) => {
-            grid.innerHTML += `
-                <div class="bg-white rounded-[20px] p-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] flex flex-col justify-between cursor-pointer active:scale-95 transition-transform border border-gray-50" onclick="openWaimaiItemModal(${idx})">
-                    <div class="w-full aspect-square bg-[#f8f8f8] rounded-[16px] mb-3 flex items-center justify-center overflow-hidden">
-                        <div class="w-14 h-14 rounded-full bg-orange-100 flex items-center justify-center opacity-70">
-                            <svg class="w-7 h-7 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        </div>
-                    </div>
-                    <div class="font-bold text-[14px] text-gray-800 leading-tight mb-2 truncate">${item.name}</div>
-                    <div class="text-[#ff4a4a] font-bold text-[16px] flex items-center justify-between mt-auto">
-                        <span><span class="text-[11px] mr-0.5">¥</span>${item.price.toFixed(2)}</span>
-                        <div class="w-7 h-7 bg-black rounded-full text-white flex items-center justify-center text-xl pb-[2px] shadow-sm">+</div>
-                    </div>
-                </div>
-            `;
-        });
-
-    } catch(e) {
-        container.innerHTML = '<div class="text-center text-gray-400 text-[13px] mt-10">网络出错啦，请检查配置或重试</div>';
-    }
-}
-
-function openWaimaiItemModal(idx) {
-    wmCurrentItem = wmItems[idx];
-    document.getElementById('wm-modal-name').innerText = wmCurrentItem.name;
-    document.getElementById('wm-modal-price').innerText = wmCurrentItem.price.toFixed(2);
-    document.getElementById('wm-modal-qty').innerText = "1";
-    document.getElementById('waimai-item-modal').classList.remove('hidden');
-}
-
-function closeWaimaiItemModal() {
-    document.getElementById('waimai-item-modal').classList.add('hidden');
-}
-
-function changeWmQty(delta) {
-    let span = document.getElementById('wm-modal-qty');
-    let qty = parseInt(span.innerText);
-    qty += delta;
-    if(qty < 1) qty = 1;
-    span.innerText = qty;
-}
-
-function confirmWaimaiAdd() {
-    let qty = parseInt(document.getElementById('wm-modal-qty').innerText);
-    let exist = wmCart.find(i => i.name === wmCurrentItem.name);
-    if(exist) {
-        exist.qty += qty;
-    } else {
-        wmCart.push({...wmCurrentItem, qty});
-    }
-    closeWaimaiItemModal();
-    renderWaimaiCart();
-}
-
-function renderWaimaiCart() {
-    let totalQty = 0;
-    let totalPrice = 0;
-    wmCart.forEach(i => {
-        totalQty += i.qty;
-        totalPrice += i.price * i.qty;
-    });
-
-    const bar = document.getElementById('waimai-cart-bar');
-    if(totalQty > 0) {
-        bar.classList.remove('hidden');
-        document.getElementById('waimai-cart-badge').innerText = totalQty;
-        document.getElementById('waimai-total-price').innerText = totalPrice.toFixed(2);
-    } else {
-        bar.classList.add('hidden');
-    }
-}
-
-// === 新增：购物车详情列表相关逻辑 ===
-function openWaimaiCartDetails() {
-    if(wmCart.length === 0) return;
-    renderWaimaiCartDetails();
-    document.getElementById('waimai-cart-details-modal').classList.remove('hidden');
-}
-
-function closeWaimaiCartDetails() {
-    document.getElementById('waimai-cart-details-modal').classList.add('hidden');
-}
-
-function renderWaimaiCartDetails() {
-    const list = document.getElementById('waimai-cart-items-list');
-    list.innerHTML = '';
-    wmCart.forEach((item, index) => {
-        list.innerHTML += `
-            <div class="flex justify-between items-center mb-1">
-                <div class="flex flex-col min-w-0 pr-4 flex-1">
-                    <span class="font-bold text-[15px] text-gray-800 truncate">${item.name}</span>
-                    <span class="text-[#ff4a4a] font-bold text-[14px]">¥${item.price.toFixed(2)}</span>
-                </div>
-                <div class="flex items-center gap-4 shrink-0">
-                    <button class="w-8 h-8 rounded-full border border-gray-300 text-gray-600 text-xl flex items-center justify-center active:bg-gray-100 pb-1" onclick="updateWmCartQty(${index}, -1)">-</button>
-                    <span class="text-[16px] font-bold w-4 text-center text-black">${item.qty}</span>
-                    <button class="w-8 h-8 rounded-full bg-black text-white text-xl flex items-center justify-center active:scale-95 pb-1" onclick="updateWmCartQty(${index}, 1)">+</button>
-                </div>
-            </div>
-        `;
-    });
-}
-
-function updateWmCartQty(index, delta) {
-    wmCart[index].qty += delta;
-    if (wmCart[index].qty <= 0) {
-        wmCart.splice(index, 1);
-    }
-    renderWaimaiCart();
-    if (wmCart.length === 0) {
-        closeWaimaiCartDetails();
-    } else {
-        renderWaimaiCartDetails();
-    }
-}
-
-function clearWaimaiCart() {
-    wmCart = [];
-    renderWaimaiCart();
-    closeWaimaiCartDetails();
-}
-
-function waimaiCheckout() {
-    if(wmCart.length === 0) return alert("购物车空空的，先点些吃的吧~");
-    document.getElementById('waimai-checkout-modal').classList.remove('hidden');
-}
-
-function closeWaimaiCheckout() {
-    document.getElementById('waimai-checkout-modal').classList.add('hidden');
-}
-
-let waimaiOrders = JSON.parse(localStorage.getItem('waimai_orders')) || [];
-
-function renderWaimaiHistory() {
-    const container = document.getElementById('waimai-order-history');
-    if(waimaiOrders.length === 0) {
-        container.innerHTML = '<div class="text-center py-10 text-gray-400 text-[13px]">暂无外卖记录</div>';
-        return;
-    }
-    container.innerHTML = '';
-    [...waimaiOrders].reverse().forEach(o => {
-        container.innerHTML += `
-            <div class="border-b border-gray-50 py-3 active:bg-gray-50 transition-colors">
-                <div class="flex justify-between items-center mb-1.5">
-                    <span class="text-[12px] text-gray-400">${o.time}</span>
-                    <span class="font-bold text-[#ff4a4a] text-[15px]"><span class="text-[10px] mr-0.5">¥</span>${o.total.toFixed(2)}</span>
-                </div>
-                <div class="text-[13px] text-gray-800 leading-tight font-medium">
-                    ${o.items}
-                </div>
-            </div>
-        `;
-    });
-}
-
-function getCartSummaryStr() {
-    let sumStr = wmCart.map(i => `${i.name} x${i.qty}`).join('，');
-    let total = wmCart.reduce((acc, i) => acc + (i.price * i.qty), 0);
-    return { sumStr, total };
-}
-
-function clearCartAndRecord(sumStr, total) {
-    const now = new Date();
-    const timeStr = `${now.getMonth()+1}月${now.getDate()}日 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
-    waimaiOrders.push({time: timeStr, items: sumStr, total});
-    localStorage.setItem('waimai_orders', JSON.stringify(waimaiOrders));
-    wmCart = [];
-    renderWaimaiCart();
-    renderWaimaiHistory();
-}
-
-function waimaiPaySelf() {
-    const { sumStr, total } = getCartSummaryStr();
-    if(walletBalance < total) {
-        alert("啊哦，微信钱包里的零钱不够啦！");
-        return;
-    }
-    addTransaction('外卖点餐: ' + sumStr.substring(0, 10) + '...', total, 'expense');
-    alert("支付成功！已从微信钱包扣除费用。");
-    clearCartAndRecord(sumStr, total);
-    closeWaimaiCheckout();
-}
-
-function waimaiPayTA() {
-    closeWaimaiCheckout();
-    document.getElementById('waimai-char-modal').classList.remove('hidden');
-    
-    const list = document.getElementById('waimai-char-list');
-    list.innerHTML = '';
-    const friends = friendList.filter(f => !f.isGroup);
-    if(friends.length === 0) {
-        list.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">还没添加可以代付的人哦</div>';
-    } else {
-        friends.forEach(f => {
-            list.innerHTML += `
-                <div class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-100 rounded-xl border border-gray-100 bg-white mb-2 active:scale-95 transition-transform" onclick="sendWaimaiCardToChar('${f.id}')">
-                    <img src="${f.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg'}" class="w-12 h-12 rounded-full object-cover border border-gray-100">
-                    <span class="font-bold text-[15px] text-gray-700 flex-1">${f.remark}</span>
-                </div>
-            `;
-        });
-    }
-}
-
-function closeWaimaiCharModal() {
-    document.getElementById('waimai-char-modal').classList.add('hidden');
-}
-
-function sendWaimaiCardToChar(charId) {
-    const { sumStr, total } = getCartSummaryStr();
-    const friend = friendList.find(f => f.id === charId);
-    if(!friend) return;
-
-// 修改：去掉了烦人的文字前缀，并且用隐藏的 <img 标签欺骗系统这是一个无气泡的消息
-// 注意：用 把告诉 AI 的悄悄话藏在了代码里，你看不见，但 AI 能读懂！
-let cardHtml = `
- <img src="data:image/gif;base64,R0lGODlhAQABAIAAAP///wAAACH5BAEAAAAALAAAAAABAAEAAAICRAEAOw==" style="display:none;"
-class="waimai-no-bubble-trigger">
- <div class="bg-white rounded-[16px] shadow-sm border border-gray-200 p-3.5 w-[230px] flex flex-col gap-2 relative">
- <div class="flex items-center gap-2 mb-1 border-b border-gray-50 pb-2">
- <div class="w-7 h-7 bg-[#ff4a4a] rounded-full flex items-center justify-center text-white text-[11px] font-bold shrink-0">代付</div>
- <span class="text-[14px] font-bold text-gray-800">外卖代付请求</span>
- </div>
- <div class="text-[12px] text-gray-500 leading-tight line-clamp-2 text-left">${sumStr}</div>
- <div class="text-[#ff4a4a] font-bold text-[18px] text-left mt-1">¥${total.toFixed(2)}</div>
- <div class="text-[10px] text-[#07c160] mt-2 text-center bg-[#f0faf5] rounded-full py-1 font-bold">${friend.remark}已成功付款</div>
- </div>
-`;
-
-    friend.chatHistory.push({
-        role: 'user',
-        content: cardHtml
-    });
-
-    localStorage.setItem('friend_list', JSON.stringify(friendList));
-    clearCartAndRecord(sumStr, total);
-    closeWaimaiCharModal();
-    alert(`已成功把代付卡片发给 ${friend.remark} 啦！快去微信聊天界面看看吧！`);
-}
 // ================= 新增：角色设定页面逻辑 =================
 
 function openCharacterSettings() {
@@ -4276,10 +3945,6 @@ function editProfilePart(part){
         }
     }
 }
-
-function openForum(){ document.getElementById('forum-screen').classList.remove('hidden'); }
-function closeForum(){ document.getElementById('forum-screen').classList.add('hidden'); }
-function openCompose(){ 
     document.getElementById('compose-screen').classList.remove('hidden'); 
     document.getElementById('compose-avatar-sync').src = userProfile.avatar;
     validatePostContent(); 
@@ -4781,210 +4446,6 @@ function openPlaceholder(id) {
 }
 function closePlaceholder() {
     document.getElementById('placeholder-screen').classList.add('hidden');
-}
-
-// === 默契比心APP核心逻辑 ===
-let mqbxCurrentCharId = null;
-let mqbxQuestion = "";
-let mqbxCharAnswerText = "";
-
-function openMqbxApp() {
-    document.getElementById('mqbx-app-screen').classList.remove('hidden');
-    document.getElementById('mqbx-game-area').classList.add('hidden');
-    document.getElementById('mqbx-char-modal').classList.remove('hidden');
-    
-    const list = document.getElementById('mqbx-char-list');
-    list.innerHTML = '';
-    const friends = friendList.filter(f => !f.isGroup);
-    if(friends.length === 0) {
-        list.innerHTML = '<div class="text-center text-gray-400 text-sm py-4">还没添加好友，快去微信列表加一个吧</div>';
-    } else {
-        friends.forEach(f => {
-            // 注意：这里改成了 readyMqbxGame，不再是一点进去就直接调用API
-            list.innerHTML += `
-                <div class="flex items-center gap-3 p-3 cursor-pointer hover:bg-gray-200 rounded-xl border border-gray-100 bg-white mb-2 active:scale-95 transition-transform" onclick="readyMqbxGame('${f.id}')">
-                    <img src="${f.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg'}" class="w-12 h-12 rounded-full object-cover">
-                    <span class="font-bold text-[15px] text-gray-700 flex-1">${f.remark}</span>
-                </div>
-            `;
-        });
-    }
-}
-
-function closeMqbxApp() {
-    document.getElementById('mqbx-app-screen').classList.add('hidden');
-    document.getElementById('mqbx-char-modal').classList.add('hidden');
-}
-
-// 新增：准备开始界面
-function readyMqbxGame(charId) {
-    mqbxCurrentCharId = charId;
-    const friend = friendList.find(f => f.id === charId);
-    if(!friend) return;
-    
-    const name = friend.remark || friend.realName || "TA";
-
-    document.getElementById('mqbx-char-modal').classList.add('hidden');
-    document.getElementById('mqbx-game-area').classList.remove('hidden');
-    document.getElementById('mqbx-comment-area').classList.add('hidden');
-    
-    document.getElementById('mqbx-char-avatar').src = friend.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg';
-    document.getElementById('mqbx-char-name').innerText = name;
-    document.getElementById('mqbx-user-avatar').src = userProfile.avatar || 'https://i.postimg.cc/Qx8Y1m3R/IMG-2980.jpg';
-    
-    const qEl = document.getElementById('mqbx-question');
-    const statusEl = document.getElementById('mqbx-char-status');
-    const ansEl = document.getElementById('mqbx-char-answer');
-    const inputEl = document.getElementById('mqbx-user-input');
-    const btn = document.getElementById('mqbx-action-btn');
-    
-    // 初始化界面为等待点击开始的状态
-    qEl.innerHTML = '准备好接受默契考验了吗？<br><span class="text-[13px] text-gray-400 font-normal">点击下方按钮开始生成专属问题</span>';
-    statusEl.innerText = `等待游戏开始...`;
-    statusEl.classList.remove('hidden');
-    ansEl.classList.add('hidden');
-    inputEl.value = '';
-    inputEl.disabled = true;
-    inputEl.placeholder = `等待问题生成...`;
-    
-    // 把框框标题改成角色的名字
-    document.getElementById('mqbx-reaction-title').innerText = `${name}的反应`;
-
-    btn.innerText = "开始游戏";
-    btn.style.opacity = "1";
-    btn.style.pointerEvents = "auto";
-    btn.onclick = startMqbxGame;
-}
-
-// 点击开始游戏后才触发
-async function startMqbxGame() {
-    if (!config.apiKey) return alert("请先在设置中配置 API Key！");
-    const friend = friendList.find(f => f.id === mqbxCurrentCharId);
-    if(!friend) return;
-    const name = friend.remark || friend.realName || "TA";
-    
-    const qEl = document.getElementById('mqbx-question');
-    const statusEl = document.getElementById('mqbx-char-status');
-    const ansEl = document.getElementById('mqbx-char-answer');
-    const inputEl = document.getElementById('mqbx-user-input');
-    const btn = document.getElementById('mqbx-action-btn');
-    const commentArea = document.getElementById('mqbx-comment-area');
-    
-    commentArea.classList.add('hidden');
-    qEl.innerHTML = '正在生成灵魂拷问<span class="animate-pulse">...</span>';
-    statusEl.innerText = `${name}正在苦思冥想...`;
-    statusEl.classList.remove('hidden');
-    ansEl.classList.add('hidden');
-    inputEl.value = '';
-    inputEl.disabled = true;
-    inputEl.placeholder = `等待问题生成...`;
-    
-    btn.innerText = "生成中...";
-    btn.style.opacity = "0.5";
-    btn.style.pointerEvents = "none";
-    btn.onclick = submitMqbxAnswer;
-
-    // 1. 出题 (基于记忆和人设)
-    let memoryText = friend.memoryList ? friend.memoryList.join(';') : (friend.aiMemory || "");
-    let promptQ = `你需要出一个“默契度测试”的问题。参与者是我和角色“${friend.realName}”。角色的设定是：${friend.persona}。我们之前的记忆点：${memoryText}。请结合我们的设定或记忆，随机提出一个刁钻、有趣或日常的二选一/简答默契问题（例如：“假如流落荒岛，你们俩谁会先饿死？”或“约会迟到半小时，对方第一句话会说什么？”）。只需输出问题文本，绝对不要带任何前缀或分析。`;
-
-    try {
-        const resQ = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}`},
-            body: JSON.stringify({ model: config.model, messages: [{role: 'user', content: promptQ}], temperature: 0.9 })
-        });
-        const dataQ = await resQ.json();
-        mqbxQuestion = dataQ.choices[0].message.content.trim();
-        qEl.innerText = mqbxQuestion;
-        
-        // 2. 角色偷偷作答
-        inputEl.placeholder = `等待${name}写下答案...`;
-        let promptA = `你扮演“${friend.realName}”，设定是：${friend.persona}。现在我们在玩默契游戏，问题是：“${mqbxQuestion}”。请直接给出你的答案（简短，一句话内），一定要符合你的人设。不要带多余的动作描写，只输出纯文本答案。`;
-
-        const resA = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}`},
-            body: JSON.stringify({ model: config.model, messages: [{role: 'user', content: promptA}], temperature: 0.8 })
-        });
-        const dataA = await resA.json();
-        mqbxCharAnswerText = dataA.choices[0].message.content.trim();
-        
-        // 角色答完了，放开用户的输入框
-        statusEl.classList.add('hidden');
-        ansEl.classList.remove('hidden');
-        ansEl.innerText = "？已隐藏，等你作答后可见？";
-        ansEl.classList.add('text-gray-400', 'italic');
-        ansEl.classList.remove('text-black', 'not-italic');
-        
-        inputEl.disabled = false;
-        inputEl.placeholder = `${name}已经答完了！轮到你了，写下你的答案吧...`;
-        btn.innerText = `提交并查看${name}的答案`;
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-
-    } catch (e) {
-        qEl.innerText = "网络错误，请重试";
-        btn.innerText = "重新开始";
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-        btn.onclick = () => readyMqbxGame(mqbxCurrentCharId);
-    }
-}
-
-async function submitMqbxAnswer() {
-    const inputEl = document.getElementById('mqbx-user-input');
-    const userAns = inputEl.value.trim();
-    if (!userAns) return alert("你还没写答案呢！");
-    
-    const ansEl = document.getElementById('mqbx-char-answer');
-    const btn = document.getElementById('mqbx-action-btn');
-    const commentArea = document.getElementById('mqbx-comment-area');
-    const commentText = document.getElementById('mqbx-char-comment');
-    
-    const friend = friendList.find(f => f.id === mqbxCurrentCharId);
-    const name = friend ? (friend.remark || friend.realName || "TA") : "TA";
-
-    // 显示角色真正的答案
-    ansEl.innerText = mqbxCharAnswerText;
-    ansEl.classList.remove('text-gray-400', 'italic');
-    ansEl.classList.add('text-black', 'not-italic');
-    
-    inputEl.disabled = true;
-    btn.innerText = `正在等待${name}的反应...`;
-    btn.style.opacity = "0.5";
-    btn.style.pointerEvents = "none";
-    
-    // 3. 角色点评审判
-    let promptC = `你扮演“${friend.realName}”，设定是：${friend.persona}。你们刚刚玩了默契游戏。
-问题是：“${mqbxQuestion}”
-你的答案是：“${mqbxCharAnswerText}”
-用户的答案是：“${userAns}”
-请根据你们的答案是否一致/有默契，给出一句充满你人设特点的点评、吐槽、牢骚或调笑（控制在50字内）。直接输出你要说的话，不要带任何前缀。`;
-
-    try {
-        const resC = await fetch(`${config.baseUrl}/chat/completions`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'Authorization': `Bearer ${config.apiKey}`},
-            body: JSON.stringify({ model: config.model, messages: [{role: 'user', content: promptC}], temperature: 0.8 })
-        });
-        const dataC = await resC.json();
-        const comment = dataC.choices[0].message.content.trim();
-        
-        commentArea.classList.remove('hidden');
-        commentText.innerText = comment;
-        
-        btn.innerText = "再玩一次";
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-        btn.onclick = () => readyMqbxGame(mqbxCurrentCharId);
-        
-    } catch(e) {
-        btn.innerText = "再玩一次 (网络出错)";
-        btn.style.opacity = "1";
-        btn.style.pointerEvents = "auto";
-        btn.onclick = () => readyMqbxGame(mqbxCurrentCharId);
-    }
 }
 
 function updateWidgetTime() {
@@ -5866,18 +5327,6 @@ window.onload = () => {
         if (momentsFeed) momentsFeed.innerHTML = savedMoments;
     }
     
-    // 3. 恢复论坛推文长相
-    const savedForum = localStorage.getItem('os_forum_html');
-    if (savedForum) {
-        const forumFeed = document.getElementById('forum-feed');
-        if (forumFeed) forumFeed.innerHTML = savedForum;
-    }
-    const savedProfilePosts = localStorage.getItem('os_profile_posts_html');
-    if (savedProfilePosts) {
-        const profilePostsFeed = document.getElementById('profile-posts-feed');
-        if (profilePostsFeed) profilePostsFeed.innerHTML = savedProfilePosts;
-    }
-
     // 4. 恢复桌面壁纸
     const savedBg = localStorage.getItem('os_desktop_bg');
     if (savedBg) {
@@ -5939,395 +5388,6 @@ window.onload = () => {
 
     // 【重点修复】：删除了原本的 requestNotificationPermission()，完美解决卡死！
 };
-
-// ================= 新增：短信(iMessage)功能模块 =================
-let currentSmsFriendId = null;
-let smsChatHistory = [];
-
-function openSmsApp() {
-    document.getElementById('sms-app-screen').classList.remove('hidden');
-    document.getElementById('sms-list-view').classList.remove('hidden');
-    document.getElementById('sms-chat-view').classList.add('hidden');
-    renderSmsFriendList();
-}
-function closeSmsApp() {
-    document.getElementById('sms-app-screen').classList.add('hidden');
-}
-
-function renderSmsFriendList() {
-    const container = document.getElementById('sms-friend-list');
-    container.innerHTML = '';
-    
-    if(friendList.length === 0) {
-        container.innerHTML = '<div class="text-center text-gray-400 mt-10 text-[14px]">暂无联系人</div>';
-        return;
-    }
-    
-    friendList.forEach(f => {
-        // 同步微信信息，列表样式变更为苹果原生短信风格
-        const lastMsg = (f.smsHistory && f.smsHistory.length > 0) ? f.smsHistory[f.smsHistory.length-1].content.substring(0,20) : '暂无短信';
-        const div = document.createElement('div');
-        div.className = "flex items-center gap-3 py-3 border-b border-gray-100 bg-white cursor-pointer active:bg-gray-50";
-        div.onclick = () => openSmsChat(f.id);
-        div.innerHTML = `
-            <img src="${f.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg'}" class="w-12 h-12 rounded-full object-cover flex-shrink-0">
-            <div class="flex-1 min-w-0">
-                <div class="flex justify-between items-center mb-0.5">
-                    <span class="font-semibold text-[16px] text-black truncate">${f.remark}</span>
-                    <span class="text-[13px] text-gray-400">刚刚</span>
-                </div>
-                <div class="text-[14px] text-gray-500 truncate">${lastMsg.replace(/<img[^>]*>/g, '[图片]')}</div>
-            </div>
-            <div class="text-gray-300 text-xl font-light">›</div>
-        `;
-        container.appendChild(div);
-    });
-}
-
-function openSmsChat(id) {
-    currentSmsFriendId = id;
-    const friend = friendList.find(f => f.id === id);
-    if (!friend.smsHistory) friend.smsHistory = [];
-    smsChatHistory = friend.smsHistory;
-    
-// 修改点：把 friend.remark 改成了 friend.realName，这样顶栏就显示真名了
-// 后面加了个 ||
-// friend.remark 是为了防止你没填真名时报错，没填就会兜底显示备注
-    document.getElementById('sms-chat-name').innerHTML = `${friend.realName || friend.remark} <svg class="w-2.5 h-2.5 text-gray-400 inline-block -mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>`;
-    document.getElementById('sms-chat-avatar').src = friend.avatar || 'https://i.postimg.cc/76N2w5M7/IMG_2980.jpg';
-    
-    document.getElementById('sms-list-view').classList.add('hidden');
-    document.getElementById('sms-chat-view').classList.remove('hidden');
-    
-    renderSmsMessages();
-}
-
-function closeSmsChat() {
-    document.getElementById('sms-chat-view').classList.add('hidden');
-    document.getElementById('sms-list-view').classList.remove('hidden');
-    currentSmsFriendId = null;
-    renderSmsFriendList(); // 刷新列表的“最后一条消息”
-}
-
-function renderSmsMessages(isIncremental = false) {
-    const container = document.getElementById('sms-chat-flow');
-    if (!isIncremental) container.innerHTML = '<div class="text-center text-[11px] text-gray-400 my-2">iMessage 信息</div>';
-    
-    const alreadyDrawnCount = isIncremental ? container.querySelectorAll('.sms-bubble-wrapper').length : 0;
-    
-    smsChatHistory.forEach((msg, index) => {
-        if (isIncremental && index < alreadyDrawnCount) return;
-
-        const div = document.createElement('div');
-        div.className = "flex w-full sms-bubble-wrapper " + (msg.role === 'user' ? "justify-end" : "justify-start") + " items-end mb-2 relative";
-        
-        let displayContent = msg.content;
-        if (displayContent.includes('[我发送了一个表情包')) {
-            displayContent = displayContent.replace(/\[我发送了一个表情包.*?\n/, '');
-        }
-
-        if (msg.role === 'user') {
-            div.innerHTML = `<div class="max-w-[70%] bg-[#007aff] text-white px-3.5 py-2 rounded-2xl rounded-br-sm shadow-sm break-words" style="font-size: 15px; line-height: 1.4;">${displayContent}</div>`;
-        } else {
-            div.innerHTML = `<div class="max-w-[70%] bg-[#e5e5ea] text-black px-3.5 py-2 rounded-2xl rounded-bl-sm shadow-sm break-words" style="font-size: 15px; line-height: 1.4;">${displayContent}</div>`;
-        }
-        
-        // 短信长按删除
-        let pressTimer;
-        const startMsgPress = () => {
-            pressTimer = setTimeout(() => {
-                if(confirm("要删除这条短信吗？")) {
-                    smsChatHistory.splice(index, 1);
-                    renderSmsMessages();
-                }
-            }, 600);
-        };
-        const cancelMsgPress = () => clearTimeout(pressTimer);
-        div.addEventListener('touchstart', startMsgPress);
-        div.addEventListener('touchend', cancelMsgPress);
-        div.addEventListener('mousedown', startMsgPress);
-        div.addEventListener('mouseup', cancelMsgPress);
-
-        container.appendChild(div);
-    });
-    
-    setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
-}
-
-function sendSmsUserMsg() {
-    if(!currentSmsFriendId) return;
-    const input = document.getElementById('sms-input');
-    const text = input.value.trim();
-    
-    // 【核心修改】：输入框为空时点击发送，才会触发AI回复
-    if(!text) {
-        triggerSmsAI();
-        return;
-    }
-    
-    // 有字的时候只负责发送上屏，不叫醒AI
-    smsChatHistory.push({role:'user', content: text});
-    input.value = '';
-    renderSmsMessages(true);
-}
-
-// 修改：发完图片也不自动触发AI了，你可以连发好几张图，最后点一下空白发送键让AI一起看
-function sendSmsImage(input) {
-    if(!currentSmsFriendId) return;
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const base64Img = e.target.result;
-            smsChatHistory.push({role:'user', content: `<img src="${base64Img}" class="max-w-full rounded-xl mt-1 shadow-sm border border-gray-100">`});
-            renderSmsMessages(true);
-        }
-        reader.readAsDataURL(input.files[0]);
-        input.value = ''; 
-    }
-}
-
-async function triggerSmsAI() {
-    if(!currentSmsFriendId || !config.apiKey) return;
-    
-    const titleEl = document.getElementById('sms-chat-name');
-    const originalTitleHtml = titleEl.innerHTML;
-    titleEl.innerHTML = '<span style="color: #999; font-size: 11px;">对方正在输入...</span>';
-    
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    let finalSystemMessage = config.systemPrompt;
-    if (friend && friend.isTranslationEnabled) {
-        finalSystemMessage += `\n\n【强制翻译要求】：你开启了多语言自动翻译。你的每一条回复都必须严格使用以下单行HTML代码包裹（绝对不能在代码中间换行！），只需要把里面的[原语言]和[中文翻译]替换成你的回复即可：\n<div style="display:inline-block;font:13px;color:#333;line-height:1.2;padding:6px 7px;"><div style="margin:0 0 5px 6px;font-size:13px;">[原语言]</div><div id="trans-container"><div style="border-top:1px dashed #ccc;width:calc(100% - 4px);"></div><div style="color:#666;margin:3px 0 0 4px;cursor:pointer;" onclick="this.parentElement.style.display=this.parentElement.style.display==='none'?'block':'none'">[中文翻译]</div></div></div>`;
-    }
-    
-    if(friend) {
-        const now = new Date();
-        const timeString = now.getHours() + "点" + now.getMinutes() + "分";
-        finalSystemMessage += `\n\n你的真实名字是：${friend.realName}。
-你的设定是：${friend.persona}。
-【活人感引擎：当前时间是 ${timeString}】
-【重要提示：你现在正在和用户在苹果“短信(iMessage)”上聊天，不要发微信特有的表情包或功能。短信通常比微信更直接，偏向有事说事或短平快的生活碎片，没有微信那么多寒暄。】
-每次只回复 1 到 2 条简短信息。`;
-
-        // 喂入双端记忆
-        let wxMemoryText = (friend.memoryList && friend.memoryList.length > 0) ? friend.memoryList.join('\n') : (friend.aiMemory || "");
-        if (wxMemoryText) finalSystemMessage += `\n\n【你们在微信的记忆总结】：\n${wxMemoryText}`;
-        
-        let smsMemoryText = (friend.smsMemoryList && friend.smsMemoryList.length > 0) ? friend.smsMemoryList.join('\n') : "";
-        if (smsMemoryText) finalSystemMessage += `\n【你们在短信的记忆总结，请一定记住】：\n${smsMemoryText}`;
-    }
-    
-    try {
-        // 【新增】给短信也装上完全兼容 GPT-4o 等模型的视觉解析核心
-        let formattedMessages = [{role:'system', content:finalSystemMessage}];
-        smsChatHistory.slice(-5).forEach(msg => {
-            const imgMatch = msg.content.match(/<img[^>]+src=["']([^"']+)["']/);
-            if (imgMatch) {
-                const base64Url = imgMatch[1];
-                let textOnly = msg.content.replace(/<img[^>]*>/g, '').trim();
-                if (!textOnly) textOnly = msg.role === 'user' ? "【我发送了一张图片，请你看看图片里有什么，并根据内容回复我】" : "【一张图片】";
-                
-                formattedMessages.push({
-                    role: msg.role,
-                    content: [
-                        { type: "text", text: textOnly },
-                        { type: "image_url", image_url: { url: base64Url } }
-                    ]
-                });
-            } else {
-                formattedMessages.push({ role: msg.role, content: msg.content });
-            }
-        });
-
-        const response=await fetch(`${config.baseUrl}/chat/completions`,{
-            method:'POST',
-            headers:{'Content-Type':'application/json','Authorization':`Bearer ${config.apiKey}`},
-            body:JSON.stringify({
-                model:config.model,
-                messages: formattedMessages,
-                temperature: parseFloat(config.temperature),
-                max_tokens:800
-            })
-        });
-
-        const data=await response.json();
-        const reply=data.choices[0].message.content;
-
-        let newMessages = [];
-        const textLines = reply.split('\n').map(line => line.trim()).filter(line => line.length > 0);
-        textLines.forEach(line => newMessages.push({role:'assistant', content: line}));
-        if (newMessages.length === 0) newMessages.push({role:'assistant', content: reply});
-
-        let msgIndex = 0;
-        function showNextMsg() {
-            if (msgIndex < newMessages.length) {
-                const currentMsg = newMessages[msgIndex];
-                smsChatHistory.push(currentMsg);
-                renderSmsMessages(true);
-                
-                // 【修改重点】：在每发一条短信气泡时，只要界面在后台，就发一次系统弹窗！
-                sendSystemNotification(friend.realName || friend.remark || "新短信", currentMsg.content);
-
-                msgIndex++;
-                setTimeout(showNextMsg, 1200);
-            } else {
-                titleEl.innerHTML = originalTitleHtml;
-                checkAndTriggerSmsAutoSummary();
-            }
-        }
-        showNextMsg();
-    } catch(e) { 
-        smsChatHistory.push({role:'assistant',content:"（短信发送失败）"});
-        renderSmsMessages(true);
-        titleEl.innerHTML = originalTitleHtml;
-    }
-}
-
-// ==== 短信独立记忆管理 ====
-function openSmsMemoryPage() {
-    if (!currentSmsFriendId) return alert('请先进入一个短信聊天');
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    if (!friend) return;
-    
-    if (!friend.smsMemoryList) friend.smsMemoryList = [];
-    document.getElementById('sms-current-msg-count').innerText = smsChatHistory.length;
-    document.getElementById('sms-auto-summary-switch').checked = friend.smsAutoSummary || false;
-    document.getElementById('sms-auto-summary-threshold').value = friend.smsSummaryThreshold || 20;
-    
-    document.getElementById('sms-manual-summary-start').value = 1;
-    document.getElementById('sms-manual-summary-end').value = smsChatHistory.length > 0 ? smsChatHistory.length : 1;
-    
-    renderSmsMemoryBlocks();
-    document.getElementById('sms-memory-page').classList.remove('slide-hidden');
-}
-
-function closeSmsMemoryPage() { document.getElementById('sms-memory-page').classList.add('slide-hidden'); }
-
-function renderSmsMemoryBlocks() {
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    if(!friend) return;
-    
-    const container = document.getElementById('sms-memory-blocks-container');
-    container.innerHTML = '';
-    
-    if(!friend.smsMemoryList || friend.smsMemoryList.length === 0) {
-        container.innerHTML = '<div class="text-[13px] text-gray-400 text-center py-6">短信暂无记忆...</div>';
-        return;
-    }
-
-    friend.smsMemoryList.forEach((mem, index) => {
-        const block = document.createElement('div');
-        block.className = 'bg-gray-50 border border-gray-200 rounded-xl p-3 relative shadow-sm';
-        block.innerHTML = `
-            <div class="text-[13px] text-gray-700 pr-14 whitespace-pre-wrap break-words leading-relaxed">${mem}</div>
-            <div class="absolute top-2 right-2 flex flex-col gap-2">
-                <button onclick="editSmsMemoryBlock(${index})" class="text-green-500 text-[11px] font-bold bg-green-50 px-2 py-1 rounded active:scale-95 transition-transform">编辑</button>
-                <button onclick="deleteSmsMemoryBlock(${index})" class="text-red-500 text-[11px] font-bold bg-red-50 px-2 py-1 rounded active:scale-95 transition-transform">删除</button>
-            </div>
-        `;
-        container.appendChild(block);
-    });
-}
-
-function editSmsMemoryBlock(index) {
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    if(!friend) return;
-    const newMem = prompt("编辑短信记忆：", friend.smsMemoryList[index]);
-    if(newMem !== null && newMem.trim() !== "") {
-        friend.smsMemoryList[index] = newMem.trim();
-        localStorage.setItem('friend_list', JSON.stringify(friendList));
-        renderSmsMemoryBlocks();
-    }
-}
-
-function deleteSmsMemoryBlock(index) {
-    if(confirm("确定要删除这条短信记忆吗？")) {
-        const friend = friendList.find(f => f.id === currentSmsFriendId);
-        if(!friend) return;
-        friend.smsMemoryList.splice(index, 1);
-        localStorage.setItem('friend_list', JSON.stringify(friendList));
-        renderSmsMemoryBlocks();
-    }
-}
-
-function saveSmsMemorySettings() {
-    if (!currentSmsFriendId) return;
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    if (!friend) return;
-    friend.smsAutoSummary = document.getElementById('sms-auto-summary-switch').checked;
-    friend.smsSummaryThreshold = parseInt(document.getElementById('sms-auto-summary-threshold').value) || 20;
-    localStorage.setItem('friend_list', JSON.stringify(friendList));
-}
-
-async function executeSmsSummarize(messagesArray, friend) {
-    if(!messagesArray || messagesArray.length === 0) return;
-    const chatText = messagesArray.map(msg => `${msg.role === 'user' ? '我' : 'TA'}: ${msg.content}`).join('\n');
-    
-    try {
-        const response = await fetch(config.baseUrl + '/chat/completions', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + config.apiKey},
-            body: JSON.stringify({
-                model: config.model,
-                messages: [
-                    {role: 'system', content: '你是一个用于提炼短信记忆的助手。请将以下短信对话提取出核心记忆点。如果无实际意义回复“无”。'},
-                    {role: 'user', content: chatText}
-                ],
-                temperature: 0.3
-            })
-        });
-        const data = await response.json();
-        let summary = data.choices[0].message.content.trim();
-        if(summary !== '无' && summary !== '') {
-            if (!friend.smsMemoryList) friend.smsMemoryList = [];
-            friend.smsMemoryList.push(`[短信记忆]: ${summary}`);
-            if (!document.getElementById('sms-memory-page').classList.contains('slide-hidden')) {
-                renderSmsMemoryBlocks();
-            }
-        }
-        friend.smsLastSummarizedLength = smsChatHistory.length;
-        localStorage.setItem('friend_list', JSON.stringify(friendList));
-    } catch(e) { console.error("短信记忆失败:", e); }
-}
-
-async function manualSmsSummarize() {
-    if (!currentSmsFriendId) return;
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    if (!friend) return;
-    
-    const startIdx = parseInt(document.getElementById('sms-manual-summary-start').value);
-    const endIdx = parseInt(document.getElementById('sms-manual-summary-end').value);
-    if (isNaN(startIdx) || isNaN(endIdx) || startIdx < 1 || endIdx > smsChatHistory.length || startIdx > endIdx) return alert("条数范围错误！");
-
-    const btn = document.getElementById('sms-manual-summary-btn');
-    btn.innerText = "正在提取中...";
-    btn.style.opacity = "0.5";
-    btn.style.pointerEvents = "none";
-    
-    const msgsToSummarize = smsChatHistory.slice(startIdx - 1, endIdx);
-    await executeSmsSummarize(msgsToSummarize, friend);
-    
-    btn.innerText = "开始提取短信记忆";
-    btn.style.opacity = "1";
-    btn.style.pointerEvents = "auto";
-    alert("短信记忆提取完成！");
-}
-
-function checkAndTriggerSmsAutoSummary() {
-    if (!currentSmsFriendId) return;
-    const friend = friendList.find(f => f.id === currentSmsFriendId);
-    if (!friend) return;
-    
-    const countEl = document.getElementById('sms-current-msg-count');
-    if(countEl) countEl.innerText = smsChatHistory.length;
-    
-    if (!friend.smsAutoSummary) return;
-    const threshold = friend.smsSummaryThreshold || 20;
-    const unsummarizedCount = smsChatHistory.length - (friend.smsLastSummarizedLength || 0);
-    if (unsummarizedCount >= threshold) {
-        const msgsToSummarize = smsChatHistory.slice(friend.smsLastSummarizedLength || 0);
-        executeSmsSummarize(msgsToSummarize, friend);
-    }
-}
 
 // ================= 新增：好友专属关联世界书功能 =================
 function openFriendLorebook() {
@@ -6825,8 +5885,6 @@ function openOtherSettings() {
     document.getElementById('os-bg-activity').value = friend.bgActivityInterval || '';
     document.getElementById('os-block-switch').checked = friend.isBlocked || false;
     document.getElementById('os-block-duration').value = friend.blockDuration || 60;
-    document.getElementById('os-block-sms').value = friend.blockSmsInterval || 10;
-
     document.getElementById('other-settings-page').classList.remove('slide-hidden');
 }
 
@@ -6858,11 +5916,10 @@ function saveOtherSettings() {
     const wasBlocked = friend.isBlocked;
     friend.isBlocked = document.getElementById('os-block-switch').checked;
     friend.blockDuration = parseInt(document.getElementById('os-block-duration').value) || 60;
-    friend.blockSmsInterval = parseInt(document.getElementById('os-block-sms').value) || 10;
     
     if (friend.isBlocked && !wasBlocked) {
         friend.blockStartTime = Date.now();
-        friend.lastProactiveSmsTime = Date.now();
+        
     } else if (!friend.isBlocked) {
         friend.blockStartTime = null;
     }
@@ -6876,12 +5933,12 @@ function clearFriendHistory() {
     if (confirm("⚠️ 警告：这将会彻底清空与该角色的所有聊天记录、心声、总结记忆以及短信记录！不可恢复！确定要清空吗？")) {
         const friend = friendList.find(f => f.id === currentFriendId);
         friend.chatHistory = [];
-        friend.smsHistory = [];
+
         friend.memoryList = [];
-        friend.smsMemoryList = [];
+
         friend.aiMemory = "";
         friend.lastSummarizedLength = 0;
-        friend.smsLastSummarizedLength = 0;
+        
         localStorage.setItem('friend_list', JSON.stringify(friendList));
         
         closeOtherSettings();
@@ -7025,15 +6082,7 @@ setInterval(async () => {
             if (now >= blockEnd) {
                 friend.isBlocked = false; // 刑满释放
                 localStorage.setItem('friend_list', JSON.stringify(friendList));
-            } else if (friend.blockSmsInterval > 0) {
-                // 在拉黑期间，判断是否该发短信求和了
-                const nextSms = (friend.lastProactiveSmsTime || friend.blockStartTime) + (friend.blockSmsInterval * 60000);
-                if (now >= nextSms) {
-                    friend.lastProactiveSmsTime = now;
-                    localStorage.setItem('friend_list', JSON.stringify(friendList));
-                    await executeProactiveMessage(friend, 'sms');
-                }
-            }
+
         } 
         // 2. 没被拉黑，且设置了后台活跃发微信
         else if (!friend.isBlocked && friend.bgActivityInterval > 0) {
@@ -7049,9 +6098,8 @@ setInterval(async () => {
 
 async function executeProactiveMessage(friend, type) {
     let prompt = `你是${friend.realName}。你的设定是：${friend.persona}。\n`;
-    if (type === 'sms') {
-        prompt += `【强制任务】：你现在被用户拉黑了，不能发微信。你非常着急或想挽回，所以偷偷通过“短信”发消息。请结合你的人设，写一条发送给用户的短信（比如求和、道歉或傲娇的询问），控制在2句话内。直接输出短信内容。`;
-    } else {
+    {
+
         prompt += `【强制任务】：你们有一段时间没聊天了，你需要主动寻找话题给用户发一条微信。请结合你的人设，发一条自然的主动问候或生活分享，控制在2句话内。直接输出内容。`;
     }
     
@@ -7071,12 +6119,9 @@ async function executeProactiveMessage(friend, type) {
         // 触发主动寻找你的系统通知
         sendSystemNotification(friend.remark || friend.realName || "AI 好友", reply);
         
-        if (type === 'sms') {
-            if(!friend.smsHistory) friend.smsHistory = [];
-            friend.smsHistory.push({role: 'assistant', content: reply});
-            if (currentSmsFriendId === friend.id) renderSmsMessages(); // 如果恰好停在短信页，刷新一下
-        } else {
+        {
             friend.chatHistory.push({role: 'assistant', content: reply});
+
             if (currentFriendId === friend.id) renderAllMessages(true); // 如果恰好在微信页，挤出消息
         }
         localStorage.setItem('friend_list', JSON.stringify(friendList));
@@ -7122,29 +6167,6 @@ function clearSingleChatBg() {
     }
 }
 
-// 3. 处理全局聊天背景上传
-function handleGlobalChatBg(input) {
-    if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const result = e.target.result;
-            document.getElementById('preview-global-chat-bg').src = result;
-            document.getElementById('preview-global-chat-bg').classList.remove('hidden');
-            document.getElementById('global-chat-bg-hint').classList.add('hidden');
-            tempAppearance.chatBg = result; // 先暂存，点保存才生效
-        }
-        reader.readAsDataURL(input.files[0]);
-        input.value = '';
-    }
-}
-
-// 4. 清除全局背景
-function clearGlobalChatBg() {
-    document.getElementById('preview-global-chat-bg').src = '';
-    document.getElementById('preview-global-chat-bg').classList.add('hidden');
-    document.getElementById('global-chat-bg-hint').classList.remove('hidden');
-    tempAppearance.chatBg = '';
-}
 // ================= 新增：夜间模式核心逻辑 =================
 function toggleDarkMode(isDark) {
     config.isDarkMode = isDark;

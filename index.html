@@ -681,42 +681,114 @@
     .messages {
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 18px;
     }
 
     .message-row {
       display: flex;
       width: 100%;
+      align-items: flex-start;
+      gap: 10px;
     }
 
     .message-row.ai {
-      justify-content: flex-start;
+      flex-direction: row;
     }
 
     .message-row.me {
-      justify-content: flex-end;
+      flex-direction: row-reverse;
     }
 
+    /* 聊天界面头像 */
+    .chat-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background: #e5e5e5;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+    }
+
+    /* 聊天消息主体区域 (包含气泡和时间) */
+    .message-content {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      max-width: calc(100% - 90px); /* 留出头像和边距空间 */
+    }
+
+    .message-row.ai .message-content {
+      flex-direction: row;
+    }
+
+    .message-row.me .message-content {
+      flex-direction: row-reverse;
+    }
+
+    /* 气泡与小尾巴的包裹层 */
+    .bubble-wrapper {
+      position: relative;
+      display: flex;
+      align-items: flex-start; /* 顶部对齐以放置尾巴 */
+    }
+
+    /* 小尾巴 */
+    .bubble-tail {
+      width: 10px;
+      height: 18px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: top;
+      flex-shrink: 0;
+      margin-top: 14px; /* 调整尾巴高度以对齐第一行文字 */
+      z-index: 2;
+    }
+
+    .message-row.ai .bubble-tail {
+      background-image: url('https://i.postimg.cc/Hsj17ML5/IMG-4847.png');
+      margin-right: -2px; 
+    }
+
+    .message-row.me .bubble-tail {
+      background-image: url('https://i.postimg.cc/L6hFZPsP/IMG-4848.png');
+      margin-left: -2px;
+    }
+
+    /* 气泡本体 */
     .bubble {
-      max-width: min(76vw, 560px);
-      border-radius: 18px;
-      padding: 12px 14px;
+      border-radius: 14px;
+      padding: 12px 16px;
       font-size: 15px;
       line-height: 1.5;
       word-break: break-word;
       white-space: pre-wrap;
+      z-index: 1;
     }
 
     .message-row.ai .bubble {
-      background: #f3f5f8;
+      background: #F2F4F8;
       color: #111;
-      border-top-left-radius: 8px;
     }
 
     .message-row.me .bubble {
-      background: #111;
+      background: #111111;
       color: #fff;
-      border-top-right-radius: 8px;
+    }
+
+    /* 聊天时间 */
+    .chat-time {
+      font-size: 11px;
+      color: #b2b2b2;
+      white-space: nowrap;
+      padding-bottom: 2px;
+    }
+
+    /* 朋友圈和我界面的头像增加可点击指针 */
+    .moments-avatar, .me-avatar {
+      cursor: pointer;
+      background-size: cover;
+      background-position: center;
     }
 
     .chatbar {
@@ -837,6 +909,7 @@
 </head>
 <body>
   <div class="app">
+    <input type="file" id="globalAvatarInput" accept="image/*" style="display: none;" />
     <section class="screen top-screen active" id="screen-friends">
       <header class="header">
         <div class="header-bar">
@@ -1113,15 +1186,19 @@
   </div>
 
   <script>
-    // 辅助函数：获取当前时间格式 (例如 "21:04")
+    // 辅助函数：获取当前时间格式，带 AM/PM (例如 "AM 12:54")
     function getCurrentTime() {
       const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
+      let h = now.getHours();
       const m = String(now.getMinutes()).padStart(2, '0');
-      return `${h}:${m}`;
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      h = h % 12;
+      h = h ? h : 12; // 把 0 点转换为 12
+      return `${ampm} ${h}:${m}`;
     }
 
     const state = {
+      userAvatar: "", // 存储全局用户头像
       apiSettings: {
         url: "",
         key: "",
@@ -1336,7 +1413,6 @@
     function renderChat() {
       const contact = getContact(state.activeContactId);
       if (!contact) return;
-
       chatTitle.textContent = getDisplayName(contact);
       messagesEl.innerHTML = "";
 
@@ -1353,14 +1429,54 @@
         const row = document.createElement("div");
         row.className = "message-row " + (msg.from === "me" ? "me" : "ai");
 
+        // 1. 生成头像
+        const avatarWrap = document.createElement("div");
+        avatarWrap.className = "chat-avatar";
+        if (msg.from === "me" && state.userAvatar) {
+          avatarWrap.style.backgroundImage = `url(${state.userAvatar})`;
+        } else if (msg.from === "ai") {
+          // AI 头像（如果角色有独立头像字段也可以在这里扩展，目前用默认灰色底纹）
+          avatarWrap.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+        }
+
+        // 2. 消息体包裹层 (包含气泡和时间)
+        const contentWrap = document.createElement("div");
+        contentWrap.className = "message-content";
+
+        // 3. 时间标签
+        const timeEl = document.createElement("div");
+        timeEl.className = "chat-time";
+        timeEl.textContent = msg.time || "";
+
+        // 4. 气泡包裹层 (包含小尾巴和文字气泡)
+        const bubbleWrap = document.createElement("div");
+        bubbleWrap.className = "bubble-wrapper";
+
+        const tail = document.createElement("div");
+        tail.className = "bubble-tail";
+
         const bubble = document.createElement("div");
         bubble.className = "bubble";
         bubble.textContent = msg.text;
 
-        row.appendChild(bubble);
+        // 5. 按照发送者进行不同的 DOM 拼接顺序
+        if (msg.from === "me") {
+          bubbleWrap.appendChild(bubble);
+          bubbleWrap.appendChild(tail);
+          contentWrap.appendChild(bubbleWrap);
+          contentWrap.appendChild(timeEl);
+        } else {
+          bubbleWrap.appendChild(tail);
+          bubbleWrap.appendChild(bubble);
+          contentWrap.appendChild(bubbleWrap);
+          contentWrap.appendChild(timeEl);
+        }
+
+        // 6. 塞入整体行
+        row.appendChild(avatarWrap);
+        row.appendChild(contentWrap);
         messagesEl.appendChild(row);
       });
-
       requestAnimationFrame(() => {
         chatBody.scrollTop = chatBody.scrollHeight;
       });
@@ -1373,26 +1489,30 @@
       const contact = getContact(state.activeContactId);
       if (!contact || !text) return;
 
+      const currentTime = getCurrentTime(); // 获取当下时间
+
       contact.messages.push({
         from: "me",
-        text
+        text,
+        time: currentTime // 存入消息对象
       });
-      contact.lastTime = getCurrentTime(); // 更新最后发送时间
+      contact.lastTime = currentTime;
 
       chatInput.value = "";
       renderChat();
 
       const reply = buildReply(contact, text);
-
       setTimeout(() => {
         const latest = getContact(contact.id);
         if (!latest) return;
 
+        const replyTime = getCurrentTime();
         latest.messages.push({
           from: "ai",
-          text: reply
+          text: reply,
+          time: replyTime // 存入AI回复消息对象
         });
-        latest.lastTime = getCurrentTime(); // 更新最后回复时间
+        latest.lastTime = replyTime;
 
         if (state.activeContactId === latest.id) {
           renderChat();
@@ -1698,6 +1818,35 @@
       tabbar.classList.remove("hidden");
     });
 
+    // ================== 头像同步与更换逻辑 ==================
+    const globalAvatarInput = document.getElementById("globalAvatarInput");
+    const meAvatarEl = document.querySelector(".me-avatar");
+    const momentsAvatarEl = document.querySelector(".moments-avatar");
+
+    // 点击我界面或朋友圈头像触发选图
+    meAvatarEl.addEventListener("click", () => globalAvatarInput.click());
+    momentsAvatarEl.addEventListener("click", () => globalAvatarInput.click());
+
+    globalAvatarInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const url = URL.createObjectURL(file);
+        state.userAvatar = url;
+        
+        // 更新 Me 和 Moments 的头像
+        meAvatarEl.style.backgroundImage = `url(${url})`;
+        momentsAvatarEl.style.backgroundImage = `url(${url})`;
+        meAvatarEl.style.background = `url(${url}) center/cover`;
+        momentsAvatarEl.style.background = `url(${url}) center/cover border-box`;
+        momentsAvatarEl.style.border = "2px solid #fff"; // 保留朋友圈白色边框
+        
+        // 如果正好在聊天页，重新渲染更新右上角头像
+        if (screens.chat.classList.contains("active")) {
+          renderChat();
+        }
+      }
+    });
+
     // 初始化运行一次动态样式
     applyGlobalFontAndSize();
     renderContacts();
@@ -1705,3 +1854,4 @@
   </script>
 </body>
 </html>
+

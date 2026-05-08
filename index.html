@@ -1263,18 +1263,28 @@
              <img id="framePreviewOverlay" src="" style="position: absolute; pointer-events: none; display: none; left: 50%; top: 50%; transform: translate(-50%, -50%);" />
           </div>
 
-          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 100%; max-width: 200px; margin-bottom: 24px; flex-shrink: 0;">上传头像框</button>
+          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 140px; height: 44px; min-height: 44px; margin-bottom: 24px; flex-shrink: 0; flex: none; border-radius: 22px; padding: 0;">上传头像框</button>
           <input type="file" id="frameFileInput" accept="image/*" style="display: none;" />
 
-          <div style="width: 100%; margin-bottom: 24px;">
+          <div style="width: 100%; margin-bottom: 16px;">
             <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">调整头像框大小</label>
             <input type="range" id="frameScaleSlider" min="0.8" max="2.5" step="0.01" value="1" style="width: 100%; accent-color: #111;" />
+          </div>
+
+          <div style="width: 100%; margin-bottom: 16px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">横向平移 (左右)</label>
+            <input type="range" id="frameXSlider" min="-50" max="50" step="1" value="0" style="width: 100%; accent-color: #111;" />
+          </div>
+
+          <div style="width: 100%; margin-bottom: 24px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">纵向平移 (上下)</label>
+            <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="width: 100%; accent-color: #111;" />
           </div>
 
           <div style="width: 100%;">
             <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px; display: block;">历史头像框</label>
             <div id="frameHistoryGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
-              </div>
+            </div>
           </div>
 
         </div>
@@ -1403,6 +1413,8 @@
           avatar: "",
           frameUrl: "",
           frameScale: 1,
+          frameX: 0,
+          frameY: 0,
           lastTime: "22:36",
           messages: []
         },
@@ -1415,6 +1427,8 @@
           avatar: "",
           frameUrl: "",
           frameScale: 1,
+          frameX: 0,
+          frameY: 0,
           lastTime: "昨天",
           messages: []
         }
@@ -1513,8 +1527,8 @@
           frameImg.src = contact.frameUrl;
           frameImg.style.position = "absolute";
           frameImg.style.pointerEvents = "none";
-          frameImg.style.left = "50%";
-          frameImg.style.top = "50%";
+          frameImg.style.left = `calc(50% + ${contact.frameX || 0}px)`;
+          frameImg.style.top = `calc(50% + ${contact.frameY || 0}px)`;
           frameImg.style.transform = "translate(-50%, -50%)";
           frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
           frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
@@ -1594,6 +1608,8 @@
         avatar: "",
         frameUrl: "",
         frameScale: 1,
+        frameX: 0,
+        frameY: 0,
         lastTime: getCurrentTime(), // 新联系人默认当前时间
         messages: []
       };
@@ -1679,8 +1695,8 @@
               frameImg.src = contact.frameUrl;
               frameImg.style.position = "absolute";
               frameImg.style.pointerEvents = "none";
-              frameImg.style.left = "50%";
-              frameImg.style.top = "50%";
+              frameImg.style.left = `calc(50% + ${contact.frameX || 0}px)`;
+              frameImg.style.top = `calc(50% + ${contact.frameY || 0}px)`;
               frameImg.style.transform = "translate(-50%, -50%)";
               frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
               frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
@@ -2194,10 +2210,14 @@
     const uploadFrameBtn = document.getElementById("uploadFrameBtn");
     const frameFileInput = document.getElementById("frameFileInput");
     const frameScaleSlider = document.getElementById("frameScaleSlider");
+    const frameXSlider = document.getElementById("frameXSlider");
+    const frameYSlider = document.getElementById("frameYSlider");
     const frameHistoryGrid = document.getElementById("frameHistoryGrid");
 
     let tempFrameUrl = "";
     let tempFrameScale = 1;
+    let tempFrameX = 0;
+    let tempFrameY = 0;
 
     // 1. 打开聊天详情
     chatDetailsBtn.addEventListener("click", () => {
@@ -2219,10 +2239,10 @@
       if (contact.frameUrl) {
         detailsFrameOverlay.src = contact.frameUrl;
         detailsFrameOverlay.style.display = "block";
-        detailsFrameOverlay.style.width = `${100 * contact.frameScale}%`;
-        detailsFrameOverlay.style.height = `${100 * contact.frameScale}%`;
-        detailsFrameOverlay.style.left = "50%";
-        detailsFrameOverlay.style.top = "50%";
+        detailsFrameOverlay.style.width = `${100 * (contact.frameScale || 1)}%`;
+        detailsFrameOverlay.style.height = `${100 * (contact.frameScale || 1)}%`;
+        detailsFrameOverlay.style.left = `calc(50% + ${contact.frameX || 0}px)`;
+        detailsFrameOverlay.style.top = `calc(50% + ${contact.frameY || 0}px)`;
         detailsFrameOverlay.style.transform = "translate(-50%, -50%)";
       } else {
         detailsFrameOverlay.style.display = "none";
@@ -2288,7 +2308,13 @@
 
       tempFrameUrl = contact.frameUrl || "";
       tempFrameScale = contact.frameScale || 1;
+      tempFrameX = contact.frameX || 0;
+      tempFrameY = contact.frameY || 0;
+      
       frameScaleSlider.value = tempFrameScale;
+      frameXSlider.value = tempFrameX;
+      frameYSlider.value = tempFrameY;
+      
       updateFramePreview();
       renderFrameHistory();
 
@@ -2306,16 +2332,25 @@
     }
 
     // 7. 更新拉条
-    frameScaleSlider.addEventListener("input", (e) => {
-      tempFrameScale = parseFloat(e.target.value);
+    function handleSliderChange() {
+      tempFrameScale = parseFloat(frameScaleSlider.value);
+      tempFrameX = parseInt(frameXSlider.value, 10);
+      tempFrameY = parseInt(frameYSlider.value, 10);
       updateFramePreview();
-    });
+    }
+    
+    frameScaleSlider.addEventListener("input", handleSliderChange);
+    frameXSlider.addEventListener("input", handleSliderChange);
+    frameYSlider.addEventListener("input", handleSliderChange);
+
     function updateFramePreview() {
       if (tempFrameUrl) {
         framePreviewOverlay.src = tempFrameUrl;
         framePreviewOverlay.style.display = "block";
         framePreviewOverlay.style.width = `${100 * tempFrameScale}%`;
         framePreviewOverlay.style.height = `${100 * tempFrameScale}%`;
+        framePreviewOverlay.style.left = `calc(50% + ${tempFrameX}px)`;
+        framePreviewOverlay.style.top = `calc(50% + ${tempFrameY}px)`;
       } else {
         framePreviewOverlay.style.display = "none";
       }
@@ -2331,7 +2366,12 @@
         const fileUrl = URL.createObjectURL(file);
         tempFrameUrl = fileUrl;
         tempFrameScale = 1;
+        tempFrameX = 0;
+        tempFrameY = 0;
+        
         frameScaleSlider.value = tempFrameScale;
+        frameXSlider.value = tempFrameX;
+        frameYSlider.value = tempFrameY;
         
         if (!state.uploadedFrames.includes(fileUrl)) {
           state.uploadedFrames.unshift(fileUrl);
@@ -2345,7 +2385,6 @@
     // 9. 渲染历史记录列表 (一排四个)
     function renderFrameHistory() {
       frameHistoryGrid.innerHTML = "";
-      
       const noneItem = document.createElement("div");
       noneItem.style.width = "100%"; noneItem.style.aspectRatio = "1/1";
       noneItem.style.borderRadius = "8px"; noneItem.style.border = "1px solid #ddd";
@@ -2379,6 +2418,8 @@
       if (contact) {
         contact.frameUrl = tempFrameUrl;
         contact.frameScale = tempFrameScale;
+        contact.frameX = tempFrameX;
+        contact.frameY = tempFrameY;
         
         // 马上更新背后详情界面的预览
         if (contact.frameUrl) {
@@ -2386,8 +2427,8 @@
           detailsFrameOverlay.style.display = "block";
           detailsFrameOverlay.style.width = `${100 * contact.frameScale}%`;
           detailsFrameOverlay.style.height = `${100 * contact.frameScale}%`;
-          detailsFrameOverlay.style.left = "50%";
-          detailsFrameOverlay.style.top = "50%";
+          detailsFrameOverlay.style.left = `calc(50% + ${contact.frameX}px)`;
+          detailsFrameOverlay.style.top = `calc(50% + ${contact.frameY}px)`;
           detailsFrameOverlay.style.transform = "translate(-50%, -50%)";
         } else {
           detailsFrameOverlay.style.display = "none";

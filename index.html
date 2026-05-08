@@ -837,12 +837,13 @@
     }
 
     .chatbar-inner > #chatExtraBtn {
-      margin-right: 8px;
+      /* 原本的 margin-right 删除，由 input-wrap 统一控制间距 */
     }
 
     .chatbar-inner > #voiceBtn {
       margin-right: -2px;
-      transform: translate(10px, 1.5px); /* 精确控制：向右移动 5px，向上移动 3px */
+      transform: translate(10px, 1.5px);
+      /* 精确控制：向右移动 5px，向上移动 3px */
     }
 
     /* 专门缩小回复键内部的图标 (原本是 26px，缩小 5px 变为 21px) */
@@ -873,13 +874,46 @@
     }
 
     .chat-input-wrap {
-      flex: 1; /* 占据剩余全部空间，实现输入框向右拉伸 */
-      margin-right: 8px; /* 保持与回复键的相对距离，被推着向右平移 */
+      flex: 1;
+      /* 占据剩余全部空间，实现输入框向右拉伸 */
+      margin: 0 10px; /* 控制输入框：向左距离物品栏图标10px，向右距离回复键10px */
       position: relative;
       height: 42px;
       border-radius: 999px;
       background: #f7f7f8;
       overflow: hidden;
+    }
+
+    /* 新增：物品栏弹窗样式 */
+    .inventory-popup {
+      position: absolute;
+      bottom: 76px; /* 位于底部聊天栏上方 */
+      left: 12px;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
+      padding: 6px 0;
+      display: none;
+      flex-direction: column;
+      z-index: 50;
+      width: 110px;
+    }
+
+    .inventory-popup.show {
+      display: flex;
+    }
+
+    .inventory-item {
+      padding: 14px 16px;
+      font-size: 15px;
+      font-weight: 500;
+      color: #111;
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .inventory-item:active {
+      background: #f5f5f5;
     }
 
     .chat-input {
@@ -1117,10 +1151,20 @@
         <div class="messages hidden" id="messages"></div>
       </div>
 
+      <div class="inventory-popup" id="inventoryPopup">
+        <div class="inventory-item">相机</div>
+        <div class="inventory-item">相册</div>
+        <div class="inventory-item">描述图片</div>
+        <div class="inventory-item">转账</div>
+        <div class="inventory-item">语音</div>
+        <div class="inventory-item">语音通话</div>
+        <div class="inventory-item">重回</div>
+      </div>
+
       <div class="chatbar">
         <div class="chatbar-inner">
-          <button class="icon-img-btn" id="chatExtraBtn" aria-label="更多">
-            <img src="https://i.postimg.cc/7hx0JsFP/IMG-3064.png" alt="" />
+          <button class="icon-img-btn" id="chatExtraBtn" aria-label="物品栏">
+            <img src="https://i.postimg.cc/D0M5jXfC/IMG-4863.png" alt="物品栏" />
           </button>
 
           <div class="chat-input-wrap">
@@ -1652,10 +1696,28 @@
       }
     });
 
-    document.getElementById("chatExtraBtn").addEventListener("click", () => {
-      chatInput.focus();
+        const inventoryPopup = document.getElementById("inventoryPopup");
+    
+    // 点击物品栏图标，显示或隐藏弹窗
+    document.getElementById("chatExtraBtn").addEventListener("click", (e) => {
+      e.stopPropagation(); // 阻止点击事件传给页面，导致立刻触发关闭逻辑
+      inventoryPopup.classList.toggle("show");
     });
 
+    // 点击页面其他任意地方，收起弹窗
+    document.addEventListener("click", (e) => {
+      if (!inventoryPopup.contains(e.target) && e.target !== document.getElementById("chatExtraBtn")) {
+        inventoryPopup.classList.remove("show");
+      }
+    });
+
+    // 点击弹窗里的各个选项后，自动收起弹窗
+    document.querySelectorAll(".inventory-item").forEach(item => {
+      item.addEventListener("click", () => {
+        inventoryPopup.classList.remove("show");
+        // 你后续如果要给比如“相机”、“转账”加功能，可以写在这里
+      });
+    });
     document.getElementById("emojiBtn").addEventListener("click", () => {
       chatInput.value += "🙂";
       chatInput.focus();

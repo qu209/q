@@ -660,13 +660,13 @@
       top: calc(54px + var(--safe-top));
       left: 0;
       right: 0;
-      bottom: 60px; /* 配合新的聊天底栏紧凑高度 */
+      bottom: 68px; /* 配合底栏稍微抬高的尺寸，防止最后一条消息被挡住 */
       overflow-y: auto;
       overscroll-behavior: contain;
       background: #fff;
       padding: 16px 14px 20px;
     }
-
+    
     /* 保留：专门去掉设置页面的底部空白 */
     #screen-settings .chat-body {
       bottom: 0;
@@ -824,8 +824,8 @@
       right: 0;
       bottom: 0;
       z-index: 6;
-      height: 60px; /* 固定整体小高度 */
-      padding: 9px 12px; /* 均匀的上下内边距，彻底消灭底部巨型白条 */
+      height: 68px; /* 高度微微增加，专门用来做底部留白 */
+      padding: 8px 12px 18px; /* 上边距保持紧凑，下边距加大到18px，底部自然留出一小截安全缝隙 */
       background: #fff;
       border-top: 1px solid #f0f0f0;
     }

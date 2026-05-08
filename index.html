@@ -832,10 +832,23 @@
 
     .chatbar-inner {
       height: 100%;
-      display: grid;
-      grid-template-columns: 40px 1fr 40px 40px;
-      gap: 8px;
+      display: flex;
       align-items: center;
+    }
+
+    .chatbar-inner > #chatExtraBtn {
+      margin-right: 8px;
+    }
+
+    .chatbar-inner > #voiceBtn {
+      margin-right: -2px;
+      transform: translate(10px, 1.5px); /* 精确控制：向右移动 5px，向上移动 3px */
+    }
+
+    /* 专门缩小回复键内部的图标 (原本是 26px，缩小 5px 变为 21px) */
+    .chatbar-inner > #voiceBtn img {
+      width: 18px;
+      height: 18px;
     }
 
     .icon-img-btn {
@@ -851,6 +864,7 @@
       flex: 0 0 auto;
     }
 
+    /* 其他按钮的默认图标大小保持不变 */
     .icon-img-btn img {
       width: 26px;
       height: 26px;
@@ -859,6 +873,8 @@
     }
 
     .chat-input-wrap {
+      flex: 1; /* 占据剩余全部空间，实现输入框向右拉伸 */
+      margin-right: 8px; /* 保持与回复键的相对距离，被推着向右平移 */
       position: relative;
       height: 42px;
       border-radius: 999px;
@@ -1120,8 +1136,8 @@
             </button>
           </div>
 
-          <button class="icon-img-btn" id="voiceBtn" aria-label="语音">
-            <img src="https://i.postimg.cc/zvJKHtsG/IMG-3063.png" alt="" />
+          <button class="icon-img-btn" id="voiceBtn" aria-label="回复">
+            <img src="https://i.postimg.cc/prR7HRRY/IMG-4861.png" alt="" />
           </button>
 
           <button class="icon-img-btn" id="sendBtn" aria-label="发送">

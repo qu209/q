@@ -1217,8 +1217,8 @@
         
         <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
-            <div id="detailsAvatarPreview" style="width: 60px; height: 60px; border-radius: 50%; background: #eee; position: relative; background-size: cover; background-position: center;">
-               <img id="detailsFrameOverlay" src="" style="position: absolute; pointer-events: none; display: none;" />
+            <div id="detailsAvatarPreview" style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; background: #eee; position: relative; background-size: cover; background-position: center;">
+               <img id="detailsFrameOverlay" src="" style="position: absolute; pointer-events: none; display: none; object-fit: contain;" />
             </div>
             <div style="display: flex; gap: 8px;">
               <button class="btn btn-light" id="changeAvatarBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">更改</button>
@@ -1259,26 +1259,47 @@
         </div>
         <div style="padding: 24px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; flex: 1;">
           
-          <div id="framePreviewContainer" style="width: 100px; height: 100px; border-radius: 50%; background: #eee; position: relative; margin-bottom: 24px; background-size: cover; background-position: center;">
-             <img id="framePreviewOverlay" src="" style="position: absolute; pointer-events: none; display: none; left: 50%; top: 50%; transform: translate(-50%, -50%);" />
+          <div id="framePreviewContainer" style="width: 100px; height: 100px; flex-shrink: 0; border-radius: 50%; background: #eee; position: relative; margin-bottom: 20px; background-size: cover; background-position: center;">
+             <img id="framePreviewOverlay" src="" style="position: absolute; pointer-events: none; display: none; left: 50%; top: 50%; transform: translate(-50%, -50%); object-fit: contain;" />
           </div>
 
-          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 140px; height: 44px; min-height: 44px; margin-bottom: 24px; flex-shrink: 0; flex: none; border-radius: 22px; padding: 0;">上传头像框</button>
+          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 110px; height: 36px; min-height: 36px; font-size: 14px; margin-bottom: 24px; flex-shrink: 0; flex: none; border-radius: 18px; padding: 0;">上传头像框</button>
           <input type="file" id="frameFileInput" accept="image/*" style="display: none;" />
 
           <div style="width: 100%; margin-bottom: 16px;">
-            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">调整头像框大小</label>
-            <input type="range" id="frameScaleSlider" min="0.8" max="2.5" step="0.01" value="1" style="width: 100%; accent-color: #111;" />
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: flex; justify-content: space-between;">
+              <span>调整头像框大小</span>
+              <span id="frameScaleVal" style="color: #666; font-weight: normal;">1.00</span>
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #999;">0.8</span>
+              <input type="range" id="frameScaleSlider" min="0.8" max="2.5" step="0.01" value="1" style="flex: 1; accent-color: #111;" />
+              <span style="font-size: 12px; color: #999;">2.5</span>
+            </div>
           </div>
 
           <div style="width: 100%; margin-bottom: 16px;">
-            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">横向平移 (左右)</label>
-            <input type="range" id="frameXSlider" min="-50" max="50" step="1" value="0" style="width: 100%; accent-color: #111;" />
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: flex; justify-content: space-between;">
+              <span>横向平移 (左右)</span>
+              <span id="frameXVal" style="color: #666; font-weight: normal;">0</span>
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #999;">-50</span>
+              <input type="range" id="frameXSlider" min="-50" max="50" step="1" value="0" style="flex: 1; accent-color: #111;" />
+              <span style="font-size: 12px; color: #999;">+50</span>
+            </div>
           </div>
 
           <div style="width: 100%; margin-bottom: 24px;">
-            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">纵向平移 (上下)</label>
-            <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="width: 100%; accent-color: #111;" />
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: flex; justify-content: space-between;">
+              <span>纵向平移 (上下)</span>
+              <span id="frameYVal" style="color: #666; font-weight: normal;">0</span>
+            </label>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="font-size: 12px; color: #999;">-50</span>
+              <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="flex: 1; accent-color: #111;" />
+              <span style="font-size: 12px; color: #999;">+50</span>
+            </div>
           </div>
 
           <div style="width: 100%;">
@@ -1527,6 +1548,7 @@
           frameImg.src = contact.frameUrl;
           frameImg.style.position = "absolute";
           frameImg.style.pointerEvents = "none";
+          frameImg.style.objectFit = "contain";
           frameImg.style.left = `calc(50% + ${contact.frameX || 0}px)`;
           frameImg.style.top = `calc(50% + ${contact.frameY || 0}px)`;
           frameImg.style.transform = "translate(-50%, -50%)";
@@ -1695,6 +1717,7 @@
               frameImg.src = contact.frameUrl;
               frameImg.style.position = "absolute";
               frameImg.style.pointerEvents = "none";
+              frameImg.style.objectFit = "contain";
               frameImg.style.left = `calc(50% + ${contact.frameX || 0}px)`;
               frameImg.style.top = `calc(50% + ${contact.frameY || 0}px)`;
               frameImg.style.transform = "translate(-50%, -50%)";
@@ -2293,7 +2316,7 @@
       renderContacts();
     });
 
-    // 5. 打开头像框弹窗
+// 5. 打开头像框弹窗
     openFrameModalBtn.addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       if (!contact) return;
@@ -2314,6 +2337,11 @@
       frameScaleSlider.value = tempFrameScale;
       frameXSlider.value = tempFrameX;
       frameYSlider.value = tempFrameY;
+
+      // 更新标签数值
+      document.getElementById("frameScaleVal").textContent = tempFrameScale.toFixed(2);
+      document.getElementById("frameXVal").textContent = tempFrameX > 0 ? "+" + tempFrameX : tempFrameX;
+      document.getElementById("frameYVal").textContent = tempFrameY > 0 ? "+" + tempFrameY : tempFrameY;
       
       updateFramePreview();
       renderFrameHistory();
@@ -2336,6 +2364,11 @@
       tempFrameScale = parseFloat(frameScaleSlider.value);
       tempFrameX = parseInt(frameXSlider.value, 10);
       tempFrameY = parseInt(frameYSlider.value, 10);
+      
+      document.getElementById("frameScaleVal").textContent = tempFrameScale.toFixed(2);
+      document.getElementById("frameXVal").textContent = tempFrameX > 0 ? "+" + tempFrameX : tempFrameX;
+      document.getElementById("frameYVal").textContent = tempFrameY > 0 ? "+" + tempFrameY : tempFrameY;
+
       updateFramePreview();
     }
     
@@ -2372,6 +2405,10 @@
         frameScaleSlider.value = tempFrameScale;
         frameXSlider.value = tempFrameX;
         frameYSlider.value = tempFrameY;
+
+        document.getElementById("frameScaleVal").textContent = "1.00";
+        document.getElementById("frameXVal").textContent = "0";
+        document.getElementById("frameYVal").textContent = "0";
         
         if (!state.uploadedFrames.includes(fileUrl)) {
           state.uploadedFrames.unshift(fileUrl);

@@ -1513,45 +1513,88 @@
 
       chatInput.value = "";
       renderChat();
-
-      const reply = buildReply(contact, text);
-
-      setTimeout(() => {
-        const latest = getContact(contact.id);
-        if (!latest) return;
-
-        latest.messages.push({
-          from: "ai",
-          text: reply,
-          time: getCurrentTime()
-        });
-        latest.lastTime = getCurrentTime(); // 更新最后回复时间
-
-        if (state.activeContactId === latest.id) {
-          renderChat();
-        } else {
-          renderContacts();
-        }
-      }, 500);
     }
 
-    function buildReply(contact, text) {
-      const name = getDisplayName(contact);
-      const persona = (contact.persona || "").trim();
+    async function triggerAIReply() {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
 
-      if (/你好|嗨|hello|hi/i.test(text)) {
-        return `${name}：你好，我在。`;
+      const api = state.apiSettings;
+      
+      // 检查 API 配置是否填写
+      if (!api.url || !api.key) {
+        contact.messages.push({
+          from: "ai",
+          text: "请先前往设置填写api哦",
+          time: getCurrentTime()
+        });
+        contact.lastTime = getCurrentTime();
+        if (state.activeContactId === contact.id) renderChat();
+        else renderContacts();
+        return;
       }
 
-      if (/你是谁|叫什么/i.test(text)) {
-        return `${name}：我是你的 AI 好友。`;
+      // 组装 OpenAI 格式的消息体
+      const messages = [];
+      if (contact.persona) {
+        messages.push({ role: "system", content: contact.persona });
+      }
+      
+      // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
+      const history = contact.messages.slice(-30);
+      history.forEach(msg => {
+        messages.push({
+          role: msg.from === "me" ? "user" : "assistant",
+          content: msg.text
+        });
+      });
+
+      // 插入一条 "正在输入..." 的临时气泡提升体验
+      const loadingMsgIndex = contact.messages.length;
+      contact.messages.push({
+        from: "ai",
+        text: "正在思考...",
+        time: getCurrentTime()
+      });
+      renderChat();
+
+      try {
+        const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${api.key}`
+          },
+          body: JSON.stringify({
+            model: api.model || "gpt-3.5-turbo",
+            messages: messages,
+            temperature: api.temperature
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP 状态码异常: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const aiText = data.choices[0].message.content;
+
+        // 请求成功，把刚才的 "正在思考..." 替换为真实的 AI 回复
+        contact.messages[loadingMsgIndex].text = aiText;
+        contact.messages[loadingMsgIndex].time = getCurrentTime();
+        contact.lastTime = getCurrentTime();
+        
+      } catch (error) {
+        // 请求失败时的提示
+        contact.messages[loadingMsgIndex].text = "[请求失败: 请检查网络、API地址和密钥是否正确 (" + error.message + ")]";
+        contact.messages[loadingMsgIndex].time = getCurrentTime();
+        contact.lastTime = getCurrentTime();
       }
 
-      if (persona) {
-        return `${name}：收到，我会按这个设定和你聊天。你刚刚说的是「${text}」`;
-      }
-
-      return `${name}：收到，你刚刚说的是「${text}」`;
+      // 最后刷新视图
+      if (state.activeContactId === contact.id) renderChat();
+      else renderContacts();
     }
 
     tabs.forEach(btn => {
@@ -1585,8 +1628,8 @@
       chatInput.focus();
     });
 
-    document.getElementById("voiceBtn").addEventListener("click", () => {
-      chatInput.focus();
+        document.getElementById("voiceBtn").addEventListener("click", () => {
+      triggerAIReply();
     });
 
     menuBtn.addEventListener("click", () => {

@@ -74,7 +74,7 @@
     }
 
     .top-screen {
-      padding-bottom: calc(var(--tab-h) + var(--safe-bottom));
+      padding-bottom: 60px;
       overflow-y: auto;
       overscroll-behavior: contain;
     }
@@ -363,8 +363,8 @@
       right: 0;
       bottom: 0;
       z-index: 10;
-      height: calc(var(--tab-h) + var(--safe-bottom));
-      padding-bottom: var(--safe-bottom);
+      height: 60px; /* 固定整体小高度 */
+      padding-bottom: 10px; /* 仅给下方留一点点自然缝隙，消灭巨型白条 */
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       background: #fff;
@@ -660,11 +660,17 @@
       top: calc(54px + var(--safe-top));
       left: 0;
       right: 0;
-      bottom: calc(var(--chatbar-h) + var(--safe-bottom));
+      bottom: 60px; /* 配合新的聊天底栏紧凑高度 */
       overflow-y: auto;
       overscroll-behavior: contain;
       background: #fff;
       padding: 16px 14px 20px;
+    }
+
+    /* 保留：专门去掉设置页面的底部空白 */
+    #screen-settings .chat-body {
+      bottom: 0;
+      padding-bottom: 20px;
     }
 
     /* 专门去掉设置页面的底部空白 */
@@ -818,8 +824,8 @@
       right: 0;
       bottom: 0;
       z-index: 6;
-      height: calc(var(--chatbar-h) + var(--safe-bottom));
-      padding: 6px 12px calc(6px + var(--safe-bottom));
+      height: 60px; /* 固定整体小高度 */
+      padding: 9px 12px; /* 均匀的上下内边距，彻底消灭底部巨型白条 */
       background: #fff;
       border-top: 1px solid #f0f0f0;
     }

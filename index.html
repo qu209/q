@@ -15,8 +15,8 @@
       --text: #111111;
       --sub: #adb3bd;
       --cover: #a8a8a8;
-      --tab-h: 54px; 
-      --chatbar-h: 70px;
+      --tab-h: 48px; 
+      --chatbar-h: 54px; 
       --safe-top: env(safe-area-inset-top);
       --safe-bottom: env(safe-area-inset-bottom);
     }
@@ -667,6 +667,12 @@
       padding: 16px 14px 20px;
     }
 
+    /* 专门去掉设置页面的底部空白 */
+    #screen-settings .chat-body {
+      bottom: 0;
+      padding-bottom: calc(20px + var(--safe-bottom));
+    }
+
     .chat-empty {
       height: 100%;
       display: flex;
@@ -813,7 +819,7 @@
       bottom: 0;
       z-index: 6;
       height: calc(var(--chatbar-h) + var(--safe-bottom));
-      padding: 10px 12px calc(10px + var(--safe-bottom));
+      padding: 6px 12px calc(6px + var(--safe-bottom));
       background: #fff;
       border-top: 1px solid #f0f0f0;
     }

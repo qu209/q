@@ -1543,20 +1543,6 @@
           avatar.classList.remove("has-custom-avatar");
         }
 
-        if (contact.frameUrl) {
-          const frameImg = document.createElement("img");
-          frameImg.src = contact.frameUrl;
-          frameImg.style.position = "absolute";
-          frameImg.style.pointerEvents = "none";
-          frameImg.style.objectFit = "contain";
-          frameImg.style.left = `calc(50% + ${contact.frameX || 0}px)`;
-          frameImg.style.top = `calc(50% + ${contact.frameY || 0}px)`;
-          frameImg.style.transform = "translate(-50%, -50%)";
-          frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
-          frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
-          avatar.appendChild(frameImg);
-        }
-
         const main = document.createElement("div");
         main.className = "friend-main";
 
@@ -1718,8 +1704,8 @@
               frameImg.style.position = "absolute";
               frameImg.style.pointerEvents = "none";
               frameImg.style.objectFit = "contain";
-              frameImg.style.left = `calc(50% + ${contact.frameX || 0}px)`;
-              frameImg.style.top = `calc(50% + ${contact.frameY || 0}px)`;
+              frameImg.style.left = `calc(50% + ${contact.frameX || 0}%)`;
+              frameImg.style.top = `calc(50% + ${contact.frameY || 0}%)`;
               frameImg.style.transform = "translate(-50%, -50%)";
               frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
               frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
@@ -2264,8 +2250,8 @@
         detailsFrameOverlay.style.display = "block";
         detailsFrameOverlay.style.width = `${100 * (contact.frameScale || 1)}%`;
         detailsFrameOverlay.style.height = `${100 * (contact.frameScale || 1)}%`;
-        detailsFrameOverlay.style.left = `calc(50% + ${contact.frameX || 0}px)`;
-        detailsFrameOverlay.style.top = `calc(50% + ${contact.frameY || 0}px)`;
+        detailsFrameOverlay.style.left = `calc(50% + ${contact.frameX || 0}%)`;
+        detailsFrameOverlay.style.top = `calc(50% + ${contact.frameY || 0}%)`;
         detailsFrameOverlay.style.transform = "translate(-50%, -50%)";
       } else {
         detailsFrameOverlay.style.display = "none";
@@ -2382,8 +2368,8 @@
         framePreviewOverlay.style.display = "block";
         framePreviewOverlay.style.width = `${100 * tempFrameScale}%`;
         framePreviewOverlay.style.height = `${100 * tempFrameScale}%`;
-        framePreviewOverlay.style.left = `calc(50% + ${tempFrameX}px)`;
-        framePreviewOverlay.style.top = `calc(50% + ${tempFrameY}px)`;
+        framePreviewOverlay.style.left = `calc(50% + ${tempFrameX}%)`;
+        framePreviewOverlay.style.top = `calc(50% + ${tempFrameY}%)`;
       } else {
         framePreviewOverlay.style.display = "none";
       }
@@ -2393,7 +2379,7 @@
     uploadFrameBtn.addEventListener("click", () => {
       frameFileInput.click();
     });
-    frameFileInput.addEventListener("change", (e) => {
+        frameFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
         const fileUrl = URL.createObjectURL(file);
@@ -2410,8 +2396,15 @@
         document.getElementById("frameXVal").textContent = "0";
         document.getElementById("frameYVal").textContent = "0";
         
-        if (!state.uploadedFrames.includes(fileUrl)) {
-          state.uploadedFrames.unshift(fileUrl);
+        // 【核心修改】判断是否已存在，不存在则保存对象以存储独立参数
+        const existingIndex = state.uploadedFrames.findIndex(f => (typeof f === 'string' ? f : f.url) === fileUrl);
+        if (existingIndex === -1) {
+          state.uploadedFrames.unshift({
+            url: fileUrl,
+            scale: 1,
+            x: 0,
+            y: 0
+          });
         }
         
         updateFramePreview();
@@ -2433,7 +2426,9 @@
       if (!tempFrameUrl) { noneItem.style.borderColor = "#111"; noneItem.style.borderWidth = "2px"; }
       frameHistoryGrid.appendChild(noneItem);
 
-      state.uploadedFrames.forEach(url => {
+      state.uploadedFrames.forEach(frameObj => {
+        // 兼容处理
+        const url = typeof frameObj === 'string' ? frameObj : frameObj.url;
         const imgItem = document.createElement("img");
         imgItem.src = url;
         imgItem.style.width = "100%"; imgItem.style.aspectRatio = "1/1";
@@ -2442,6 +2437,26 @@
         if (url === tempFrameUrl) { imgItem.style.borderColor = "#111"; imgItem.style.borderWidth = "2px"; }
         imgItem.onclick = () => {
           tempFrameUrl = url;
+          
+          // 【核心修改】点击历史时，还原此头像框专属的独立参数
+          if (typeof frameObj === 'object') {
+            tempFrameScale = frameObj.scale || 1;
+            tempFrameX = frameObj.x || 0;
+            tempFrameY = frameObj.y || 0;
+          } else {
+            tempFrameScale = 1;
+            tempFrameX = 0;
+            tempFrameY = 0;
+          }
+          
+          // 同步更新滑块UI和数值显示
+          frameScaleSlider.value = tempFrameScale;
+          frameXSlider.value = tempFrameX;
+          frameYSlider.value = tempFrameY;
+          document.getElementById("frameScaleVal").textContent = tempFrameScale.toFixed(2);
+          document.getElementById("frameXVal").textContent = tempFrameX > 0 ? "+" + tempFrameX : tempFrameX;
+          document.getElementById("frameYVal").textContent = tempFrameY > 0 ? "+" + tempFrameY : tempFrameY;
+
           updateFramePreview();
           renderFrameHistory();
         };
@@ -2458,14 +2473,30 @@
         contact.frameX = tempFrameX;
         contact.frameY = tempFrameY;
         
-        // 马上更新背后详情界面的预览
+        // 【核心修改】把当前调好的参数记录到全局历史中，让它彻底拥有“独立记忆”
+        if (tempFrameUrl) {
+          const frameIndex = state.uploadedFrames.findIndex(f => (typeof f === 'string' ? f : f.url) === tempFrameUrl);
+          if (frameIndex !== -1) {
+            if (typeof state.uploadedFrames[frameIndex] === 'object') {
+              state.uploadedFrames[frameIndex].scale = tempFrameScale;
+              state.uploadedFrames[frameIndex].x = tempFrameX;
+              state.uploadedFrames[frameIndex].y = tempFrameY;
+            } else {
+              state.uploadedFrames[frameIndex] = { url: tempFrameUrl, scale: tempFrameScale, x: tempFrameX, y: tempFrameY };
+            }
+          } else {
+            state.uploadedFrames.unshift({ url: tempFrameUrl, scale: tempFrameScale, x: tempFrameX, y: tempFrameY });
+          }
+        }
+
+        // 马上更新背后详情界面的预览 (px 改 %)
         if (contact.frameUrl) {
           detailsFrameOverlay.src = contact.frameUrl;
           detailsFrameOverlay.style.display = "block";
           detailsFrameOverlay.style.width = `${100 * contact.frameScale}%`;
           detailsFrameOverlay.style.height = `${100 * contact.frameScale}%`;
-          detailsFrameOverlay.style.left = `calc(50% + ${contact.frameX}px)`;
-          detailsFrameOverlay.style.top = `calc(50% + ${contact.frameY}px)`;
+          detailsFrameOverlay.style.left = `calc(50% + ${contact.frameX}%)`;
+          detailsFrameOverlay.style.top = `calc(50% + ${contact.frameY}%)`;
           detailsFrameOverlay.style.transform = "translate(-50%, -50%)";
         } else {
           detailsFrameOverlay.style.display = "none";

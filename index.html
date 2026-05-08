@@ -965,6 +965,12 @@
       border-bottom-right-radius: 4px;
     }
 
+    /* 隐藏带有自定义头像的默认伪元素 */
+    .friend-avatar.has-custom-avatar::before,
+    .friend-avatar.has-custom-avatar::after {
+      display: none !important;
+    }
+
     @media (min-width: 768px) {
       .friend-name {
         font-size: 18px;
@@ -1142,7 +1148,13 @@
             <span class="back-char">‹</span>
           </button>
           <div class="chat-title" id="chatTitle">()</div>
-          <div></div>
+          <button class="header-btn" id="chatDetailsBtn" aria-label="聊天详情">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="5" r="1"></circle>
+              <circle cx="12" cy="12" r="1"></circle>
+              <circle cx="12" cy="19" r="1"></circle>
+            </svg>
+          </button>
         </div>
       </div>
 
@@ -1190,6 +1202,84 @@
         </div>
       </div>
     </section>
+
+    <section class="screen chat-screen" id="screen-chat-details">
+      <div class="chat-header" style="border-bottom: none; background: #f2f2f7;">
+        <div class="chat-header-bar">
+          <button class="header-btn" id="detailsBackBtn" aria-label="返回">
+            <span class="back-char">‹</span>
+          </button>
+          <div class="chat-title" style="font-size: 17px; font-weight: 600;">聊天详情</div>
+          <button class="header-btn" id="saveDetailsBtn" style="font-size: 15px; font-weight: 600; color: #111; width: auto; padding-right: 16px;">保存</button>
+        </div>
+      </div>
+      <div class="chat-body" style="padding: 20px 16px; background: #f2f2f7; bottom: 0;">
+        
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <div id="detailsAvatarPreview" style="width: 60px; height: 60px; border-radius: 50%; background: #eee; position: relative; background-size: cover; background-position: center;">
+               <img id="detailsFrameOverlay" src="" style="position: absolute; pointer-events: none; display: none;" />
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-light" id="changeAvatarBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">更改</button>
+              <button class="btn btn-light" id="openFrameModalBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">头像框</button>
+            </div>
+            <input type="file" id="contactAvatarInput" accept="image/*" style="display: none;" />
+          </div>
+
+          <div class="field" style="display: flex; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="width: 60px; font-size: 15px; font-weight: 600; color: #222; margin: 0;">备注</label>
+            <input class="input" id="detailsRemarkInput" type="text" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0;" />
+          </div>
+
+          <div class="field" style="display: flex; align-items: center; margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="width: 60px; font-size: 15px; font-weight: 600; color: #222; margin: 0;">本名</label>
+            <input class="input" id="detailsRealNameInput" type="text" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0;" />
+          </div>
+
+          <div class="field" style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">对方人设</label>
+            <textarea class="textarea" id="detailsPersonaInput" style="background: #f7f7f8; border: none; border-radius: 12px; min-height: 80px;"></textarea>
+          </div>
+
+          <div class="field" style="margin-bottom: 0;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">我的人设</label>
+            <textarea class="textarea" id="detailsMyPersonaInput" placeholder="输入你在TA面前的人设" style="background: #f7f7f8; border: none; border-radius: 12px; min-height: 80px;"></textarea>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <div class="drawer-mask" id="frameModalMask" style="z-index: 60;">
+      <div class="side-drawer" id="frameBottomSheet" style="width: 100%; max-width: none; height: 65vh; top: auto; bottom: 0; transform: translateY(100%); border-radius: 24px 24px 0 0; background: #fff; display: flex; flex-direction: column;">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #f2f2f7;">
+          <div style="font-size: 16px; font-weight: 600;">调整头像框</div>
+          <button id="saveFrameBtn" style="appearance: none; border: 0; background: transparent; font-size: 15px; font-weight: 600; color: #111; cursor: pointer;">保存</button>
+        </div>
+        <div style="padding: 24px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; flex: 1;">
+          
+          <div id="framePreviewContainer" style="width: 100px; height: 100px; border-radius: 50%; background: #eee; position: relative; margin-bottom: 24px; background-size: cover; background-position: center;">
+             <img id="framePreviewOverlay" src="" style="position: absolute; pointer-events: none; display: none; left: 50%; top: 50%; transform: translate(-50%, -50%);" />
+          </div>
+
+          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 100%; max-width: 200px; margin-bottom: 24px; flex-shrink: 0;">上传头像框</button>
+          <input type="file" id="frameFileInput" accept="image/*" style="display: none;" />
+
+          <div style="width: 100%; margin-bottom: 24px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">调整头像框大小</label>
+            <input type="range" id="frameScaleSlider" min="0.8" max="2.5" step="0.01" value="1" style="width: 100%; accent-color: #111;" />
+          </div>
+
+          <div style="width: 100%;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px; display: block;">历史头像框</label>
+            <div id="frameHistoryGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+              </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
 
     <nav class="tabbar" id="tabbar">
       <button class="tab-item active" data-tab="friends">好友</button>
@@ -1302,12 +1392,17 @@
       ],
       currentTab: "friends",
       activeContactId: null,
+      uploadedFrames: [], // 全局保存用户上传过的头像框历史
       contacts: [
         {
           id: makeId(),
           remark: "哥",
           realName: "",
           persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
+          myPersona: "",
+          avatar: "",
+          frameUrl: "",
+          frameScale: 1,
           lastTime: "22:36",
           messages: []
         },
@@ -1316,6 +1411,10 @@
           remark: "()",
           realName: "",
           persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
+          myPersona: "",
+          avatar: "",
+          frameUrl: "",
+          frameScale: 1,
           lastTime: "昨天",
           messages: []
         }
@@ -1399,6 +1498,28 @@
 
         const avatar = document.createElement("div");
         avatar.className = "friend-avatar";
+        if (contact.avatar) {
+          avatar.style.backgroundImage = `url(${contact.avatar})`;
+          avatar.style.backgroundSize = "cover";
+          avatar.style.backgroundPosition = "center";
+          avatar.classList.add("has-custom-avatar");
+        } else {
+          avatar.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+          avatar.classList.remove("has-custom-avatar");
+        }
+
+        if (contact.frameUrl) {
+          const frameImg = document.createElement("img");
+          frameImg.src = contact.frameUrl;
+          frameImg.style.position = "absolute";
+          frameImg.style.pointerEvents = "none";
+          frameImg.style.left = "50%";
+          frameImg.style.top = "50%";
+          frameImg.style.transform = "translate(-50%, -50%)";
+          frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
+          frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
+          avatar.appendChild(frameImg);
+        }
 
         const main = document.createElement("div");
         main.className = "friend-main";
@@ -1469,10 +1590,13 @@
         remark,
         realName,
         persona,
+        myPersona: "",
+        avatar: "",
+        frameUrl: "",
+        frameScale: 1,
         lastTime: getCurrentTime(), // 新联系人默认当前时间
         messages: []
       };
-
       state.contacts.unshift(newContact);
       renderContacts();
       closeAddModal();
@@ -1538,11 +1662,30 @@
         if (positionClass === "middle" || positionClass === "last") {
           avatar.style.visibility = "hidden";
         } else {
+          avatar.style.position = "relative"; // 保证头像框可以基于头像定位
           if (msg.from === "me") {
             if (state.userAvatar) avatar.style.backgroundImage = `url(${state.userAvatar})`;
             else avatar.style.background = "#333";
           } else {
-            avatar.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+            if (contact.avatar) {
+              avatar.style.backgroundImage = `url(${contact.avatar})`;
+            } else {
+              avatar.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+            }
+            
+            // 叠加头像框
+            if (contact.frameUrl) {
+              const frameImg = document.createElement("img");
+              frameImg.src = contact.frameUrl;
+              frameImg.style.position = "absolute";
+              frameImg.style.pointerEvents = "none";
+              frameImg.style.left = "50%";
+              frameImg.style.top = "50%";
+              frameImg.style.transform = "translate(-50%, -50%)";
+              frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
+              frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
+              avatar.appendChild(frameImg);
+            }
           }
         }
 
@@ -1613,8 +1756,15 @@
 
       // 组装 OpenAI 格式的消息体
       const messages = [];
+      let combinedPersona = "";
       if (contact.persona) {
-        messages.push({ role: "system", content: contact.persona });
+        combinedPersona += `你的设定：${contact.persona}\n`;
+      }
+      if (contact.myPersona) {
+        combinedPersona += `与你对话的用户的设定：${contact.myPersona}\n`;
+      }
+      if (combinedPersona) {
+        messages.push({ role: "system", content: combinedPersona });
       }
       
       // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
@@ -2017,6 +2167,233 @@
     // 点击“朋友圈”界面头像更换
     momentsAvatar.addEventListener("click", () => {
       avatarInput.click();
+    });
+
+    // ================== 聊天详情 & 头像框交互逻辑 ==================
+    const chatDetailsBtn = document.getElementById("chatDetailsBtn");
+    const screenChatDetails = document.getElementById("screen-chat-details");
+    const detailsBackBtn = document.getElementById("detailsBackBtn");
+    const saveDetailsBtn = document.getElementById("saveDetailsBtn");
+
+    const detailsAvatarPreview = document.getElementById("detailsAvatarPreview");
+    const detailsFrameOverlay = document.getElementById("detailsFrameOverlay");
+    const changeAvatarBtn = document.getElementById("changeAvatarBtn");
+    const contactAvatarInput = document.getElementById("contactAvatarInput");
+    
+    const detailsRemarkInput = document.getElementById("detailsRemarkInput");
+    const detailsRealNameInput = document.getElementById("detailsRealNameInput");
+    const detailsPersonaInput = document.getElementById("detailsPersonaInput");
+    const detailsMyPersonaInput = document.getElementById("detailsMyPersonaInput");
+
+    const openFrameModalBtn = document.getElementById("openFrameModalBtn");
+    const frameModalMask = document.getElementById("frameModalMask");
+    const frameBottomSheet = document.getElementById("frameBottomSheet");
+    const saveFrameBtn = document.getElementById("saveFrameBtn");
+    const framePreviewContainer = document.getElementById("framePreviewContainer");
+    const framePreviewOverlay = document.getElementById("framePreviewOverlay");
+    const uploadFrameBtn = document.getElementById("uploadFrameBtn");
+    const frameFileInput = document.getElementById("frameFileInput");
+    const frameScaleSlider = document.getElementById("frameScaleSlider");
+    const frameHistoryGrid = document.getElementById("frameHistoryGrid");
+
+    let tempFrameUrl = "";
+    let tempFrameScale = 1;
+
+    // 1. 打开聊天详情
+    chatDetailsBtn.addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+
+      // 回显数据
+      detailsRemarkInput.value = contact.remark || "";
+      detailsRealNameInput.value = contact.realName || "";
+      detailsPersonaInput.value = contact.persona || "";
+      detailsMyPersonaInput.value = contact.myPersona || "";
+      
+      if (contact.avatar) {
+        detailsAvatarPreview.style.backgroundImage = `url(${contact.avatar})`;
+      } else {
+        detailsAvatarPreview.style.backgroundImage = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+      }
+
+      if (contact.frameUrl) {
+        detailsFrameOverlay.src = contact.frameUrl;
+        detailsFrameOverlay.style.display = "block";
+        detailsFrameOverlay.style.width = `${100 * contact.frameScale}%`;
+        detailsFrameOverlay.style.height = `${100 * contact.frameScale}%`;
+        detailsFrameOverlay.style.left = "50%";
+        detailsFrameOverlay.style.top = "50%";
+        detailsFrameOverlay.style.transform = "translate(-50%, -50%)";
+      } else {
+        detailsFrameOverlay.style.display = "none";
+      }
+
+      screens.chat.classList.remove("active");
+      screenChatDetails.classList.add("active");
+    });
+
+    // 2. 退出详情（不保存）
+    detailsBackBtn.addEventListener("click", () => {
+      screenChatDetails.classList.remove("active");
+      screens.chat.classList.add("active");
+    });
+
+    // 3. 更换头像（仅预览，点右上角保存才生效）
+    changeAvatarBtn.addEventListener("click", () => {
+      contactAvatarInput.click();
+    });
+    contactAvatarInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const fileUrl = URL.createObjectURL(file);
+        detailsAvatarPreview.style.backgroundImage = `url(${fileUrl})`;
+        detailsAvatarPreview.dataset.tempAvatar = fileUrl; // 暂存
+      }
+    });
+
+    // 4. 保存详情
+    saveDetailsBtn.addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+
+      contact.remark = detailsRemarkInput.value.trim();
+      contact.realName = detailsRealNameInput.value.trim();
+      contact.persona = detailsPersonaInput.value.trim();
+      contact.myPersona = detailsMyPersonaInput.value.trim();
+
+      if (detailsAvatarPreview.dataset.tempAvatar) {
+        contact.avatar = detailsAvatarPreview.dataset.tempAvatar;
+        delete detailsAvatarPreview.dataset.tempAvatar;
+      }
+
+      screenChatDetails.classList.remove("active");
+      screens.chat.classList.add("active");
+      chatTitle.textContent = getDisplayName(contact);
+      renderChat();
+      renderContacts();
+    });
+
+    // 5. 打开头像框弹窗
+    openFrameModalBtn.addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+
+      // 弹窗里的头像底图
+      const currentTempAvatar = detailsAvatarPreview.dataset.tempAvatar || contact.avatar;
+      if (currentTempAvatar) {
+        framePreviewContainer.style.backgroundImage = `url(${currentTempAvatar})`;
+      } else {
+        framePreviewContainer.style.backgroundImage = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+      }
+
+      tempFrameUrl = contact.frameUrl || "";
+      tempFrameScale = contact.frameScale || 1;
+      frameScaleSlider.value = tempFrameScale;
+      updateFramePreview();
+      renderFrameHistory();
+
+      frameModalMask.classList.add("show");
+      setTimeout(() => { frameBottomSheet.style.transform = "translateY(0)"; }, 10);
+    });
+
+    // 6. 关闭头像框弹窗
+    frameModalMask.addEventListener("click", (e) => {
+      if (e.target === frameModalMask) closeFrameModal();
+    });
+    function closeFrameModal() {
+      frameBottomSheet.style.transform = "translateY(100%)";
+      setTimeout(() => { frameModalMask.classList.remove("show"); }, 300);
+    }
+
+    // 7. 更新拉条
+    frameScaleSlider.addEventListener("input", (e) => {
+      tempFrameScale = parseFloat(e.target.value);
+      updateFramePreview();
+    });
+    function updateFramePreview() {
+      if (tempFrameUrl) {
+        framePreviewOverlay.src = tempFrameUrl;
+        framePreviewOverlay.style.display = "block";
+        framePreviewOverlay.style.width = `${100 * tempFrameScale}%`;
+        framePreviewOverlay.style.height = `${100 * tempFrameScale}%`;
+      } else {
+        framePreviewOverlay.style.display = "none";
+      }
+    }
+
+    // 8. 上传新头像框
+    uploadFrameBtn.addEventListener("click", () => {
+      frameFileInput.click();
+    });
+    frameFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const fileUrl = URL.createObjectURL(file);
+        tempFrameUrl = fileUrl;
+        tempFrameScale = 1;
+        frameScaleSlider.value = tempFrameScale;
+        
+        if (!state.uploadedFrames.includes(fileUrl)) {
+          state.uploadedFrames.unshift(fileUrl);
+        }
+        
+        updateFramePreview();
+        renderFrameHistory();
+      }
+    });
+
+    // 9. 渲染历史记录列表 (一排四个)
+    function renderFrameHistory() {
+      frameHistoryGrid.innerHTML = "";
+      
+      const noneItem = document.createElement("div");
+      noneItem.style.width = "100%"; noneItem.style.aspectRatio = "1/1";
+      noneItem.style.borderRadius = "8px"; noneItem.style.border = "1px solid #ddd";
+      noneItem.style.display = "flex"; noneItem.style.alignItems = "center";
+      noneItem.style.justifyContent = "center"; noneItem.style.fontSize = "13px";
+      noneItem.style.color = "#666"; noneItem.style.cursor = "pointer";
+      noneItem.textContent = "无";
+      noneItem.onclick = () => { tempFrameUrl = ""; updateFramePreview(); renderFrameHistory(); };
+      if (!tempFrameUrl) { noneItem.style.borderColor = "#111"; noneItem.style.borderWidth = "2px"; }
+      frameHistoryGrid.appendChild(noneItem);
+
+      state.uploadedFrames.forEach(url => {
+        const imgItem = document.createElement("img");
+        imgItem.src = url;
+        imgItem.style.width = "100%"; imgItem.style.aspectRatio = "1/1";
+        imgItem.style.objectFit = "contain"; imgItem.style.borderRadius = "8px";
+        imgItem.style.border = "1px solid #ddd"; imgItem.style.cursor = "pointer";
+        if (url === tempFrameUrl) { imgItem.style.borderColor = "#111"; imgItem.style.borderWidth = "2px"; }
+        imgItem.onclick = () => {
+          tempFrameUrl = url;
+          updateFramePreview();
+          renderFrameHistory();
+        };
+        frameHistoryGrid.appendChild(imgItem);
+      });
+    }
+
+    // 10. 确认并保存头像框
+    saveFrameBtn.addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      if (contact) {
+        contact.frameUrl = tempFrameUrl;
+        contact.frameScale = tempFrameScale;
+        
+        // 马上更新背后详情界面的预览
+        if (contact.frameUrl) {
+          detailsFrameOverlay.src = contact.frameUrl;
+          detailsFrameOverlay.style.display = "block";
+          detailsFrameOverlay.style.width = `${100 * contact.frameScale}%`;
+          detailsFrameOverlay.style.height = `${100 * contact.frameScale}%`;
+          detailsFrameOverlay.style.left = "50%";
+          detailsFrameOverlay.style.top = "50%";
+          detailsFrameOverlay.style.transform = "translate(-50%, -50%)";
+        } else {
+          detailsFrameOverlay.style.display = "none";
+        }
+      }
+      closeFrameModal();
     });
 
     // 初始化运行一次动态样式

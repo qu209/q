@@ -795,6 +795,27 @@
       display: none !important;
     }
 
+    /* 字体预览气泡样式 */
+    .preview-bubble {
+      padding: 10px 14px;
+      border-radius: 18px;
+      line-height: 1.4;
+      max-width: 85%;
+      position: relative;
+      word-break: break-word;
+      white-space: pre-wrap;
+    }
+    .preview-left {
+      background: #fff;
+      color: #111;
+      border-bottom-left-radius: 4px;
+    }
+    .preview-right {
+      background: #787878;
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
     @media (min-width: 768px) {
       .friend-name {
         font-size: 18px;
@@ -877,26 +898,26 @@
           <button class="header-btn" id="settingsBackBtn" aria-label="返回">
             <span class="back-char">‹</span>
           </button>
-          <div class="chat-title" style="font-size: 17px; font-weight: 600;">API 设置</div>
+          <div class="chat-title" style="font-size: 17px; font-weight: 600;">设置</div>
           <button class="header-btn" id="saveSettingsBtn" style="font-size: 15px; font-weight: 600; color: #111; width: auto; padding-right: 16px;">保存</button>
         </div>
       </div>
       <div class="chat-body" style="padding: 20px 16px; background: #f2f2f7;">
         
-        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">api设置</div>
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">API 设置</div>
         <div style="background: #fff; border-radius: 16px; padding: 4px 16px; margin-bottom: 24px;">
           <div class="field" style="margin: 12px 0; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label for="apiUrlInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">反代地址 (API URL)</label>
             <input class="input" id="apiUrlInput" type="text" placeholder="例如: https://api.openai.com/v1" style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
           </div>
           <div class="field" style="margin: 12px 0;">
-            <label for="apiKeyInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">(API Key)</label>
+            <label for="apiKeyInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">密钥 (API Key)</label>
             <input class="input" id="apiKeyInput" type="password" placeholder="sk-..." style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
           </div>
         </div>
 
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">模型设置</div>
-        <div style="background: #fff; border-radius: 16px; padding: 16px;">
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
           <div class="field" style="display: flex; margin-bottom: 16px;">
             <button class="btn" id="fetchModelsBtn" style="flex: 1; background: #111; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">拉取可用模型</button>
           </div>
@@ -912,8 +933,54 @@
               <span id="tempValueDisplay" style="color: #8e8e93; font-weight: normal;">1.0</span>
             </label>
             <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; accent-color: #d1d1d6; height: 4px; outline: none; margin: 4px 0 8px 0;" />
-            <div style="font-size: 12px; color: #9ea5b0; line-height: 1.5; margin-top: 8px;">控制AI输出随机性的参数，较高的温度值会产生更多样化和创造性的回答，较低的温度值则产生更确定和一致的回答。</div>
           </div>
+        </div>
+
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">个性化 (全局字体与排版)</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px;">
+          
+          <div class="field" style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">
+            <select class="input" id="fontPresetSelect" style="flex: 1; height: 36px; padding: 0 12px; font-size: 14px; border-radius: 8px; appearance: auto; background: #f7f7f8; border: none; outline: none;">
+              <option value="default">默认预设</option>
+            </select>
+            <button class="btn btn-light" id="saveFontPresetBtn" style="height: 36px; padding: 0 12px; font-size: 13px; border-radius: 8px; flex: none; max-width: none;">保存预设</button>
+            <button class="btn btn-light" id="deleteFontPresetBtn" style="height: 36px; padding: 0 12px; font-size: 13px; border-radius: 8px; color: #df3b3b; flex: none; max-width: none;">删除</button>
+          </div>
+
+          <div class="field" style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">全局字体</label>
+            <input class="input" id="fontUrlInput" type="text" placeholder="填写字体链接 (如 https://.../font.ttf)" style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px; margin-bottom: 8px;" />
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; position: relative; border-radius: 8px;">
+                选择本地字体文件
+                <input type="file" id="fontFileInput" accept=".ttf,.otf,.woff,.woff2" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
+              </button>
+              <button class="btn btn-light" id="clearFontBtn" style="height: 36px; padding: 0 12px; font-size: 14px; border-radius: 8px; flex: none;">清除</button>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 20px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px;">对话预览 (点击切换中英文)</label>
+            <div id="fontPreviewArea" style="background: #f2f2f7; padding: 16px; border-radius: 12px; cursor: pointer; user-select: none;">
+              <div style="display: flex; flex-direction: column; align-items: flex-start; margin-bottom: 16px;">
+                <div class="preview-bubble preview-left" id="previewTextLeft">怎么会没有话题呢</div>
+                <div style="font-size: 11px; color: #a1a1a1; margin-top: 4px; margin-left: 4px;">21:50</div>
+              </div>
+              <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                <div class="preview-bubble preview-right" id="previewTextRight">每天的云都不一样呀</div>
+                <div style="font-size: 11px; color: #a1a1a1; margin-top: 4px; margin-right: 4px;">21:53 已读</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="field" style="margin-bottom: 4px;">
+            <label for="fontSizeInput" style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px;">
+              <span>气泡文本大小</span>
+              <span id="fontSizeDisplay" style="color: #8e8e93; font-weight: normal;">15px</span>
+            </label>
+            <input type="range" id="fontSizeInput" min="12" max="25" step="1" value="15" style="width: 100%; accent-color: #d1d1d6; height: 4px; outline: none; margin: 4px 0 8px 0;" />
+          </div>
+
         </div>
 
       </div>
@@ -1061,16 +1128,23 @@
         model: "",
         temperature: 1.0
       },
+      fontSettings: {
+        currentPresetId: "default",
+        url: "",
+        size: 15
+      },
+      fontPresets: [
+        { id: "default", name: "默认预设", url: "", size: 15 }
+      ],
       currentTab: "friends",
       activeContactId: null,
       contacts: [
-
         {
           id: makeId(),
           remark: "哥",
           realName: "",
           persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
-          lastTime: "22:36", // 模拟时间
+          lastTime: "22:36",
           messages: []
         },
         {
@@ -1078,7 +1152,7 @@
           remark: "()",
           realName: "",
           persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
-          lastTime: "昨天", // 模拟时间
+          lastTime: "昨天",
           messages: []
         }
       ]
@@ -1392,10 +1466,33 @@
       }
     });
 
-    // 设置页面逻辑
+    // ================== 个性化设置 & 动态样式注入 ==================
+    function applyGlobalFontAndSize() {
+      let styleEl = document.getElementById("dynamic-font-style");
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "dynamic-font-style";
+        document.head.appendChild(styleEl);
+      }
+      const fontUrl = state.fontSettings.url;
+      const fontSize = state.fontSettings.size;
+      let css = "";
+      if (fontUrl) {
+        css += `@font-face { font-family: 'AppCustomFont'; src: url('${fontUrl}'); }\n`;
+        css += `body, input, textarea, button, select { font-family: 'AppCustomFont', -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif !important; }\n`;
+      } else {
+        css += `body, input, textarea, button, select { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif !important; }\n`;
+      }
+      css += `.bubble, .preview-bubble { font-size: ${fontSize}px !important; }\n`;
+      styleEl.innerHTML = css;
+    }
+
+    // ================== 设置页面逻辑 ==================
     const openSettingsBtn = document.getElementById("openSettingsBtn");
     const settingsBackBtn = document.getElementById("settingsBackBtn");
     const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+    
+    // API 元素
     const apiUrlInput = document.getElementById("apiUrlInput");
     const apiKeyInput = document.getElementById("apiKeyInput");
     const fetchModelsBtn = document.getElementById("fetchModelsBtn");
@@ -1403,7 +1500,33 @@
     const tempInput = document.getElementById("tempInput");
     const tempValueDisplay = document.getElementById("tempValueDisplay");
 
+    // 个性化 元素
+    const fontPresetSelect = document.getElementById("fontPresetSelect");
+    const saveFontPresetBtn = document.getElementById("saveFontPresetBtn");
+    const deleteFontPresetBtn = document.getElementById("deleteFontPresetBtn");
+    const fontUrlInput = document.getElementById("fontUrlInput");
+    const fontFileInput = document.getElementById("fontFileInput");
+    const clearFontBtn = document.getElementById("clearFontBtn");
+    const fontSizeInput = document.getElementById("fontSizeInput");
+    const fontSizeDisplay = document.getElementById("fontSizeDisplay");
+    const fontPreviewArea = document.getElementById("fontPreviewArea");
+    const previewTextLeft = document.getElementById("previewTextLeft");
+    const previewTextRight = document.getElementById("previewTextRight");
+
+    // 预设刷新函数
+    function renderFontPresets() {
+      fontPresetSelect.innerHTML = "";
+      state.fontPresets.forEach(preset => {
+        const opt = document.createElement("option");
+        opt.value = preset.id;
+        opt.textContent = preset.name;
+        fontPresetSelect.appendChild(opt);
+      });
+      fontPresetSelect.value = state.fontSettings.currentPresetId;
+    }
+
     openSettingsBtn.addEventListener("click", () => {
+      // 载入 API 设置
       apiUrlInput.value = state.apiSettings.url;
       apiKeyInput.value = state.apiSettings.key;
       tempInput.value = state.apiSettings.temperature;
@@ -1412,6 +1535,12 @@
         modelSelect.innerHTML = `<option value="${state.apiSettings.model}">${state.apiSettings.model}</option>`;
       }
       
+      // 载入个性化设置
+      renderFontPresets();
+      fontUrlInput.value = state.fontSettings.url;
+      fontSizeInput.value = state.fontSettings.size;
+      fontSizeDisplay.textContent = state.fontSettings.size + "px";
+
       screens.me.classList.remove("active");
       screens.settings.classList.add("active");
       tabbar.classList.add("hidden");
@@ -1427,6 +1556,7 @@
       tempValueDisplay.textContent = Number(e.target.value).toFixed(1);
     });
 
+    // 模型拉取
     fetchModelsBtn.addEventListener("click", async () => {
       const url = apiUrlInput.value.trim();
       const key = apiKeyInput.value.trim();
@@ -1451,10 +1581,111 @@
       } catch (err) {
         alert("拉取模型失败，请检查地址和密钥是否正确。\n" + err.message);
       } finally {
-        fetchModelsBtn.textContent = "拉取模型";
+        fetchModelsBtn.textContent = "拉取可用模型";
       }
     });
 
+    // =============== 个性化交互逻辑 ===============
+
+    // 选择预设
+    fontPresetSelect.addEventListener("change", (e) => {
+      const selectedId = e.target.value;
+      const preset = state.fontPresets.find(p => p.id === selectedId);
+      if (preset) {
+        state.fontSettings.currentPresetId = selectedId;
+        state.fontSettings.url = preset.url;
+        state.fontSettings.size = preset.size;
+        fontUrlInput.value = preset.url;
+        fontSizeInput.value = preset.size;
+        fontSizeDisplay.textContent = preset.size + "px";
+        applyGlobalFontAndSize();
+      }
+    });
+
+    // 保存预设
+    saveFontPresetBtn.addEventListener("click", () => {
+      const name = prompt("请输入预设名称：", "自定义预设");
+      if (!name) return;
+      const newPreset = {
+        id: "preset_" + Date.now(),
+        name: name,
+        url: state.fontSettings.url,
+        size: state.fontSettings.size
+      };
+      state.fontPresets.push(newPreset);
+      state.fontSettings.currentPresetId = newPreset.id;
+      renderFontPresets();
+      alert("预设已保存！");
+    });
+
+    // 删除预设
+    deleteFontPresetBtn.addEventListener("click", () => {
+      if (state.fontSettings.currentPresetId === "default") {
+        alert("默认预设不可删除");
+        return;
+      }
+      if (confirm("确定要删除当前预设吗？")) {
+        state.fontPresets = state.fontPresets.filter(p => p.id !== state.fontSettings.currentPresetId);
+        state.fontSettings.currentPresetId = "default";
+        // 回退到 default
+        const def = state.fontPresets.find(p => p.id === "default");
+        state.fontSettings.url = def.url;
+        state.fontSettings.size = def.size;
+        renderFontPresets();
+        fontUrlInput.value = def.url;
+        fontSizeInput.value = def.size;
+        fontSizeDisplay.textContent = def.size + "px";
+        applyGlobalFontAndSize();
+      }
+    });
+
+    // 字体链接输入
+    fontUrlInput.addEventListener("input", (e) => {
+      state.fontSettings.url = e.target.value.trim();
+      applyGlobalFontAndSize();
+    });
+
+    // 选择本地字体文件
+    fontFileInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const fileUrl = URL.createObjectURL(file);
+        state.fontSettings.url = fileUrl;
+        fontUrlInput.value = fileUrl;
+        applyGlobalFontAndSize();
+      }
+    });
+
+    // 清除字体
+    clearFontBtn.addEventListener("click", () => {
+      state.fontSettings.url = "";
+      fontUrlInput.value = "";
+      fontFileInput.value = "";
+      applyGlobalFontAndSize();
+    });
+
+    // 大小滑块
+    fontSizeInput.addEventListener("input", (e) => {
+      const size = e.target.value;
+      state.fontSettings.size = size;
+      fontSizeDisplay.textContent = size + "px";
+      applyGlobalFontAndSize();
+    });
+
+    // 点击预览区域切换中英文
+    let isPreviewZh = true;
+    fontPreviewArea.addEventListener("click", () => {
+      isPreviewZh = !isPreviewZh;
+      if (isPreviewZh) {
+        previewTextLeft.textContent = "怎么会没有话题呢";
+        previewTextRight.textContent = "每天的云都不一样呀";
+      } else {
+        previewTextLeft.textContent = "How could we have no topics?";
+        previewTextRight.textContent = "The clouds are different every day!";
+      }
+    });
+
+    // 总体保存
     saveSettingsBtn.addEventListener("click", () => {
       state.apiSettings.url = apiUrlInput.value.trim();
       state.apiSettings.key = apiKeyInput.value.trim();
@@ -1467,6 +1698,8 @@
       tabbar.classList.remove("hidden");
     });
 
+    // 初始化运行一次动态样式
+    applyGlobalFontAndSize();
     renderContacts();
     switchTab("friends");
   </script>

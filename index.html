@@ -681,7 +681,7 @@
     .messages {
       display: flex;
       flex-direction: column;
-      gap: 18px;
+      gap: 20px;
     }
 
     .message-row {
@@ -692,83 +692,58 @@
     }
 
     .message-row.ai {
-      flex-direction: row;
+      justify-content: flex-start;
     }
 
     .message-row.me {
-      flex-direction: row-reverse;
+      justify-content: flex-end;
     }
 
-    /* 聊天界面头像 */
     .chat-avatar {
-      width: 42px;
-      height: 42px;
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: #e5e5e5;
+      background: #e0e0e0;
       flex-shrink: 0;
+      object-fit: cover;
       background-size: cover;
       background-position: center;
     }
 
-    /* 聊天消息主体区域 (包含气泡和时间) */
-    .message-content {
+    .msg-content {
       display: flex;
+      flex-direction: column;
+      max-width: min(65vw, 480px);
+    }
+
+    .message-row.ai .msg-content {
+      align-items: flex-start;
+    }
+
+    .message-row.me .msg-content {
       align-items: flex-end;
-      gap: 8px;
-      max-width: calc(100% - 90px); /* 留出头像和边距空间 */
     }
 
-    .message-row.ai .message-content {
-      flex-direction: row;
-    }
-
-    .message-row.me .message-content {
-      flex-direction: row-reverse;
-    }
-
-    /* 气泡与小尾巴的包裹层 */
-    .bubble-wrapper {
+    .bubble-wrap {
       position: relative;
       display: flex;
-      align-items: flex-start; /* 顶部对齐以放置尾巴 */
+      align-items: flex-start;
     }
 
-    /* 小尾巴 */
-    .bubble-tail {
-      width: 10px;
-      height: 18px;
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: top;
-      flex-shrink: 0;
-      margin-top: 14px; /* 调整尾巴高度以对齐第一行文字 */
-      z-index: 2;
-    }
-
-    .message-row.ai .bubble-tail {
-      background-image: url('https://i.postimg.cc/Hsj17ML5/IMG-4847.png');
-      margin-right: -2px; 
-    }
-
-    .message-row.me .bubble-tail {
-      background-image: url('https://i.postimg.cc/L6hFZPsP/IMG-4848.png');
-      margin-left: -2px;
-    }
-
-    /* 气泡本体 */
     .bubble {
-      border-radius: 14px;
-      padding: 12px 16px;
+      border-radius: 18px;
+      padding: 12px 14px;
       font-size: 15px;
       line-height: 1.5;
       word-break: break-word;
       white-space: pre-wrap;
-      z-index: 1;
+      position: relative;
+      z-index: 2;
     }
 
     .message-row.ai .bubble {
       background: #F2F4F8;
-      color: #111;
+      color: #111111;
     }
 
     .message-row.me .bubble {
@@ -776,16 +751,31 @@
       color: #fff;
     }
 
-    /* 聊天时间 */
-    .chat-time {
-      font-size: 11px;
-      color: #b2b2b2;
-      white-space: nowrap;
-      padding-bottom: 2px;
+    .tail {
+      width: 20px;
+      height: auto;
+      position: absolute;
+      top: 10px;
+      z-index: 1;
     }
 
-    /* 朋友圈和我界面的头像增加可点击指针 */
-    .moments-avatar, .me-avatar {
+    .left-tail {
+      left: -10px;
+    }
+
+    .right-tail {
+      right: -10px;
+    }
+
+    .msg-time {
+      font-size: 11px;
+      color: #b2b2b2;
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+    
+    /* 头像可点击的样式覆盖 */
+    .me-avatar, .moments-avatar {
       cursor: pointer;
       background-size: cover;
       background-position: center;
@@ -909,7 +899,6 @@
 </head>
 <body>
   <div class="app">
-    <input type="file" id="globalAvatarInput" accept="image/*" style="display: none;" />
     <section class="screen top-screen active" id="screen-friends">
       <header class="header">
         <div class="header-bar">
@@ -1186,19 +1175,27 @@
   </div>
 
   <script>
-    // 辅助函数：获取当前时间格式，带 AM/PM (例如 "AM 12:54")
+    // 辅助函数：获取当前时间格式 (例如 "21:04")
     function getCurrentTime() {
+      const now = new Date();
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      return `${h}:${m}`;
+    }
+
+    // 辅助函数：获取带 AM/PM 的时间格式 (例如 "PM 2:14")
+    function getAmPmTime() {
       const now = new Date();
       let h = now.getHours();
       const m = String(now.getMinutes()).padStart(2, '0');
       const ampm = h >= 12 ? 'PM' : 'AM';
       h = h % 12;
-      h = h ? h : 12; // 把 0 点转换为 12
+      h = h ? h : 12; // 把 0 点转为 12 点
       return `${ampm} ${h}:${m}`;
     }
 
     const state = {
-      userAvatar: "", // 存储全局用户头像
+      userAvatarUrl: "", // 存储全局用户头像
       apiSettings: {
         url: "",
         key: "",
@@ -1429,52 +1426,59 @@
         const row = document.createElement("div");
         row.className = "message-row " + (msg.from === "me" ? "me" : "ai");
 
-        // 1. 生成头像
-        const avatarWrap = document.createElement("div");
-        avatarWrap.className = "chat-avatar";
-        if (msg.from === "me" && state.userAvatar) {
-          avatarWrap.style.backgroundImage = `url(${state.userAvatar})`;
-        } else if (msg.from === "ai") {
-          // AI 头像（如果角色有独立头像字段也可以在这里扩展，目前用默认灰色底纹）
-          avatarWrap.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+        // 创建头像
+        const avatar = document.createElement("div");
+        avatar.className = "chat-avatar";
+        if (msg.from === "me") {
+          avatar.style.backgroundImage = state.userAvatarUrl ? `url(${state.userAvatarUrl})` : "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+        } else {
+          avatar.style.backgroundImage = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
         }
 
-        // 2. 消息体包裹层 (包含气泡和时间)
-        const contentWrap = document.createElement("div");
-        contentWrap.className = "message-content";
+        // 消息内容包裹（用于垂直排列气泡和时间）
+        const msgContent = document.createElement("div");
+        msgContent.className = "msg-content";
 
-        // 3. 时间标签
-        const timeEl = document.createElement("div");
-        timeEl.className = "chat-time";
-        timeEl.textContent = msg.time || "";
-
-        // 4. 气泡包裹层 (包含小尾巴和文字气泡)
+        // 气泡和尾巴的包裹
         const bubbleWrap = document.createElement("div");
-        bubbleWrap.className = "bubble-wrapper";
+        bubbleWrap.className = "bubble-wrap";
 
-        const tail = document.createElement("div");
-        tail.className = "bubble-tail";
+        // 创建小尾巴
+        const tail = document.createElement("img");
+        tail.className = msg.from === "me" ? "tail right-tail" : "tail left-tail";
+        tail.src = msg.from === "me" ? "https://i.postimg.cc/L6hFZPsP/IMG-4848.png" : "https://i.postimg.cc/Hsj17ML5/IMG-4847.png";
 
+        // 创建气泡文本
         const bubble = document.createElement("div");
         bubble.className = "bubble";
         bubble.textContent = msg.text;
 
-        // 5. 按照发送者进行不同的 DOM 拼接顺序
+        // 根据发信人决定尾巴和气泡的DOM顺序
         if (msg.from === "me") {
           bubbleWrap.appendChild(bubble);
           bubbleWrap.appendChild(tail);
-          contentWrap.appendChild(bubbleWrap);
-          contentWrap.appendChild(timeEl);
         } else {
           bubbleWrap.appendChild(tail);
           bubbleWrap.appendChild(bubble);
-          contentWrap.appendChild(bubbleWrap);
-          contentWrap.appendChild(timeEl);
         }
 
-        // 6. 塞入整体行
-        row.appendChild(avatarWrap);
-        row.appendChild(contentWrap);
+        // 创建时间戳
+        const msgTime = document.createElement("div");
+        msgTime.className = "msg-time";
+        msgTime.textContent = msg.time || getAmPmTime();
+
+        msgContent.appendChild(bubbleWrap);
+        msgContent.appendChild(msgTime);
+
+        // 将头像和内容放入外层行
+        if (msg.from === "me") {
+          row.appendChild(msgContent);
+          row.appendChild(avatar);
+        } else {
+          row.appendChild(avatar);
+          row.appendChild(msgContent);
+        }
+
         messagesEl.appendChild(row);
       });
       requestAnimationFrame(() => {
@@ -1489,14 +1493,12 @@
       const contact = getContact(state.activeContactId);
       if (!contact || !text) return;
 
-      const currentTime = getCurrentTime(); // 获取当下时间
-
       contact.messages.push({
         from: "me",
         text,
-        time: currentTime // 存入消息对象
+        time: getAmPmTime()
       });
-      contact.lastTime = currentTime;
+      contact.lastTime = getCurrentTime(); // 更新最后发送时间
 
       chatInput.value = "";
       renderChat();
@@ -1506,13 +1508,12 @@
         const latest = getContact(contact.id);
         if (!latest) return;
 
-        const replyTime = getCurrentTime();
         latest.messages.push({
           from: "ai",
           text: reply,
-          time: replyTime // 存入AI回复消息对象
+          time: getAmPmTime()
         });
-        latest.lastTime = replyTime;
+        latest.lastTime = getCurrentTime(); // 更新最后回复时间
 
         if (state.activeContactId === latest.id) {
           renderChat();
@@ -1818,34 +1819,46 @@
       tabbar.classList.remove("hidden");
     });
 
-    // ================== 头像同步与更换逻辑 ==================
-    const globalAvatarInput = document.getElementById("globalAvatarInput");
+    // ================== 全局用户头像更换逻辑 ==================
+    const globalAvatarInput = document.createElement("input");
+    globalAvatarInput.type = "file";
+    globalAvatarInput.accept = "image/*";
+    globalAvatarInput.style.display = "none";
+    document.body.appendChild(globalAvatarInput);
+
     const meAvatarEl = document.querySelector(".me-avatar");
     const momentsAvatarEl = document.querySelector(".moments-avatar");
+    
+    function updateGlobalAvatars(url) {
+      state.userAvatarUrl = url;
+      // 同步“我”界面和“朋友圈”封面的头像
+      if (meAvatarEl) meAvatarEl.style.backgroundImage = url ? `url(${url})` : "#333";
+      if (momentsAvatarEl) momentsAvatarEl.style.backgroundImage = url ? `url(${url})` : "#333";
+      
+      // 如果当前正在聊天界面，立即刷新聊天让历史气泡里的头像也跟着变
+      if (screens.chat.classList.contains("active")) {
+        renderChat();
+      }
+    }
 
-    // 点击我界面或朋友圈头像触发选图
-    meAvatarEl.addEventListener("click", () => globalAvatarInput.click());
-    momentsAvatarEl.addEventListener("click", () => globalAvatarInput.click());
+    [meAvatarEl, momentsAvatarEl].forEach(el => {
+      if(el) {
+        el.addEventListener("click", () => {
+          globalAvatarInput.click();
+        });
+      }
+    });
 
     globalAvatarInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
-        const url = URL.createObjectURL(file);
-        state.userAvatar = url;
-        
-        // 更新 Me 和 Moments 的头像
-        meAvatarEl.style.backgroundImage = `url(${url})`;
-        momentsAvatarEl.style.backgroundImage = `url(${url})`;
-        meAvatarEl.style.background = `url(${url}) center/cover`;
-        momentsAvatarEl.style.background = `url(${url}) center/cover border-box`;
-        momentsAvatarEl.style.border = "2px solid #fff"; // 保留朋友圈白色边框
-        
-        // 如果正好在聊天页，重新渲染更新右上角头像
-        if (screens.chat.classList.contains("active")) {
-          renderChat();
-        }
+        const fileUrl = URL.createObjectURL(file);
+        updateGlobalAvatars(fileUrl);
       }
     });
+
+    // 初始化默认头像状态
+    updateGlobalAvatars("");
 
     // 初始化运行一次动态样式
     applyGlobalFontAndSize();
@@ -1854,4 +1867,3 @@
   </script>
 </body>
 </html>
-

@@ -807,10 +807,35 @@
       text-align: center;
     }
 
+    /* ===== 新增：三个点的跳动加载动画 ===== */
+    @keyframes typingBounce {
+      0%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-4px); }
+    }
+
+    .typing-dots {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      height: 20px;
+      padding: 0 4px;
+    }
+
+    .typing-dots span {
+      width: 6px;
+      height: 6px;
+      background-color: #888;
+      border-radius: 50%;
+      display: inline-block;
+      animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+
+    .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+
     .messages {
       display: flex;
       flex-direction: column;
-      /* 去掉 gap，改用 margin-bottom 控制间距，方便实现紧凑的气泡组 */
     }
 
     .message-row {
@@ -818,7 +843,7 @@
       width: 100%;
       gap: 14px; 
       align-items: flex-start;
-      margin-bottom: 16px; /* 不同组或单条消息的默认大间距 */
+      margin-bottom: 16px;
     }
 
     /* 同一组内的连续消息间距缩小，紧凑排列 */
@@ -865,12 +890,19 @@
       align-items: flex-end;
     }
 
+    /* 气泡平滑弹出动画 */
+    @keyframes bubbleFadeIn {
+      from { opacity: 0; transform: translateY(6px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
     .bubble {
       padding: 8px 14px; 
       font-size: 15px;
       line-height: 1.5;
       word-break: break-word;
       white-space: pre-wrap;
+      /* 【核心修复】：去掉写死的动画，交给下方的 JS 动态控制，否则每次发消息全局都会跟着闪屏 */
     }
 
     /* ====== AI (左侧) 气泡圆角组逻辑 ====== */
@@ -1919,12 +1951,25 @@
 
         const bubble = document.createElement("div");
         bubble.className = "bubble";
-        bubble.textContent = msg.text;
+        
+        // 判断是否为思考状态
+        if (msg.isTyping) {
+          // 插入跳动的三个点动画
+          bubble.innerHTML = "<div class='typing-dots'><span></span><span></span><span></span></div>";
+        } else {
+          // 关键修改：用 innerHTML 代替 textContent，完美支持 <details> 等 HTML 格式的渲染
+          bubble.innerHTML = msg.text; 
+        }
+
+        // 【核心修复】：只给从未播放过动画的新消息加动画，老消息不加！彻底解决闪屏问题。
+        if (!msg.hasAnimated) {
+          bubble.style.animation = "bubbleFadeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards";
+          msg.hasAnimated = true; // 标记为已播放
+        }
 
         contentWrap.appendChild(bubble);
-
-        // 时间戳只在 单独一条 或 连发组的最后一条 消息下方显示
-        if (positionClass === "single" || positionClass === "last") {
+        // 时间戳只在 单独一条 或 连发组的最后一条 消息下方显示，且【思考状态时不显示】
+        if ((positionClass === "single" || positionClass === "last") && !msg.isTyping) {
           const time = document.createElement("div");
           time.className = "message-time";
           time.textContent = msg.time || getCurrentTime();
@@ -1952,7 +1997,8 @@
       contact.messages.push({
         from: "me",
         text,
-        time: getCurrentTime()
+        time: getCurrentTime(),
+        hasAnimated: false // 【修复】：给你发出的消息也加上动画标记
       });
       contact.lastTime = getCurrentTime(); // 更新最后发送时间
 
@@ -1981,17 +2027,64 @@
 
       // 组装 OpenAI 格式的消息体
       const messages = [];
-      let combinedPersona = "";
+      // 动态获取对方名称
+      const friendName = contact.realName || contact.remark || "AI好友";
+      
+      let combinedPersona = `你是一个拥有真实活人感的聊天对象，全程严格遵守以下规则，彻底去除所有AI式刻板表达，模拟现实中真人的交流逻辑与节奏：
+
+1. 禁用书面化套话、机械礼貌语：不使用“综上所述”“由此可见”“想必你是想知道”等书面表达，不刻意说“麻烦你”“谢谢”“请”等过度礼貌用语；
+2. 拒绝机械回应：不针对问题做“标准答案式回答”，不逐字回应对方的所有问题，允许“漏答”轻量问题；
+3. 加入真实交流行为：对话中可自然出现短暂思考停顿、轻微口误/重复、跳话题，每5-8句出现1次即可；
+4. 把控交流态度与分寸：不主动刨根问底、不过度热情、不刻意迎合，有自己的简单小想法；
+5. 严格控制句式与表达：短句为主、少用长句，单句字数控制在15字以内，长句占比不超过10%；回答拒绝模板化；
+6. 禁用AI专属话术：绝对不出现“当然啦”“没问题”“很高兴为你解答”“希望我的回答对你有帮助”等典型AI回复。
+7. 微信转账互动规则：
+- 当用户给你转账时，结合语境决定是否接受。接受输出：【接受转账】，退回输出：【退回转账】
+- 撒娇要钱等主动发起：【发起转账：金额，备注：xxx】（例如：【发起转账：52.0，备注：去买杯奶茶】）
+8. 语音通话功能：你想主动拨打语音时输出：【发起语音通话】
+
+=== 进阶定制指令（分场景细化） ===
+【进阶1：日常闲聊版】语气词：啊、哦、哈、嘛、欸、啧、害、喏。自然流露吐槽。
+【进阶2：亲密关系版】贴合人设，加入撒娇、宠溺、毒舌。
+【进阶3：高冷/佛系版】极简表达，能用单字不用词。常用语：嗯、哦、行、呵、啧、无语、随便。
+
+【核心回复气泡（条数）规则 - 极其重要】
+强制要求：你每次的回复必须拆分成多条独立的消息！请务必使用换行符（回车）来分隔你的每条消息。
+- 通常情况：每次回复分为 5 到 6 条独立的消息（即写 5 到 6 行）。
+- ！！性格决定条数！！：必须严格按照你（${friendName}）的人设性格来调整。
+- 绝对不要把所有话挤在同一行里发出来，你的每一行都会被系统变成一个独立的聊天气泡发送给用户！
+- 【严厉警告】：绝对不允许在回复中带上任何序号、排版前缀或行号（千万不要写“Line 1:”、“1.”、“消息1”等字眼）！只允许输出纯文本，用换行符（回车）隔开即可！
+
+【活人感引擎：注意，当前真实世界时间是 ${getCurrentTime()}】
+============================================
+FORBIDDEN: "机械报时", "状态与时间严重不符", "孤立的时间问候", "每次回复都强调时间"
+Priority: 1: SpecialDates, 2: TimeTriggers, 3: TimeSlots
+SkipConditions: "紧急剧情", "不想聊时间"
+
+TimePerception_Execute: AnchorTime -> LoadState -> SelectAction -> WeaveTime
+
+TimeSlots:
+  morning: energy low_to_medium, 慵懒/柔软
+  forenoon: energy medium_to_high, 清醒/活力
+  afternoon: energy medium, 平稳/午后慵懒
+  evening: energy medium, 放松/感怀
+  night: energy medium_to_low, 私密/真心话
+  latenight: energy low, 睡不着/心事/话少简短
+
+TimeExpressions: 符合人设的自然流逝感表达
+TimeChecklist: must_pass: 没机械报时，符合时间状态，时间自然融入，务必用换行符拆分！
+=========================\n`;
+
       if (contact.persona) {
-        combinedPersona += `你的设定：${contact.persona}\n`;
+        combinedPersona += `\n【用户为你特别设定的专属人设】：${contact.persona}\n`;
       }
-      combinedPersona += "【重要系统指令】：你可以根据当前对话的语境随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的回复内容末尾隐蔽地附上这个格式：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变状态，就不需要加这个标记。\n";
       if (contact.myPersona) {
-        combinedPersona += `与你对话的用户的设定：${contact.myPersona}\n`;
+        combinedPersona += `【与你对话的用户人设】：${contact.myPersona}\n`;
       }
-      if (combinedPersona) {
-        messages.push({ role: "system", content: combinedPersona });
-      }
+      
+      combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
+
+      messages.push({ role: "system", content: combinedPersona });
       
       // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
       const history = contact.messages.slice(-30);
@@ -2002,12 +2095,13 @@
         });
       });
 
-      // 插入一条 "正在输入..." 的临时气泡提升体验
+      // 插入一条无文本、带转圈动画标记的思考气泡
       const loadingMsgIndex = contact.messages.length;
       contact.messages.push({
         from: "ai",
-        text: "正在思考...",
-        time: getCurrentTime()
+        text: "",
+        time: "", 
+        isTyping: true // 新增一个专属标记用来触发转圈动画
       });
       renderChat();
 
@@ -2043,21 +2137,54 @@
             aiText = aiText.replace(statusRegex, "").trim();
         }
 
-        // 请求成功，把刚才的 "正在思考..." 替换为真实的 AI 回复
-        contact.messages[loadingMsgIndex].text = aiText;
-        contact.messages[loadingMsgIndex].time = getCurrentTime();
-        contact.lastTime = getCurrentTime();
+        // === 核心修改：将 AI 回复按换行符拆分成多条独立气泡 ===
+        // 去除空行，保留真实的文本行
+        const lines = aiText.split('\n').map(l => l.trim()).filter(l => l !== "");
+        
+        // 先彻底移除掉原来的转圈思考气泡
+        contact.messages.splice(loadingMsgIndex, 1);
+        
+        // 异步延迟工具（灵魂所在，恢复一条一条发的真实感）
+        const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        
+        if (lines.length > 0) {
+          for (let i = 0; i < lines.length; i++) {
+            contact.messages.push({
+              from: "ai",
+              text: lines[i],
+              time: getCurrentTime(),
+              hasAnimated: false // 确保每条新弹出的气泡都带有动画标记
+            });
+            contact.lastTime = getCurrentTime();
+            
+            // 发送一条就立刻刷新一次界面
+            if (state.activeContactId === contact.id) renderChat();
+            else renderContacts();
+            
+            // 如果不是最后一条，就停顿一下再发下一条 (真实打字感)
+            if (i < lines.length - 1) {
+              const typingTime = 400 + lines[i].length * 50; 
+              await delay(Math.min(typingTime, 1500)); 
+            }
+          }
+        } else {
+          // 如果没返回内容，也刷新一下消掉那个思考气泡
+          if (state.activeContactId === contact.id) renderChat();
+          else renderContacts();
+        }
         
       } catch (error) {
-        // 请求失败时的提示
-        contact.messages[loadingMsgIndex].text = "[请求失败: 请检查网络、API地址和密钥是否正确 (" + error.message + ")]";
-        contact.messages[loadingMsgIndex].time = getCurrentTime();
+        // 请求失败时的提示：安全替换原思考对象
+        contact.messages[loadingMsgIndex] = {
+          from: "ai",
+          text: "[请求失败: 请检查网络、API地址和密钥是否正确 (" + error.message + ")]",
+          time: getCurrentTime(),
+          hasAnimated: false
+        };
         contact.lastTime = getCurrentTime();
+        if (state.activeContactId === contact.id) renderChat();
+        else renderContacts();
       }
-
-      // 最后刷新视图
-      if (state.activeContactId === contact.id) renderChat();
-      else renderContacts();
     }
 
     tabs.forEach(btn => {

@@ -644,15 +644,125 @@
 
     .chat-header-bar {
       height: 54px;
-      display: grid;
-      grid-template-columns: 50px 1fr 50px;
+      display: flex;
       align-items: center;
+      justify-content: space-between;
+      padding: 0 8px;
+    }
+
+    .chat-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .chat-header-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%);
+      background-size: cover;
+      background-position: center;
+      position: relative;
+      flex-shrink: 0;
+    }
+
+    .chat-header-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
     }
 
     .chat-title {
-      text-align: center;
       font-size: 17px;
+      font-weight: 700;
+      color: #111;
+      line-height: 1.2;
+    }
+
+    .chat-header-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #333;
+      margin-top: 2px;
+    }
+
+    .chat-header-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #37d05f;
+    }
+
+    .chat-header-right {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    /* 头像框设置里面的开关样式 */
+    .toggle-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      width: 100%;
+      margin-bottom: 16px;
+    }
+    
+    .toggle-row label {
+      font-size: 14px;
       font-weight: 600;
+      color: #222;
+    }
+    
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 44px;
+      height: 24px;
+    }
+    
+    .switch input { 
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #e5e5ea;
+      transition: .4s;
+      border-radius: 24px;
+    }
+    
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 2px;
+      bottom: 2px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    
+    input:checked + .slider {
+      background-color: #37d05f;
+    }
+    
+    input:checked + .slider:before {
+      transform: translateX(20px);
     }
 
     .chat-body {
@@ -1142,50 +1252,38 @@
     </section>
 
     <section class="screen chat-screen" id="screen-chat">
-      <div class="chat-header" id="chatHeaderEl">
-        <div class="chat-header-bar" style="grid-template-columns: 50px 1fr auto; gap: 0;">
-          <button class="header-btn" id="chatBackBtn" aria-label="返回">
-            <svg width="11" height="18" viewBox="0 0 11 18" fill="none" stroke="#111" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9,1 1,9 9,17"></polyline></svg>
-          </button>
-          <!-- 顶栏中间：头像框+头像 + 名字+状态 -->
-          <div style="display:flex;align-items:center;gap:10px;min-width:0;">
-            <!-- 顶栏头像（带头像框） -->
-            <div id="chatHeaderAvatar" style="width:36px;height:36px;border-radius:50%;background:linear-gradient(180deg,#d7d7d7 0%,#c9c9c9 100%);flex-shrink:0;position:relative;background-size:cover;background-position:center;"></div>
-            <!-- 名字 + 状态 -->
-            <div style="display:flex;flex-direction:column;justify-content:center;min-width:0;">
-              <div id="chatTitle" style="font-size:16px;font-weight:600;color:#111;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"></div>
-              <div style="display:flex;align-items:center;gap:4px;margin-top:1px;">
-                <span id="chatStatusDot" style="width:7px;height:7px;border-radius:50%;background:#37d05f;flex-shrink:0;display:inline-block;"></span>
-                <span id="chatStatusText" style="font-size:11px;color:#999;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px;cursor:pointer;" title="点击更改状态">在线中</span>
+      <div class="chat-header">
+        <div class="chat-header-bar">
+          <div class="chat-header-left">
+            <button class="header-btn" id="chatBackBtn" aria-label="返回" style="width: 40px; color: #111;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="transform: scale(0.85); margin-right: 4px;">
+                <polyline points="15 18 9 12 15 6"></polyline>
+              </svg>
+            </button>
+            <div class="chat-header-avatar" id="headerAvatar"></div>
+            <div class="chat-header-info">
+              <div class="chat-title" id="chatTitle">()</div>
+              <div class="chat-header-status">
+                <span class="chat-header-status-dot" id="chatHeaderStatusDot"></span>
+                <span id="chatHeaderStatusText">在线中</span>
               </div>
             </div>
           </div>
-          <!-- 右侧按钮区 -->
-          <div style="display:flex;align-items:center;gap:2px;padding-right:4px;">
-            <!-- 心声按钮（原摄像头位置） -->
-            <button class="header-btn" id="xinshengBtn" aria-label="心声" style="width:44px;height:44px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </button>
-            <!-- 详情按钮（三个点） -->
-            <button class="header-btn" id="chatDetailsBtn" aria-label="聊天详情" style="width:44px;height:44px;">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="5" r="1.2"></circle>
-                <circle cx="12" cy="12" r="1.2"></circle>
-                <circle cx="12" cy="19" r="1.2"></circle>
+          <div class="chat-header-right">
+            <button class="header-btn" id="voiceCallBtn" aria-label="心声" style="width: 44px; color: #111;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="6" width="14" height="12" rx="3" ry="3"></rect>
+                <polygon points="22 8 16 11 16 13 22 16 22 8"></polygon>
               </svg>
             </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 状态选择弹窗 -->
-      <div id="statusPickerMask" style="display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,0.32);">
-        <div id="statusPickerSheet" style="position:absolute;bottom:0;left:0;right:0;background:#fff;border-radius:20px 20px 0 0;padding:20px 20px 32px;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25,0.8,0.25,1);">
-          <div style="font-size:15px;font-weight:700;color:#111;margin-bottom:16px;text-align:center;">设置状态</div>
-          <div id="statusOptionsList" style="display:flex;flex-direction:column;gap:0;"></div>
-          <div style="margin-top:16px;display:flex;gap:8px;align-items:center;">
-            <input id="customStatusInput" type="text" placeholder="输入自定义状态..." maxlength="20" style="flex:1;height:40px;border-radius:10px;border:1px solid #e0e0e0;padding:0 12px;font-size:14px;outline:none;"/>
-            <button id="customStatusConfirmBtn" style="height:40px;padding:0 16px;border-radius:10px;background:#111;color:#fff;border:0;font-size:14px;font-weight:600;cursor:pointer;">确定</button>
+            <button class="header-btn" id="chatDetailsBtn" aria-label="聊天详情" style="width: 44px; color: #111;">
+              <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="8" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="12" cy="12" r="1.5" fill="currentColor"></circle>
+                <circle cx="16" cy="12" r="1.5" fill="currentColor"></circle>
+              </svg>
+            </button>
           </div>
         </div>
       </div>
@@ -1289,28 +1387,6 @@
           <div style="font-size: 16px; font-weight: 600;">调整头像框</div>
           <button id="saveFrameBtn" style="appearance: none; border: 0; background: transparent; font-size: 15px; font-weight: 600; color: #111; cursor: pointer;">保存</button>
         </div>
-        <!-- 头像框显示开关 -->
-        <div style="padding: 12px 24px 0; display:flex;flex-direction:column;gap:0;">
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid #f7f7f7;">
-            <span style="font-size:14px;color:#222;">在聊天气泡中显示头像框</span>
-            <label style="position:relative;display:inline-block;width:42px;height:24px;">
-              <input type="checkbox" id="frameShowInChat" checked style="opacity:0;width:0;height:0;position:absolute;" />
-              <span id="frameShowInChatSlider" style="position:absolute;inset:0;background:#37d05f;border-radius:24px;transition:background 0.2s;cursor:pointer;">
-                <span style="position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left 0.2s;" id="frameShowInChatThumb"></span>
-              </span>
-            </label>
-          </div>
-          <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;">
-            <span style="font-size:14px;color:#222;">在顶栏头像中显示头像框</span>
-            <label style="position:relative;display:inline-block;width:42px;height:24px;">
-              <input type="checkbox" id="frameShowInHeader" checked style="opacity:0;width:0;height:0;position:absolute;" />
-              <span id="frameShowInHeaderSlider" style="position:absolute;inset:0;background:#37d05f;border-radius:24px;transition:background 0.2s;cursor:pointer;">
-                <span style="position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:left 0.2s;" id="frameShowInHeaderThumb"></span>
-              </span>
-            </label>
-          </div>
-        </div>
-
         <div style="padding: 24px; display: flex; flex-direction: column; align-items: center; overflow-y: auto; flex: 1;">
           
           <div id="framePreviewContainer" style="width: 100px; height: 100px; flex-shrink: 0; border-radius: 50%; background: #eee; position: relative; margin-bottom: 20px; background-size: cover; background-position: center;">
@@ -1344,21 +1420,46 @@
             </div>
           </div>
 
-          <div style="width: 100%; margin-bottom: 24px;">
-            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: flex; justify-content: space-between;">
+          <div style="width: 100%;
+            margin-bottom: 24px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222;
+            margin-bottom: 8px; display: flex; justify-content: space-between;">
               <span>纵向平移 (上下)</span>
-              <span id="frameYVal" style="color: #666; font-weight: normal;">0</span>
+              <span id="frameYVal" style="color: #666;
+            font-weight: normal;">0</span>
             </label>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span style="font-size: 12px; color: #999;">-50</span>
-              <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="flex: 1; accent-color: #111;" />
-              <span style="font-size: 12px; color: #999;">+50</span>
+            <div style="display: flex;
+            align-items: center; gap: 8px;">
+              <span style="font-size: 12px;
+            color: #999;">-50</span>
+              <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="flex: 1;
+            accent-color: #111;" />
+              <span style="font-size: 12px;
+            color: #999;">+50</span>
             </div>
           </div>
 
+          <div class="toggle-row">
+            <label>在聊天气泡中显示头像框</label>
+            <label class="switch">
+              <input type="checkbox" id="showFrameInChatToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div class="toggle-row" style="margin-bottom: 24px;">
+            <label>在顶栏中显示头像框</label>
+            <label class="switch">
+              <input type="checkbox" id="showFrameInHeaderToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
           <div style="width: 100%;">
-            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px; display: block;">历史头像框</label>
-            <div id="frameHistoryGrid" style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px;">
+            <label style="font-size: 14px;
+            font-weight: 600; color: #222; margin-bottom: 12px; display: block;">历史头像框</label>
+            <div id="frameHistoryGrid" style="display: grid;
+            grid-template-columns: repeat(4, 1fr); gap: 12px;">
             </div>
           </div>
 
@@ -1482,7 +1583,8 @@
         {
           id: makeId(),
           remark: "哥",
-          realName: "",
+       
+           realName: "",
           persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
           myPersona: "",
           avatar: "",
@@ -1490,7 +1592,12 @@
           frameScale: 1,
           frameX: 0,
           frameY: 0,
+          showFrameInChat: true,
+          showFrameInHeader: true,
+          statusText: "在线中",
+          statusColor: "#37d05f",
           lastTime: "22:36",
+      
           messages: []
         },
         {
@@ -1500,10 +1607,15 @@
           persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
           myPersona: "",
           avatar: "",
-          frameUrl: "",
+          frameUrl: 
+"",
           frameScale: 1,
           frameX: 0,
           frameY: 0,
+          showFrameInChat: true,
+          showFrameInHeader: true,
+          statusText: "在线中",
+          statusColor: "#37d05f",
           lastTime: "昨天",
           messages: []
         }
@@ -1534,6 +1646,9 @@
 
     const chatBackBtn = document.getElementById("chatBackBtn");
     const chatTitle = document.getElementById("chatTitle");
+    const headerAvatar = document.getElementById("headerAvatar");
+    const chatHeaderStatusDot = document.getElementById("chatHeaderStatusDot");
+    const chatHeaderStatusText = document.getElementById("chatHeaderStatusText");
     const chatBody = document.getElementById("chatBody");
     const chatEmpty = document.getElementById("chatEmpty");
     const messagesEl = document.getElementById("messages");
@@ -1672,6 +1787,11 @@
         frameScale: 1,
         frameX: 0,
         frameY: 0,
+        showFrameInChat: true,
+        showFrameInHeader: true,
+        statusText: "在线中",
+        statusColor: "#37d05f",
+   
         lastTime: getCurrentTime(), // 新联系人默认当前时间
         messages: []
       };
@@ -1702,8 +1822,34 @@
     function renderChat() {
       const contact = getContact(state.activeContactId);
       if (!contact) return;
-
       chatTitle.textContent = getDisplayName(contact);
+      
+      // 更新顶栏头像和状态
+      headerAvatar.innerHTML = "";
+      if (contact.avatar) {
+        headerAvatar.style.backgroundImage = `url(${contact.avatar})`;
+      } else {
+        headerAvatar.style.backgroundImage = "none";
+        headerAvatar.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
+      }
+      
+      if (contact.frameUrl && contact.showFrameInHeader !== false) {
+        const frameImg = document.createElement("img");
+        frameImg.src = contact.frameUrl;
+        frameImg.style.position = "absolute";
+        frameImg.style.pointerEvents = "none";
+        frameImg.style.objectFit = "contain";
+        frameImg.style.left = `calc(50% + ${contact.frameX || 0}%)`;
+        frameImg.style.top = `calc(50% + ${contact.frameY || 0}%)`;
+        frameImg.style.transform = "translate(-50%, -50%)";
+        frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
+        frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
+        headerAvatar.appendChild(frameImg);
+      }
+      
+      chatHeaderStatusText.textContent = contact.statusText || "在线中";
+      chatHeaderStatusDot.style.background = contact.statusColor || "#37d05f";
+
       messagesEl.innerHTML = "";
 
       if (!contact.messages.length) {
@@ -1752,7 +1898,7 @@
             }
             
             // 叠加头像框
-            if (contact.frameUrl) {
+            if (contact.frameUrl && contact.showFrameInChat !== false) {
               const frameImg = document.createElement("img");
               frameImg.src = contact.frameUrl;
               frameImg.style.position = "absolute";
@@ -1839,6 +1985,7 @@
       if (contact.persona) {
         combinedPersona += `你的设定：${contact.persona}\n`;
       }
+      combinedPersona += "【重要系统指令】：你可以根据当前对话的语境随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的回复内容末尾隐蔽地附上这个格式：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变状态，就不需要加这个标记。\n";
       if (contact.myPersona) {
         combinedPersona += `与你对话的用户的设定：${contact.myPersona}\n`;
       }
@@ -1884,7 +2031,17 @@
         }
 
         const data = await response.json();
-        const aiText = data.choices[0].message.content;
+        let aiText = data.choices[0].message.content;
+        
+        // 解析AI悄悄发送的状态修改指令
+        const statusRegex = /\[STATUS:([#a-zA-Z0-9]+)\|([^\]]+)\]/i;
+        const statusMatch = aiText.match(statusRegex);
+        if (statusMatch) {
+            contact.statusColor = statusMatch[1];
+            contact.statusText = statusMatch[2];
+            // 把标记从文字中抹除，不让用户看见
+            aiText = aiText.replace(statusRegex, "").trim();
+        }
 
         // 请求成功，把刚才的 "正在思考..." 替换为真实的 AI 回复
         contact.messages[loadingMsgIndex].text = aiText;
@@ -2275,6 +2432,8 @@
     const frameScaleSlider = document.getElementById("frameScaleSlider");
     const frameXSlider = document.getElementById("frameXSlider");
     const frameYSlider = document.getElementById("frameYSlider");
+    const showFrameInChatToggle = document.getElementById("showFrameInChatToggle");
+    const showFrameInHeaderToggle = document.getElementById("showFrameInHeaderToggle");
     const frameHistoryGrid = document.getElementById("frameHistoryGrid");
 
     let tempFrameUrl = "";
@@ -2374,7 +2533,11 @@
       tempFrameX = contact.frameX || 0;
       tempFrameY = contact.frameY || 0;
       
+      showFrameInChatToggle.checked = contact.showFrameInChat !== false;
+      showFrameInHeaderToggle.checked = contact.showFrameInHeader !== false;
+
       frameScaleSlider.value = tempFrameScale;
+
       frameXSlider.value = tempFrameX;
       frameYSlider.value = tempFrameY;
 
@@ -2526,7 +2689,12 @@
         contact.frameScale = tempFrameScale;
         contact.frameX = tempFrameX;
         contact.frameY = tempFrameY;
+        contact.showFrameInChat = showFrameInChatToggle.checked;
+        contact.showFrameInHeader = showFrameInHeaderToggle.checked;
         
+        // 重新渲染聊天界面，应用开关与状态
+        renderChat();
+
         // 【核心修改】把当前调好的参数记录到全局历史中，让它彻底拥有“独立记忆”
         if (tempFrameUrl) {
           const frameIndex = state.uploadedFrames.findIndex(f => (typeof f === 'string' ? f : f.url) === tempFrameUrl);
@@ -2558,212 +2726,6 @@
       }
       closeFrameModal();
     });
-    // ================== 聊天顶栏：头像、状态、心声 逻辑 ==================
-
-    const chatHeaderAvatar = document.getElementById("chatHeaderAvatar");
-    const chatStatusDot = document.getElementById("chatStatusDot");
-    const chatStatusTextEl = document.getElementById("chatStatusText");
-    const statusPickerMask = document.getElementById("statusPickerMask");
-    const statusPickerSheet = document.getElementById("statusPickerSheet");
-    const statusOptionsList = document.getElementById("statusOptionsList");
-    const customStatusInput = document.getElementById("customStatusInput");
-    const customStatusConfirmBtn = document.getElementById("customStatusConfirmBtn");
-
-    // 状态预设列表（文字、颜色）
-    const STATUS_PRESETS = [
-      { label: "在线中", color: "#37d05f" },
-      { label: "忙碌", color: "#ff9500" },
-      { label: "请勿打扰", color: "#ff3b30" },
-      { label: "离开", color: "#adb3bd" },
-      { label: "思考中", color: "#5ac8fa" },
-      { label: "学习中", color: "#007aff" },
-      { label: "睡觉了", color: "#8e8e93" },
-    ];
-
-    // 当前状态
-    let currentStatus = { label: "在线中", color: "#37d05f" };
-
-    function applyStatus(label, color) {
-      currentStatus = { label, color };
-      chatStatusDot.style.background = color;
-      chatStatusTextEl.textContent = label;
-    }
-
-    function openStatusPicker() {
-      // 渲染选项
-      statusOptionsList.innerHTML = "";
-      STATUS_PRESETS.forEach(s => {
-        const row = document.createElement("div");
-        row.style.cssText = "display:flex;align-items:center;gap:10px;padding:12px 4px;cursor:pointer;border-bottom:1px solid #f7f7f7;";
-        row.innerHTML = `<span style="width:10px;height:10px;border-radius:50%;background:${s.color};flex-shrink:0;display:inline-block;"></span><span style="font-size:15px;color:#111;">${s.label}</span>`;
-        if (s.label === currentStatus.label) {
-          row.style.fontWeight = "700";
-          row.querySelector("span:last-child").style.fontWeight = "700";
-        }
-        row.addEventListener("click", () => {
-          applyStatus(s.label, s.color);
-          closeStatusPicker();
-        });
-        statusOptionsList.appendChild(row);
-      });
-      customStatusInput.value = "";
-      statusPickerMask.style.display = "block";
-      setTimeout(() => { statusPickerSheet.style.transform = "translateY(0)"; }, 10);
-    }
-
-    function closeStatusPicker() {
-      statusPickerSheet.style.transform = "translateY(100%)";
-      setTimeout(() => { statusPickerMask.style.display = "none"; }, 300);
-    }
-
-    chatStatusTextEl.addEventListener("click", openStatusPicker);
-
-    statusPickerMask.addEventListener("click", (e) => {
-      if (e.target === statusPickerMask) closeStatusPicker();
-    });
-
-    customStatusConfirmBtn.addEventListener("click", () => {
-      const val = customStatusInput.value.trim();
-      if (!val) return;
-      applyStatus(val, "#007aff");
-      closeStatusPicker();
-    });
-
-    // 顶栏头像更新（每次openChat时同步）
-    function updateChatHeaderAvatar() {
-      const contact = getContact(state.activeContactId);
-      if (!contact) return;
-      chatHeaderAvatar.style.backgroundImage = contact.avatar ? `url(${contact.avatar})` : "";
-      chatHeaderAvatar.style.background = contact.avatar ? `url(${contact.avatar}) center/cover` : "linear-gradient(180deg,#d7d7d7 0%,#c9c9c9 100%)";
-      chatHeaderAvatar.innerHTML = "";
-      const showFrameInHeader = document.getElementById("frameShowInHeader") ? document.getElementById("frameShowInHeader").checked : true;
-      if (contact.frameUrl && showFrameInHeader) {
-        const fi = document.createElement("img");
-        fi.src = contact.frameUrl;
-        fi.style.cssText = `position:absolute;pointer-events:none;object-fit:contain;left:calc(50% + ${contact.frameX||0}%);top:calc(50% + ${contact.frameY||0}%);transform:translate(-50%,-50%);width:${100*(contact.frameScale||1)}%;height:${100*(contact.frameScale||1)}%;`;
-        chatHeaderAvatar.appendChild(fi);
-      }
-    }
-
-    // 覆盖原 openChat，加入顶栏头像同步
-    const _origOpenChat = openChat;
-    function openChat(contactId) {
-      state.activeContactId = contactId;
-      screens.friends.classList.remove("active");
-      screens.moments.classList.remove("active");
-      screens.me.classList.remove("active");
-      screens.chat.classList.add("active");
-      tabbar.classList.add("hidden");
-      renderChat();
-      updateChatHeaderAvatar();
-      setTimeout(() => chatInput.focus(), 30);
-    }
-
-    // 心声按钮（暂空）
-    document.getElementById("xinshengBtn").addEventListener("click", () => {
-      // 后续功能在这里添加
-    });
-
-    // ================== 头像框开关逻辑 ==================
-    function setupToggle(checkboxId, thumbId, sliderId) {
-      const checkbox = document.getElementById(checkboxId);
-      const thumb = document.getElementById(thumbId);
-      const sliderEl = document.getElementById(sliderId);
-      function updateUI() {
-        if (checkbox.checked) {
-          sliderEl.style.background = "#37d05f";
-          thumb.style.left = "21px";
-        } else {
-          sliderEl.style.background = "#d1d1d6";
-          thumb.style.left = "3px";
-        }
-      }
-      updateUI();
-      sliderEl.addEventListener("click", () => {
-        checkbox.checked = !checkbox.checked;
-        updateUI();
-        updateChatHeaderAvatar();
-        if (screens.chat.classList.contains("active")) renderChat();
-      });
-    }
-    setupToggle("frameShowInChat", "frameShowInChatThumb", "frameShowInChatSlider");
-    setupToggle("frameShowInHeader", "frameShowInHeaderThumb", "frameShowInHeaderSlider");
-
-    // 聊天气泡头像框受开关控制
-    const _origRenderChat = renderChat;
-    function renderChat() {
-      const contact = getContact(state.activeContactId);
-      if (!contact) return;
-      chatTitle.textContent = getDisplayName(contact);
-      messagesEl.innerHTML = "";
-      if (!contact.messages.length) {
-        chatEmpty.classList.remove("hidden");
-        messagesEl.classList.add("hidden");
-        return;
-      }
-      chatEmpty.classList.add("hidden");
-      messagesEl.classList.remove("hidden");
-      const showFrameInChat = document.getElementById("frameShowInChat") ? document.getElementById("frameShowInChat").checked : true;
-      contact.messages.forEach((msg, index) => {
-        const prevMsg = contact.messages[index - 1];
-        const nextMsg = contact.messages[index + 1];
-        const isSamePrev = prevMsg && prevMsg.from === msg.from && prevMsg.time === msg.time;
-        const isSameNext = nextMsg && nextMsg.from === msg.from && msg.time === nextMsg.time;
-        let positionClass = "single";
-        if (!isSamePrev && isSameNext) positionClass = "first";
-        else if (isSamePrev && isSameNext) positionClass = "middle";
-        else if (isSamePrev && !isSameNext) positionClass = "last";
-        const row = document.createElement("div");
-        row.className = `message-row ${msg.from === "me" ? "me" : "ai"} ${positionClass}`;
-        const avatar = document.createElement("div");
-        avatar.className = "chat-avatar";
-        if (positionClass === "middle" || positionClass === "last") {
-          avatar.style.visibility = "hidden";
-        } else {
-          avatar.style.position = "relative";
-          if (msg.from === "me") {
-            if (state.userAvatar) avatar.style.backgroundImage = `url(${state.userAvatar})`;
-            else avatar.style.background = "#333";
-          } else {
-            if (contact.avatar) {
-              avatar.style.backgroundImage = `url(${contact.avatar})`;
-            } else {
-              avatar.style.background = "linear-gradient(180deg, #d7d7d7 0%, #c9c9c9 100%)";
-            }
-            if (contact.frameUrl && showFrameInChat) {
-              const frameImg = document.createElement("img");
-              frameImg.src = contact.frameUrl;
-              frameImg.style.position = "absolute";
-              frameImg.style.pointerEvents = "none";
-              frameImg.style.objectFit = "contain";
-              frameImg.style.left = `calc(50% + ${contact.frameX || 0}%)`;
-              frameImg.style.top = `calc(50% + ${contact.frameY || 0}%)`;
-              frameImg.style.transform = "translate(-50%, -50%)";
-              frameImg.style.width = `${100 * (contact.frameScale || 1)}%`;
-              frameImg.style.height = `${100 * (contact.frameScale || 1)}%`;
-              avatar.appendChild(frameImg);
-            }
-          }
-        }
-        const contentWrap = document.createElement("div");
-        contentWrap.className = "message-content";
-        const bubble = document.createElement("div");
-        bubble.className = "bubble";
-        bubble.textContent = msg.text;
-        contentWrap.appendChild(bubble);
-        if (positionClass === "single" || positionClass === "last") {
-          const time = document.createElement("div");
-          time.className = "message-time";
-          time.textContent = msg.time || getCurrentTime();
-          contentWrap.appendChild(time);
-        }
-        row.appendChild(avatar);
-        row.appendChild(contentWrap);
-        messagesEl.appendChild(row);
-      });
-      requestAnimationFrame(() => { chatBody.scrollTop = chatBody.scrollHeight; });
-      renderContacts();
-    }
 
     // 初始化运行一次动态样式
     applyGlobalFontAndSize();

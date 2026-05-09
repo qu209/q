@@ -1229,12 +1229,20 @@
               <option value="">请先拉取模型</option>
             </select>
           </div>
-          <div class="field" style="margin-bottom: 4px;">
+          <div class="field" style="margin-bottom: 4px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label for="tempInput" style="display: flex; justify-content: space-between; font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px;">
               <span>温度 (Temperature)</span>
               <span id="tempValueDisplay" style="color: #8e8e93; font-weight: normal;">1.0</span>
             </label>
             <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; accent-color: #d1d1d6; height: 4px; outline: none; margin: 4px 0 8px 0;" />
+          </div>
+          
+          <div class="toggle-row" style="margin-top: 16px; margin-bottom: 4px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222;">强制外语翻译模式</label>
+            <label class="switch">
+              <input type="checkbox" id="translationToggle">
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
 
@@ -1599,7 +1607,8 @@
         url: "",
         key: "",
         model: "",
-        temperature: 1.0
+        temperature: 1.0,
+        enableTranslation: false
       },
       fontSettings: {
         currentPresetId: "default",
@@ -2116,8 +2125,17 @@ TimeChecklist: must_pass: 没机械报时，符合时间状态，时间自然融
       
       combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
 
+      // 检查是否开启了翻译模式，并注入超强逻辑覆写
+      if (api.enableTranslation) {
+        combinedPersona += `\n【⚠️ 绝对逻辑覆写 / Absolute Logic Overwrite】
+1. 语言强制 (Language Core): 你的思维已被锁定。你必须且只能使用【符合你角色设定的外语（任何语言均可）】进行回复。禁止在 HTML 模板外部输出任何中文！
+2. 格式协议 (Format Protocol): 说完外语后，必须紧接着提供对应的中文翻译。
+3. 严格输出模板 (Strict Template): 结合上方"每次回复必须拆分成多行"的规则，你的**每一行独立回复**都必须分别使用以下完整的 HTML 结构包裹！切记：每一行必须是一个完整的 <details> 标签组，**行与行之间必须用换行符(回车)隔开**，且 HTML 标签内部绝对不能换行！
+<details><summary style="cursor:pointer; list-style-type:none; outline:none;"><span style="display:inline-block;">[当前行的外语原文内容]</span></summary><p style="margin:4px 0 0 0; color:rgba(136,136,136,1); font-size:90%;">[当前行的中文翻译内容]</p></details>\n`;
+      }
+
       messages.push({ role: "system", content: combinedPersona });
-      
+     
       // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
       const history = contact.messages.slice(-30);
       history.forEach(msg => {
@@ -2170,6 +2188,9 @@ TimeChecklist: must_pass: 没机械报时，符合时间状态，时间自然融
         }
 
         // === 核心修改：将 AI 回复按换行符拆分成多条独立气泡 ===
+        // 强制防护：如果 AI 没敲回车，把多个 <details> 粘在同一行了，强制在它们之间插入换行符劈开！
+        aiText = aiText.replace(/<\/details>\s*<details/gi, "</details>\n<details");
+        
         // 去除空行，保留真实的文本行
         const lines = aiText.split('\n').map(l => l.trim()).filter(l => l !== "");
         
@@ -2315,6 +2336,7 @@ TimeChecklist: must_pass: 没机械报时，符合时间状态，时间自然融
     const modelSelect = document.getElementById("modelSelect");
     const tempInput = document.getElementById("tempInput");
     const tempValueDisplay = document.getElementById("tempValueDisplay");
+    const translationToggle = document.getElementById("translationToggle");
 
     // 个性化 元素
     const fontPresetSelect = document.getElementById("fontPresetSelect");
@@ -2341,12 +2363,13 @@ TimeChecklist: must_pass: 没机械报时，符合时间状态，时间自然融
       fontPresetSelect.value = state.fontSettings.currentPresetId;
     }
 
-    openSettingsBtn.addEventListener("click", () => {
+        openSettingsBtn.addEventListener("click", () => {
       // 载入 API 设置
       apiUrlInput.value = state.apiSettings.url;
       apiKeyInput.value = state.apiSettings.key;
       tempInput.value = state.apiSettings.temperature;
       tempValueDisplay.textContent = state.apiSettings.temperature;
+      translationToggle.checked = state.apiSettings.enableTranslation || false;
       if (state.apiSettings.model && modelSelect.options.length <= 1) {
         modelSelect.innerHTML = `<option value="${state.apiSettings.model}">${state.apiSettings.model}</option>`;
       }
@@ -2507,6 +2530,7 @@ TimeChecklist: must_pass: 没机械报时，符合时间状态，时间自然融
       state.apiSettings.key = apiKeyInput.value.trim();
       state.apiSettings.model = modelSelect.value;
       state.apiSettings.temperature = parseFloat(tempInput.value);
+      state.apiSettings.enableTranslation = translationToggle.checked;
       alert("设置已保存");
       
       screens.settings.classList.remove("active");

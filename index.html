@@ -902,86 +902,77 @@
       line-height: 1.5;
       word-break: break-word;
       white-space: pre-wrap;
-      /* 【核心修复】：去掉写死的动画，交给下方的 JS 动态控制，否则每次发消息全局都会跟着闪屏 */
+      -webkit-touch-callout: none; /* 禁用系统自带长按选词菜单 */
+      -webkit-user-select: none;
+      user-select: none;
     }
 
     /* ====== AI (左侧) 气泡圆角组逻辑 ====== */
-    /* 单条独立消息：全大圆角 */
-    .message-row.ai.single .bubble {
-      background: #F2F4F8;
-      color: #111;
-      border-radius: 22px; 
-    }
-    /* 连发组 第一条：左下角变直角 */
-    .message-row.ai.first .bubble {
-      background: #F2F4F8;
-      color: #111;
-      border-radius: 22px 22px 22px 4px;
-    }
-    /* 连发组 中间：左上、左下皆变直角 */
-    .message-row.ai.middle .bubble {
-      background: #F2F4F8;
-      color: #111;
-      border-radius: 4px 22px 22px 4px;
-    }
-    /* 连发组 最后一条：左上变直角，左下恢复圆角尾巴 */
-    .message-row.ai.last .bubble {
-      background: #F2F4F8;
-      color: #111;
-      border-radius: 4px 22px 22px 22px;
-    }
+    .message-row.ai.single .bubble { background: #F2F4F8; color: #111; border-radius: 22px; }
+    .message-row.ai.first .bubble { background: #F2F4F8; color: #111; border-radius: 22px 22px 22px 4px; }
+    .message-row.ai.middle .bubble { background: #F2F4F8; color: #111; border-radius: 4px 22px 22px 4px; }
+    .message-row.ai.last .bubble { background: #F2F4F8; color: #111; border-radius: 4px 22px 22px 22px; }
 
     /* ====== 我 (右侧) 气泡圆角组逻辑 ====== */
-    /* 单条独立消息：全大圆角 */
-    .message-row.me.single .bubble {
-      background: #111111;
-      color: #fff;
-      border-radius: 22px; 
-    }
-    /* 连发组 第一条：右下角变直角 */
-    .message-row.me.first .bubble {
-      background: #111111;
-      color: #fff;
-      border-radius: 22px 22px 4px 22px;
-    }
-    /* 连发组 中间：右上、右下皆变直角 */
-    .message-row.me.middle .bubble {
-      background: #111111;
-      color: #fff;
-      border-radius: 22px 4px 4px 22px;
-    }
-    /* 连发组 最后一条：右上变直角，右下恢复圆角尾巴 */
-    .message-row.me.last .bubble {
-      background: #111111;
-      color: #fff;
-      border-radius: 22px 4px 22px 22px;
-    }
+    .message-row.me.single .bubble { background: #111111; color: #fff; border-radius: 22px; }
+    .message-row.me.first .bubble { background: #111111; color: #fff; border-radius: 22px 22px 4px 22px; }
+    .message-row.me.middle .bubble { background: #111111; color: #fff; border-radius: 22px 4px 4px 22px; }
+    .message-row.me.last .bubble { background: #111111; color: #fff; border-radius: 22px 4px 22px 22px; }
 
-    .message-time {
-      font-size: 11px;
-      color: #b2b2b2;
-      margin-top: 6px;
-      margin-left: 4px;
-      margin-right: 4px;
-    }
+    .message-time { font-size: 11px; color: #b2b2b2; margin-top: 6px; margin-left: 4px; margin-right: 4px; }
 
+    /* 聊天框布局升级 (支持引用栏插入) */
     .chatbar {
       position: absolute;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      left: 0; right: 0; bottom: 0;
       z-index: 6;
-      height: 68px; /* 高度微微增加，专门用来做底部留白 */
-      padding: 8px 12px 18px; /* 上边距保持紧凑，下边距加大到18px，底部自然留出一小截安全缝隙 */
       background: #fff;
       border-top: 1px solid #f0f0f0;
+      display: flex;
+      flex-direction: column;
     }
+    .chatbar.hidden { display: none !important; }
 
     .chatbar-inner {
-      height: 100%;
+      height: 68px;
+      padding: 8px 12px 18px;
       display: flex;
       align-items: center;
     }
+
+    /* ======== 新增：长按菜单、引用与多选样式 ======== */
+    /* 长按菜单 */
+    .msg-menu-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 100; display: none; align-items: center; justify-content: center; }
+    .msg-menu-mask.show { display: flex; }
+    .msg-menu { background: #fff; width: 240px; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+    .msg-menu-item { padding: 16px; font-size: 16px; text-align: center; border-bottom: 1px solid #eee; cursor: pointer; }
+    .msg-menu-item:active { background: #f5f5f5; }
+    .msg-menu-item:last-child { border-bottom: none; }
+
+    /* 引用展示区 (气泡内) */
+    .bubble-quote { font-size: 13px; color: #666; background: rgba(0,0,0,0.05); padding: 6px 10px; border-radius: 6px; margin-bottom: 6px; border-left: 3px solid #ccc; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis;}
+    .message-row.me .bubble-quote { color: #ccc; background: rgba(255,255,255,0.15); border-left-color: #888; }
+
+    /* 输入框上方的引用预览 */
+    .reply-preview { display: none; padding: 8px 12px; background: #f7f7f8; border-bottom: 1px solid #ececec; font-size: 13px; color: #666; align-items: center; justify-content: space-between; }
+    .reply-preview.show { display: flex; }
+    .reply-preview-text { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; flex: 1; margin-right: 10px;}
+    .reply-preview-close { width: 20px; height: 20px; display: grid; place-items: center; cursor: pointer; background: #ddd; border-radius: 50%; color: #fff; font-size: 14px; line-height: 1;}
+
+    /* 多选模式的侧边复选框 (保留原有气泡布局，仅添加复选框) */
+    .msg-checkbox { width: 22px; height: 22px; border-radius: 50%; border: 1px solid #ccc; flex-shrink: 0; display: none; align-items: center; justify-content: center; margin-top: 10px; transition: all 0.2s; }
+    .msg-checkbox.checked { background: #37d05f; border-color: #37d05f; }
+    .msg-checkbox.checked::after { content: ""; width: 6px; height: 10px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); margin-bottom: 2px;}
+    .multi-select-mode .msg-checkbox { display: flex; }
+    /* 单独微调两边复选框的间距，完美嵌入左右空白区 */
+    .message-row.ai .msg-checkbox { margin-left: 10px; }
+    .message-row.me .msg-checkbox { margin-right: 10px; }
+    
+    /* 多选底部操作栏 */
+    .multi-select-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 68px; background: #fff; border-top: 1px solid #eee; z-index: 10; display: none; align-items: center; justify-content: space-between; padding: 0 24px; padding-bottom: env(safe-area-inset-bottom); }
+    .multi-select-bar.show { display: flex; }
+    .multi-select-btn { background: transparent; border: none; font-size: 16px; cursor: pointer; padding: 10px; }
+    .multi-select-delete { color: #df3b3b; font-weight: 600; }
 
     .chatbar-inner > #chatExtraBtn {
       /* 原本的 margin-right 删除，由 input-wrap 统一控制间距 */
@@ -1344,7 +1335,40 @@
         <div class="inventory-item">重回</div>
       </div>
 
-      <div class="chatbar">
+      <div class="multi-select-bar" id="multiSelectBar">
+        <button class="multi-select-btn" id="multiSelectCancel">取消</button>
+        <button class="multi-select-btn multi-select-delete" id="multiSelectDelete">删除 (<span id="multiSelectCount">0</span>)</button>
+      </div>
+
+      <div class="msg-menu-mask" id="msgMenuMask">
+        <div class="msg-menu">
+          <div class="msg-menu-item" id="menuQuote">引用</div>
+          <div class="msg-menu-item" id="menuCopy">复制</div>
+          <div class="msg-menu-item" id="menuEdit">编辑</div>
+          <div class="msg-menu-item" id="menuMulti">多选</div>
+          <div class="msg-menu-item" id="menuDelete">删除</div>
+        </div>
+      </div>
+      
+      <div class="modal-mask" id="editMsgModalMask" style="z-index: 110;">
+        <div class="modal">
+          <div class="field">
+            <label style="margin-bottom: 12px;">编辑此消息内容</label>
+            <textarea class="textarea" id="editMsgInput" style="min-height: 120px; padding: 12px; border-radius: 12px; line-height: 1.5;"></textarea>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-light" id="cancelEditMsgBtn">取消</button>
+            <button class="btn btn-dark" id="saveEditMsgBtn">保存更改</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="chatbar" id="chatbar">
+        <div class="reply-preview" id="replyPreview">
+          <div class="reply-preview-text" id="replyPreviewText"></div>
+          <div class="reply-preview-close" id="replyPreviewClose">×</div>
+        </div>
+
         <div class="chatbar-inner">
           <button class="icon-img-btn" id="chatExtraBtn" aria-label="物品栏">
             <img src="https://i.postimg.cc/D0M5jXfC/IMG-4863.png" alt="物品栏" />
@@ -1601,7 +1625,13 @@
       return `${ampm} ${hStr}:${m}`;
     }
 
+    let longPressTimer = null;
+    let targetMsgIndex = -1; // 记录被长按操作的是哪条消息
+
     const state = {
+      isMultiSelecting: false,
+      selectedMsgs: new Set(),
+      replyingToText: "",
       userAvatar: "",
       apiSettings: {
         url: "",
@@ -1928,12 +1958,27 @@
         // 总是动态更新气泡位置（修复连发圆角粘连的问题）
         row.className = `message-row ${msg.from === "me" ? "me" : "ai"} ${positionClass}`;
 
-        // 【唯一签名指纹】：如果文本、状态和头像没变，绝对不去破坏它内部的 HTML！
-        const signature = (msg.isTyping ? "typing:" : "text:") + msg.text + "|" + state.userAvatar + "|" + contact.avatar + "|" + contact.frameUrl + "|" + contact.showFrameInChat;
+        // 动态附加多选模式样式
+        if (state.isMultiSelecting) messagesEl.classList.add("multi-select-mode");
+        else messagesEl.classList.remove("multi-select-mode");
+
+        // 【唯一签名指纹】：加入 quote、多选状态，确保点击复选框能完美局部重绘
+        const signature = (msg.isTyping ? "typing:" : "text:") + msg.text + "|quote:" + (msg.quoteText||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|" + state.userAvatar + "|" + contact.avatar + "|" + contact.frameUrl + "|" + contact.showFrameInChat;
 
         if (row.dataset.signature !== signature) {
           row.dataset.signature = signature;
           row.innerHTML = ""; // 只有在发生了实质性变动时才重绘
+          
+          // ================= 新增：多选模式复选框 =================
+          const checkbox = document.createElement("div");
+          checkbox.className = "msg-checkbox" + (state.selectedMsgs.has(index) ? " checked" : "");
+          checkbox.onclick = () => {
+            if (state.selectedMsgs.has(index)) state.selectedMsgs.delete(index);
+            else state.selectedMsgs.add(index);
+            renderChat(); // 只会局部刷新打钩
+            document.getElementById("multiSelectCount").textContent = state.selectedMsgs.size;
+          };
+          // ⚠️ 取消在这里附加复选框，把它移到后面去拼接，从而排在气泡外侧
 
           const avatar = document.createElement("div");
           avatar.className = "chat-avatar";
@@ -1977,8 +2022,41 @@
           if (msg.isTyping) {
             bubble.innerHTML = "<div class='typing-dots'><span></span><span></span><span></span></div>";
           } else {
-            bubble.innerHTML = msg.text;
+            // ================= 新增：如果有引用，渲染引用区 =================
+            if (msg.quoteText) {
+              const quoteEl = document.createElement("div");
+              quoteEl.className = "bubble-quote";
+              quoteEl.textContent = msg.quoteText;
+              bubble.appendChild(quoteEl);
+            }
+            // 渲染真正的文本
+            const textSpan = document.createElement("span");
+            textSpan.innerHTML = msg.text;
+            bubble.appendChild(textSpan);
           }
+
+          // ================= 新增：长按触发菜单逻辑 =================
+          let touchStartY = 0;
+          bubble.addEventListener("touchstart", (e) => {
+            if(state.isMultiSelecting) return;
+            touchStartY = e.touches[0].clientY;
+            longPressTimer = setTimeout(() => { targetMsgIndex = index; document.getElementById("msgMenuMask").classList.add("show"); }, 500);
+          }, {passive: true});
+          
+          bubble.addEventListener("touchmove", (e) => {
+            if(Math.abs(e.touches[0].clientY - touchStartY) > 10) clearTimeout(longPressTimer);
+          }, {passive: true});
+          
+          bubble.addEventListener("touchend", () => clearTimeout(longPressTimer));
+          bubble.addEventListener("touchcancel", () => clearTimeout(longPressTimer));
+          
+          // 兼容 PC 鼠标长按测试
+          bubble.addEventListener("mousedown", () => {
+            if(state.isMultiSelecting) return;
+            longPressTimer = setTimeout(() => { targetMsgIndex = index; document.getElementById("msgMenuMask").classList.add("show"); }, 500);
+          });
+          bubble.addEventListener("mouseup", () => clearTimeout(longPressTimer));
+          bubble.addEventListener("mouseleave", () => clearTimeout(longPressTimer));
 
           if (!msg.hasAnimated) {
             bubble.style.animation = "bubbleFadeIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards";
@@ -1994,8 +2072,12 @@
             contentWrap.appendChild(time);
           }
 
+          // 按严格顺序把节点放入 row：先头像，再气泡，最后复选框
+          // 配合原本的 flex-direction (AI是 row, ME是 row-reverse)
+          // 就能完美实现：AI气泡在左，复选框在气泡右侧；我的气泡在右，复选框在气泡左侧！
           row.appendChild(avatar);
           row.appendChild(contentWrap);
+          row.appendChild(checkbox); 
         } else {
           // 【如果核心内容完全没变】，只微调头像和时间的显示隐藏，保护内部的 details 标签不闪动
           const avatar = row.querySelector('.chat-avatar');
@@ -2030,18 +2112,139 @@
       renderContacts();
     }
 
+    // ======================== 新增：长按菜单指令操作集 ========================
+    document.getElementById("msgMenuMask").addEventListener("click", (e) => {
+      if (e.target.id === "msgMenuMask") e.target.classList.remove("show"); // 点击遮罩关掉
+    });
+
+    // 指令1：引用
+    document.getElementById("menuQuote").addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      const msg = contact.messages[targetMsgIndex];
+      // 取纯文本作为引用
+      state.replyingToText = msg.text.replace(/<[^>]*>?/gm, ''); 
+      document.getElementById("replyPreviewText").textContent = "引用：" + state.replyingToText;
+      document.getElementById("replyPreview").classList.add("show");
+      document.getElementById("msgMenuMask").classList.remove("show");
+      chatInput.focus();
+    });
+
+    document.getElementById("replyPreviewClose").addEventListener("click", () => {
+      state.replyingToText = "";
+      document.getElementById("replyPreview").classList.remove("show");
+    });
+
+    // 指令2：复制
+    document.getElementById("menuCopy").addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      const text = contact.messages[targetMsgIndex].text.replace(/<[^>]*>?/gm, '');
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text);
+      } else {
+        const input = document.createElement('textarea');
+        input.value = text;
+        document.body.appendChild(input);
+        input.select();
+        document.execCommand('copy');
+        document.body.removeChild(input);
+      }
+      document.getElementById("msgMenuMask").classList.remove("show");
+    });
+
+    // 指令3：单条彻底删除
+    document.getElementById("menuDelete").addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      contact.messages.splice(targetMsgIndex, 1);
+      document.getElementById("msgMenuMask").classList.remove("show");
+      renderChat();
+    });
+
+    // 指令4：编辑 (把文本直接塞进 textarea 供用户修改，支持修改生成的 HTML 外语结构)
+    document.getElementById("menuEdit").addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      document.getElementById("editMsgInput").value = contact.messages[targetMsgIndex].text;
+      document.getElementById("editMsgModalMask").classList.add("show");
+      document.getElementById("msgMenuMask").classList.remove("show");
+    });
+
+    document.getElementById("cancelEditMsgBtn").addEventListener("click", () => {
+      document.getElementById("editMsgModalMask").classList.remove("show");
+    });
+
+    document.getElementById("saveEditMsgBtn").addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      const newText = document.getElementById("editMsgInput").value;
+      if (newText.trim() !== "") {
+        contact.messages[targetMsgIndex].text = newText;
+        if (messagesEl.children[targetMsgIndex]) {
+          messagesEl.children[targetMsgIndex].dataset.signature = ""; // 抹除签名强制更新
+        }
+        renderChat();
+      }
+      document.getElementById("editMsgModalMask").classList.remove("show");
+    });
+
+    // 指令5：多选模式
+    document.getElementById("menuMulti").addEventListener("click", () => {
+      state.isMultiSelecting = true;
+      state.selectedMsgs.clear();
+      state.selectedMsgs.add(targetMsgIndex); // 默认勾选长按的那一条
+      
+      document.getElementById("msgMenuMask").classList.remove("show");
+      document.getElementById("chatbar").classList.add("hidden");
+      document.getElementById("multiSelectBar").classList.add("show");
+      document.getElementById("multiSelectCount").textContent = state.selectedMsgs.size;
+      renderChat();
+    });
+
+    document.getElementById("multiSelectCancel").addEventListener("click", () => {
+      state.isMultiSelecting = false;
+      state.selectedMsgs.clear();
+      document.getElementById("chatbar").classList.remove("hidden");
+      document.getElementById("multiSelectBar").classList.remove("show");
+      renderChat();
+    });
+
+    document.getElementById("multiSelectDelete").addEventListener("click", () => {
+      if(state.selectedMsgs.size === 0) return;
+      if(!confirm(`确定要删除选定的 ${state.selectedMsgs.size} 条消息吗？`)) return;
+      
+      const contact = getContact(state.activeContactId);
+      // 必须从大到小删，否则删了上面的，下面的索引就全错位了
+      const indices = Array.from(state.selectedMsgs).sort((a,b) => b - a);
+      for (const idx of indices) {
+        contact.messages.splice(idx, 1);
+      }
+      
+      state.isMultiSelecting = false;
+      state.selectedMsgs.clear();
+      document.getElementById("chatbar").classList.remove("hidden");
+      document.getElementById("multiSelectBar").classList.remove("show");
+      renderChat();
+    });
+
+    // ================= 发送消息 (更新版，支持带上被引用的尾巴) =================
     function sendMessage() {
       const text = chatInput.value.trim();
       const contact = getContact(state.activeContactId);
       if (!contact || !text) return;
 
-      contact.messages.push({
+      const newMsg = {
         from: "me",
         text,
         time: getCurrentTime(),
-        hasAnimated: false // 【修复】：给你发出的消息也加上动画标记
-      });
-      contact.lastTime = getCurrentTime(); // 更新最后发送时间
+        hasAnimated: false 
+      };
+      
+      // 如果处于引用状态，就把引用内容挂载到消息体里
+      if (state.replyingToText) {
+        newMsg.quoteText = state.replyingToText;
+        state.replyingToText = "";
+        document.getElementById("replyPreview").classList.remove("show");
+      }
+
+      contact.messages.push(newMsg);
+      contact.lastTime = getCurrentTime();
 
       chatInput.value = "";
       renderChat();

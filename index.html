@@ -1324,15 +1324,61 @@
         <div class="chat-empty" id="chatEmpty">开始与 AI 好友聊天吧</div>
         <div class="messages hidden" id="messages"></div>
       </div>
-
       <div class="inventory-popup" id="inventoryPopup">
-        <div class="inventory-item">相机</div>
-        <div class="inventory-item">相册</div>
+        <div class="inventory-item" id="photoUploadItem">照片</div>
         <div class="inventory-item">描述图片</div>
-        <div class="inventory-item">转账</div>
+        <div class="inventory-item" id="transferItemBtn">转账</div>
         <div class="inventory-item">语音</div>
         <div class="inventory-item">语音通话</div>
-        <div class="inventory-item">重回</div>
+        <div class="inventory-item" id="regenerateBtn">重回</div>
+      </div>
+      <input type="file" id="chatImageInput" accept="image/*" style="display: none;" />
+
+      <div class="drawer-mask" id="transferMask" style="z-index: 120;">
+        <div class="side-drawer" id="transferSheet" style="width: 100%; max-width: none; height: auto; top: auto; bottom: 0; transform: translateY(100%); border-radius: 16px 16px 0 0; background: #f5f5f5; display: flex; flex-direction: column; padding-bottom: env(safe-area-inset-bottom); transition: transform 0.3s cubic-bezier(0.25, 1, 0.3, 1);">
+          <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; background: #f5f5f5; border-radius: 16px 16px 0 0;">
+            <button id="closeTransferBtn" style="appearance: none; border: 0; background: transparent; font-size: 28px; color: #111; cursor: pointer; line-height: 1; padding: 0;">×</button>
+            <div style="font-size: 17px; font-weight: 600; color: #111;">请输入支付密码</div>
+            <div style="width: 28px;"></div> </div>
+          
+          <div style="padding: 0 24px 16px;">
+            <div style="background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
+              <div style="display: flex; align-items: center; font-size: 32px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+                <span style="margin-right: 8px; font-size: 24px;">¥</span>
+                <input type="number" id="transferAmount" placeholder="0.00" style="flex: 1; border: none; outline: none; font-size: 32px; font-weight: 700; width: 100%; background: transparent;" />
+              </div>
+              <input type="text" id="transferNote" placeholder="添加转账说明" style="width: 100%; border: none; outline: none; font-size: 14px; margin-top: 12px; background: transparent; color: #333;" />
+            </div>
+
+            <div id="transferPwdHint" style="text-align: center; font-size: 13px; color: #df3b3b; height: 18px; margin-bottom: 12px;"></div>
+
+            <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 20px;" id="pinBoxContainer">
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+            </div>
+          </div>
+
+          <div id="customKeypad" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #e5e5ea; border-top: 1px solid #e5e5ea;">
+            <div class="keypad-btn" data-val="1" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">1</div>
+            <div class="keypad-btn" data-val="2" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">2</div>
+            <div class="keypad-btn" data-val="3" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">3</div>
+            <div class="keypad-btn" data-val="4" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">4</div>
+            <div class="keypad-btn" data-val="5" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">5</div>
+            <div class="keypad-btn" data-val="6" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">6</div>
+            <div class="keypad-btn" data-val="7" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">7</div>
+            <div class="keypad-btn" data-val="8" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">8</div>
+            <div class="keypad-btn" data-val="9" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">9</div>
+            <div class="keypad-btn empty" style="background: #e5e5ea; height: 54px;"></div>
+            <div class="keypad-btn" data-val="0" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">0</div>
+            <div class="keypad-btn del" data-val="del" style="background: #e5e5ea; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; user-select: none;">
+              <svg width="24" height="20" viewBox="0 0 24 20" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 6 7 6h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="multi-select-bar" id="multiSelectBar">
@@ -2033,6 +2079,17 @@
             const textSpan = document.createElement("span");
             textSpan.innerHTML = msg.text;
             bubble.appendChild(textSpan);
+            
+            // 新增：如果有图片，渲染图片
+            if (msg.image) {
+              const imgEl = document.createElement("img");
+              imgEl.src = msg.image;
+              imgEl.style.maxWidth = "100%";
+              imgEl.style.borderRadius = "8px";
+              imgEl.style.marginTop = msg.text ? "8px" : "0";
+              imgEl.style.display = "block";
+              bubble.appendChild(imgEl);
+            }
           }
 
           // ================= 新增：长按触发菜单逻辑 =================
@@ -2405,9 +2462,20 @@ TimeChecklist:
       // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
       const history = contact.messages.slice(-30);
       history.forEach(msg => {
+        let messageContent = msg.text;
+        
+        // 新增：如果消息里包含图片，转为 Vision 模型支持的 Array 格式
+        if (msg.image) {
+          messageContent = [];
+          if (msg.text) {
+             messageContent.push({ type: "text", text: msg.text });
+          }
+          messageContent.push({ type: "image_url", image_url: { url: msg.image } });
+        }
+
         messages.push({
           role: msg.from === "me" ? "user" : "assistant",
-          content: msg.text
+          content: messageContent
         });
       });
 
@@ -2543,13 +2611,259 @@ TimeChecklist:
       }
     });
 
+    // 用本地存储保存支付密码，首次设置后永久生效
+    let globalPayPassword = localStorage.getItem("myPayPassword") || "";
+
     // 点击弹窗里的各个选项后，自动收起弹窗
     document.querySelectorAll(".inventory-item").forEach(item => {
       item.addEventListener("click", () => {
         inventoryPopup.classList.remove("show");
-        // 你后续如果要给比如“相机”、“转账”加功能，可以写在这里
       });
     });
+
+    // ========== 新增：1. 转账功能逻辑 (安全键盘版) ==========
+    const transferItemBtn = document.getElementById("transferItemBtn");
+    const transferMask = document.getElementById("transferMask");
+    const transferSheet = document.getElementById("transferSheet");
+    const closeTransferBtn = document.getElementById("closeTransferBtn");
+    const transferAmount = document.getElementById("transferAmount");
+    const transferNote = document.getElementById("transferNote");
+    const transferPwdHint = document.getElementById("transferPwdHint");
+    
+    // 键盘和密码框核心
+    const pinBoxes = document.querySelectorAll(".pin-box");
+    const keypadBtns = document.querySelectorAll(".keypad-btn");
+    let currentPin = "";
+
+    // 更新6个密码格子的UI
+    function updatePinUI() {
+      pinBoxes.forEach((box, index) => {
+        if (index < currentPin.length) {
+          box.textContent = "●"; 
+          box.style.fontSize = "18px";
+        } else {
+          box.textContent = "";
+        }
+        
+        // 高亮下一个要输入的框 (类似微信蓝框效果)
+        if (index === currentPin.length) {
+          box.style.borderColor = "#007aff";
+        } else {
+          box.style.borderColor = "#ccc";
+        }
+      });
+    }
+
+    // 清空密码重来
+    function resetPin() {
+      currentPin = "";
+      updatePinUI();
+    }
+
+    if (transferItemBtn) {
+      transferItemBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        
+        transferPwdHint.textContent = ""; // 隐藏所有提示文字
+        transferAmount.value = "";
+        transferNote.value = "";
+        resetPin();
+        
+        transferMask.classList.add("show");
+        setTimeout(() => { transferSheet.style.transform = "translateY(0)"; }, 10);
+      });
+
+      const closeTransfer = () => {
+        transferSheet.style.transform = "translateY(100%)";
+        setTimeout(() => { transferMask.classList.remove("show"); }, 300);
+      };
+
+      closeTransferBtn.addEventListener("click", closeTransfer);
+      transferMask.addEventListener("click", (e) => {
+        if (e.target === transferMask) closeTransfer();
+      });
+
+      // 绑定键盘点击
+      keypadBtns.forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          transferPwdHint.textContent = ""; // 清理掉错密码红字
+
+          const val = btn.dataset.val;
+          if (!val) return; // 点到空白按键没反应
+
+          if (val === "del") {
+            currentPin = currentPin.slice(0, -1);
+            updatePinUI();
+          } else {
+            if (currentPin.length < 6) {
+              currentPin += val;
+              updatePinUI();
+              
+              // 【核心】到第6位，自动触发验证
+              if (currentPin.length === 6) {
+                // 加一点点延迟，让第6个黑点先画出来再消失
+                setTimeout(verifyAndTransfer, 50); 
+              }
+            }
+          }
+        });
+      });
+
+      function verifyAndTransfer() {
+        const amount = parseFloat(transferAmount.value);
+        const note = transferNote.value.trim() || "转账";
+
+        if (isNaN(amount) || amount <= 0) {
+          transferPwdHint.textContent = "请输入正确的转账金额";
+          resetPin();
+          return;
+        }
+
+        // --- 核心：静默绑定与校验 ---
+        if (!globalPayPassword) {
+          globalPayPassword = currentPin; // 首次绑定
+          localStorage.setItem("myPayPassword", currentPin);
+        } else if (globalPayPassword !== currentPin) {
+          transferPwdHint.textContent = "密码错误，请重新输入";
+          resetPin(); // 输错直接清空
+          return;
+        }
+
+        // --- 密码正确，构建漂亮的橙色转账气泡 ---
+        const contact = getContact(state.activeContactId);
+        if (!contact) return;
+
+        const transferHtml = `
+          <div style="background: #f79c39; border-radius: 8px; padding: 14px 16px; min-width: 210px; color: #fff; position: relative;">
+            <div style="display: flex; align-items: center; gap: 14px; margin-bottom: 6px;">
+              <div style="width: 36px; height: 36px; background: rgba(255,255,255,0.25); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px;">¥</div>
+              <div style="display: flex; flex-direction: column;">
+                <span style="font-size: 16px; font-weight: 500;">¥${amount.toFixed(2)}</span>
+                <span style="font-size: 13px; opacity: 0.9;">${note}</span>
+              </div>
+            </div>
+            <div style="font-size: 12px; opacity: 0.8; margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.2);">微信转账 (等待对方收款)</div>
+            <span style="display:none;" class="transfer-tag">[转账|${amount}|pending]</span>
+          </div>
+        `;
+
+        contact.messages.push({
+          from: "me",
+          text: transferHtml,
+          time: getCurrentTime(),
+          hasAnimated: false 
+        });
+        contact.lastTime = getCurrentTime();
+        
+        renderChat();
+        closeTransfer();
+      }
+    }
+
+    // ========== 新增：2. 选照片逻辑 ==========
+    const photoUploadItem = document.getElementById("photoUploadItem");
+    const chatImageInput = document.getElementById("chatImageInput");
+
+    if (photoUploadItem && chatImageInput) {
+      photoUploadItem.addEventListener("click", (e) => {
+        e.stopPropagation();
+        chatImageInput.click(); 
+      });
+
+      chatImageInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          const base64Image = event.target.result;
+          const contact = getContact(state.activeContactId);
+          if (!contact) return;
+
+          contact.messages.push({
+            from: "me",
+            text: "", 
+            image: base64Image,
+            time: getCurrentTime(),
+            hasAnimated: false 
+          });
+          contact.lastTime = getCurrentTime();
+          
+          renderChat();
+        };
+        reader.readAsDataURL(file); 
+        e.target.value = ""; 
+      });
+    }
+
+
+    // ========== 升级版：3. 终极“重回” (彻底删干净并刷新时间) ==========
+    const regenerateBtn = document.getElementById("regenerateBtn");
+    if (regenerateBtn) {
+      regenerateBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        inventoryPopup.classList.remove("show"); // 先关掉左下角的菜单
+
+        const contact = getContact(state.activeContactId);
+        if (!contact || contact.messages.length === 0) {
+            alert("还没有聊天记录呢！");
+            return;
+        }
+
+        let deletedSomething = false;
+
+        // 【重中之重】：持续从末尾删除，只要是 AI 发的，管它是打字还是转账退款，连根拔起！
+        while (contact.messages.length > 0) {
+            const lastMsg = contact.messages[contact.messages.length - 1];
+
+            if (lastMsg.from === "ai") {
+                // 如果刚刚 AI 的回复包含了接受或退还，把之前自己发出的转账气泡反转回等待状态！
+                if (lastMsg.text.includes('TA已收钱') || lastMsg.text.includes('TA已退还') || lastMsg.text.includes('接受转账') || lastMsg.text.includes('退回转账')) {
+                    for(let i = contact.messages.length - 1; i >= 0; i--) {
+                        if (contact.messages[i].from === "me" && contact.messages[i].text.includes('[转账|')) {
+                            // 正则暴力替换，不管它变成了啥样，强行恢复成待收款的橙色样式
+                            contact.messages[i].text = contact.messages[i].text
+                                .replace(/\[转账\|(.*?)\|accepted\]/g, '[转账|$1|pending]')
+                                .replace(/\[转账\|(.*?)\|returned\]/g, '[转账|$1|pending]')
+                                .replace('微信转账 (已收款)', '微信转账 (等待对方收款)')
+                                .replace('微信转账 (已被退还)', '微信转账 (等待对方收款)')
+                                .replace('background: #f0a75d;', 'background: #f79c39;') // 恢复鲜艳的橙色
+                                .replace('opacity: 0.6;', ''); // 恢复不透明度
+                            break; 
+                        }
+                    }
+                }
+                
+                contact.messages.pop(); // 咔嚓！彻底从数组里删除
+                deletedSomething = true;
+            } else {
+                // 碰到用户自己发的，停止删除
+                break;
+            }
+        }
+
+        if (!deletedSomething) {
+            alert("上一条是你发的消息哦，等TA回复了之后才能重回！");
+            return;
+        }
+
+        // 把上一条你发的消息的时间戳，强制刷新成现在的最新时间，闭环！
+        if (contact.messages.length > 0) {
+            const myLastMsg = contact.messages[contact.messages.length - 1];
+            if (myLastMsg.from === "me") {
+                myLastMsg.time = getCurrentTime();
+            }
+        }
+
+        // 强制全局刷新画面，扫清旧记录
+        renderChat();
+
+        // 带着干干净净的记忆，重新呼叫AI！
+        triggerAIReply();
+      });
+    }
+    // =========================================================
     document.getElementById("emojiBtn").addEventListener("click", () => {
       chatInput.value += "🙂";
       chatInput.focus();

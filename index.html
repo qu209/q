@@ -1140,6 +1140,72 @@
       display: none !important;
     }
 
+    /* ====== 新增：心声气泡弹窗样式 ====== */
+    .inner-voice-popup {
+      position: absolute;
+      top: calc(72px + var(--safe-top));
+      right: 12px;
+      width: 250px;
+      background: #fff;
+      border: 2px solid #111;
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      z-index: 100;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      animation: bubbleFadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    /* 气泡右上角的指引小尖角（已向左平移，精准对齐心声图标） */
+    .inner-voice-popup::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      right: 64px;
+      width: 16px;
+      height: 16px;
+      background: #fff;
+      border-left: 2px solid #111;
+      border-top: 2px solid #111;
+      transform: rotate(45deg);
+    }
+    .inner-voice-popup.show {
+      display: flex;
+    }
+    .iv-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .iv-avatar {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      background-color: #eee;
+      flex-shrink: 0;
+      border: 1px solid #ececec;
+    }
+    .iv-emoji {
+      font-size: 18px;
+      font-weight: 700;
+      color: #111;
+      flex: 1;
+    }
+    .iv-text {
+      font-size: 14px;
+      color: #111;
+      line-height: 1.5;
+      text-align: center;
+      width: 100%;
+      word-break: break-word;
+      font-weight: 500;
+    }
+
     /* 键盘点击反馈样式 */
     .keypad-btn:active {
       background: #d1d1d6 !important;
@@ -1354,6 +1420,14 @@
             </button>
           </div>
         </div>
+      </div>
+
+      <div class="inner-voice-popup" id="innerVoicePopup">
+        <div class="iv-header">
+          <div class="iv-avatar" id="innerVoiceAvatar"></div>
+          <div class="iv-emoji" id="innerVoiceEmoji"></div>
+        </div>
+        <div class="iv-text" id="innerVoiceText"></div>
       </div>
 
       <div class="chat-body" id="chatBody">
@@ -2581,7 +2655,7 @@ TimeChecklist:
       }
       
       combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
-
+      combinedPersona += "【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：\n[INNER_VOICE|你的颜文字|你的内心想法]。\n例如：[INNER_VOICE|(*/ω＼*)|他居然这么懂我，有点心动了！]。\n⚠️警告：内心想法（心声正文）必须精简，字数请严格控制在 80 字以内！这部分仅作心声记录，绝对不能让用户在聊天气泡中直接看到。\n";
       // 检查是否开启了翻译模式，并注入超强逻辑覆写
       if (api.enableTranslation) {
         combinedPersona += `\n【⚠️ 绝对逻辑覆写 / Absolute Logic Overwrite】
@@ -2671,6 +2745,16 @@ TimeChecklist:
         const data = await response.json();
         let aiText = data.choices[0].message.content;
         
+        // 新增：解析AI悄悄发送的心声指令
+        const innerVoiceRegex = /\[INNER_VOICE\|([^|]+)\|([^\]]+)\]/i;
+        const innerMatch = aiText.match(innerVoiceRegex);
+        if (innerMatch) {
+            contact.latestEmoticon = innerMatch[1];
+            contact.latestInnerVoice = innerMatch[2];
+            // 把标记从文字中抹除，绝不让用户在消息列表看见
+            aiText = aiText.replace(innerVoiceRegex, "").trim();
+        }
+
         // 解析AI悄悄发送的状态修改指令
         const statusRegex = /\[STATUS:([#a-zA-Z0-9]+)\|([^\]]+)\]/i;
         const statusMatch = aiText.match(statusRegex);
@@ -3101,27 +3185,58 @@ TimeChecklist:
       });
     }
     // =========================================================
-    document.getElementById("emojiBtn").addEventListener("click", () => {
+        document.getElementById("emojiBtn").addEventListener("click", () => {
       chatInput.value += "🙂";
       chatInput.focus();
     });
-
-        document.getElementById("voiceBtn").addEventListener("click", () => {
+    document.getElementById("voiceBtn").addEventListener("click", () => {
       triggerAIReply();
     });
-
     menuBtn.addEventListener("click", () => {
       drawerMask.classList.add("show");
     });
-    
     drawerMask.addEventListener("click", (e) => {
       if (e.target === drawerMask) {
         drawerMask.classList.remove("show");
       }
     });
 
+    // ================== 新增：心声弹窗交互逻辑 ==================
+    const innerVoicePopup = document.getElementById("innerVoicePopup");
+    const innerVoiceAvatar = document.getElementById("innerVoiceAvatar");
+    const innerVoiceEmoji = document.getElementById("innerVoiceEmoji");
+    const innerVoiceText = document.getElementById("innerVoiceText");
+
+    // 点击右上角心声/心机按钮
+    document.getElementById("voiceCallBtn").addEventListener("click", (e) => {
+      e.stopPropagation(); // 阻止点击事件冒泡导致立即关闭
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+
+      // 提取头像（纯净版不带框）
+      if (contact.avatar) {
+        innerVoiceAvatar.style.backgroundImage = `url(${contact.avatar})`;
+      } else {
+        innerVoiceAvatar.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23d7d7d7'/%3E%3Cstop offset='100%25' stop-color='%23c9c9c9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23bg)'/%3E%3Ccircle cx='50' cy='34' r='18' fill='%23ededed'/%3E%3Cpath d='M20 100 Q20 65 50 65 Q80 65 80 100' fill='%23efefef'/%3E%3C/svg%3E")`;
+      }
+
+      // 回显刚才AI背地里生成的心声（没有的话给个初始值）
+      innerVoiceEmoji.textContent = contact.latestEmoticon || "(*^▽^*)";
+      innerVoiceText.textContent = contact.latestInnerVoice || "现在还没什么特别的心声呢~ 快跟TA聊两句吧！";
+
+      // 切换显示状态
+      innerVoicePopup.classList.toggle("show");
+    });
+
+    // 点击页面其他任意地方，自动收起心声弹窗
+    document.addEventListener("click", (e) => {
+      if (innerVoicePopup && !innerVoicePopup.contains(e.target) && e.target !== document.getElementById("voiceCallBtn")) {
+        innerVoicePopup.classList.remove("show");
+      }
+    });
+
     // ================== 个性化设置 & 动态样式注入 ==================
-    function applyGlobalFontAndSize() {
+   function applyGlobalFontAndSize() {
       let styleEl = document.getElementById("dynamic-font-style");
       if (!styleEl) {
         styleEl = document.createElement("style");

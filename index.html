@@ -1228,9 +1228,9 @@
         font-size: 16px;
       }
     }
-        /* ====== 表情包系统样式 ====== */
-    /* 禁止长按选择文字 */
-    .emoji-manager-screen, .emoji-panel-sheet, .emoji-panel-sheet * {
+    /* ====== 表情包系统样式 ====== */
+    /* 禁止长按选择文字，同时彻底屏蔽长按弹出系统菜单 */
+    .emoji-manager-screen, .emoji-content-screen, .emoji-panel-sheet, .emoji-panel-sheet * {
       -webkit-user-select: none;
       user-select: none;
       -webkit-touch-callout: none;
@@ -1381,6 +1381,8 @@
       border-radius: 10px;
       background: #eee;
       display: block;
+      -webkit-touch-callout: none; /* 彻底禁用iOS长按图片弹出菜单 */
+      pointer-events: none; /* 让系统无法选中图片，只触发外层的自定义长按操作 */
     }
     .emoji-grid-label {
       font-size: 10px;
@@ -2122,13 +2124,10 @@
 
     <!-- ====== 批量上传弹窗 ====== -->
     <div class="custom-dialog-mask" id="batchUploadMask">
-      <div class="custom-dialog" style="width:min(400px,calc(100vw - 32px));max-height:70vh;display:flex;flex-direction:column;padding:20px 18px 18px;">
+      <div class="custom-dialog">
         <div class="custom-dialog-title">批量上传表情包</div>
         <div style="font-size:12px;color:#aaa;margin-bottom:12px;text-align:center;">每行一个，可填写表情包链接或选择本地图片</div>
-        <div id="batchUploadList" style="flex:1;overflow-y:auto;margin-bottom:12px;">
-          <div class="batch-upload-area" id="batchUploadArea"></div>
-        </div>
-        <button id="batchAddLinkRowBtn" style="width:100%;height:40px;background:#f7f7f8;border-radius:12px;border:1px solid #e0e0e0;font-size:14px;color:#555;cursor:pointer;margin-bottom:10px;">+ 添加一行（链接）</button>
+        <textarea class="textarea" id="batchEmojiInput" placeholder="意思+链接&#10;意思+...&#10;..." style="width:100%;height:150px;border-radius:12px;padding:12px;margin-bottom:12px;border:1px solid #e0e0e0;background:#f7f7f8;resize:none;font-size:14px;"></textarea>
         <button id="batchAddFileRowBtn" style="width:100%;height:40px;background:#f7f7f8;border-radius:12px;border:1px solid #e0e0e0;font-size:14px;color:#555;cursor:pointer;margin-bottom:14px;">+ 从相册/文件选择</button>
         <div class="custom-dialog-actions">
           <button class="custom-dialog-btn-cancel" id="batchUploadCancelBtn">取消</button>
@@ -3968,73 +3967,53 @@ TimeChecklist:
     });
 
     // ========== 批量上传 ==========
-    let batchRows = []; // [{url, label}]
     document.getElementById("emojiCatBatchBtn").addEventListener("click", () => {
-      batchRows = [];
-      renderBatchRows();
+      document.getElementById("batchEmojiInput").value = "";
       document.getElementById("batchUploadMask").classList.add("show");
     });
     document.getElementById("batchUploadCancelBtn").addEventListener("click", () => {
       document.getElementById("batchUploadMask").classList.remove("show");
     });
     document.getElementById("batchUploadConfirmBtn").addEventListener("click", () => {
-      // 过滤有效行（有url的）
-      const valid = batchRows.filter(r => r.url.trim());
-      valid.forEach(r => {
-        state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: r.url, label: r.label });
-      });
+      const text = document.getElementById("batchEmojiInput").value.trim();
+      if (text) {
+        // 按回车分行解析
+        const lines = text.split('\n');
+        lines.forEach(line => {
+          // 按加号分割 意思+链接
+          const parts = line.trim().split('+');
+          if (parts.length >= 2) {
+            const label = parts[0].trim();
+            const url = parts.slice(1).join('+').trim(); // 链接里如果有加号，重新拼回去
+            if (url) {
+              state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: url, label: label });
+            }
+          } else if (parts.length === 1 && parts[0].trim()) {
+             // 如果没写加号，默认整行全是链接，没有意思
+             state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: parts[0].trim(), label: "" });
+          }
+        });
+      }
       document.getElementById("batchUploadMask").classList.remove("show");
       renderEmojiContentGrid();
-    });
-    document.getElementById("batchAddLinkRowBtn").addEventListener("click", () => {
-      batchRows.push({ url: "", label: "", isFile: false });
-      renderBatchRows();
     });
     document.getElementById("batchAddFileRowBtn").addEventListener("click", () => {
       document.getElementById("batchFileInput").click();
     });
     document.getElementById("batchFileInput").addEventListener("change", (e) => {
       const files = Array.from(e.target.files);
-      let loaded = 0;
       files.forEach(file => {
         const reader = new FileReader();
         reader.onload = (ev) => {
-          batchRows.push({ url: ev.target.result, label: "", isFile: true });
-          loaded++;
-          if (loaded === files.length) renderBatchRows();
+          // 将本地图片转成的代码直接追加到文本框，格式为：[本地图片]+[链接]
+          const currentVal = document.getElementById("batchEmojiInput").value;
+          const newVal = currentVal + (currentVal ? "\n" : "") + "本地图片+" + ev.target.result;
+          document.getElementById("batchEmojiInput").value = newVal;
         };
         reader.readAsDataURL(file);
       });
       e.target.value = "";
     });
-    function renderBatchRows() {
-      const area = document.getElementById("batchUploadArea");
-      area.innerHTML = "";
-      batchRows.forEach((row, idx) => {
-        const div = document.createElement("div");
-        div.className = "batch-upload-row";
-        if (row.isFile || row.url.startsWith("data:")) {
-          div.innerHTML = `
-            <img class="batch-upload-img" src="${row.url}" />
-            <input class="batch-upload-label-input" placeholder="表情包意思" value="${row.label}" />
-            <button class="batch-upload-del">×</button>
-          `;
-        } else {
-          div.innerHTML = `
-            <input class="batch-upload-label-input" style="flex:2;" placeholder="图片链接 https://..." value="${row.url}" />
-            <input class="batch-upload-label-input" placeholder="意思" value="${row.label}" />
-            <button class="batch-upload-del">×</button>
-          `;
-          div.querySelector("input:first-child").addEventListener("input", (e) => { batchRows[idx].url = e.target.value; });
-        }
-        div.querySelector(".batch-upload-label-input:last-of-type").addEventListener("input", (e) => { batchRows[idx].label = e.target.value; });
-        div.querySelector(".batch-upload-del").addEventListener("click", () => {
-          batchRows.splice(idx, 1);
-          renderBatchRows();
-        });
-        area.appendChild(div);
-      });
-    }
 
     // ========== 聊天界面表情包半屏弹窗 ==========
     document.getElementById("emojiBtn").addEventListener("click", (e) => {

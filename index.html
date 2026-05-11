@@ -1123,12 +1123,26 @@
     .transfer-reply .transfer-amt { font-size: 12px; opacity: 0.7; margin-top: 2px; }
 
     /* 彻底去除转账卡片外层气泡样式的核心类 */
-    .bubble.is-transfer { background: transparent !important; padding: 0 !important; border-radius: 8px !important; }
+    .bubble.is-transfer { 
+      background: transparent !important; 
+      padding: 0 !important;
+      border-radius: 8px !important; 
+      white-space: normal !important; /* 强制消除气泡内的回车占位 */
+    }
+    
+    .bubble.is-transfer span {
+      display: block; /* 强制消除所有的内联空白缝隙 */
+    }
 
     /* 隐藏带有自定义头像的默认伪元素 */
     .friend-avatar.has-custom-avatar::before,
     .friend-avatar.has-custom-avatar::after {
       display: none !important;
+    }
+
+    /* 键盘点击反馈样式 */
+    .keypad-btn:active {
+      background: #d1d1d6 !important;
     }
 
     @media (min-width: 768px) {
@@ -1365,9 +1379,9 @@
           
           <div style="padding: 0 24px 16px;">
             <div style="background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 12px;">
-              <div style="display: flex; align-items: center; font-size: 32px; font-weight: 700; border-bottom: 1px solid #eee; padding-bottom: 8px;">
+              <div style="display: flex; align-items: center; font-size: 32px; font-weight: 700; border-bottom: 1px solid #007aff; padding-bottom: 8px; transition: border-color 0.2s;" id="amountLineWrap">
                 <span style="margin-right: 8px; font-size: 24px;">¥</span>
-                <input type="number" id="transferAmount" placeholder="0.00" style="flex: 1; border: none; outline: none; font-size: 32px; font-weight: 700; width: 100%; background: transparent;" />
+                <input type="text" id="transferAmount" readonly placeholder="0.00" style="flex: 1; border: none; outline: none; font-size: 32px; font-weight: 700; width: 100%; background: transparent; cursor: pointer;" />
               </div>
               <input type="text" id="transferNote" placeholder="添加转账说明" style="width: 100%; border: none; outline: none; font-size: 14px; margin-top: 12px; background: transparent; color: #333;" />
             </div>
@@ -1375,12 +1389,12 @@
             <div id="transferPwdHint" style="text-align: center; font-size: 13px; color: #df3b3b; height: 18px; margin-bottom: 12px;"></div>
 
             <div style="display: flex; justify-content: center; gap: 8px; margin-bottom: 20px;" id="pinBoxContainer">
-              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
-              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
-              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
-              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
-              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
-              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: border-color 0.2s;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: border-color 0.2s;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: border-color 0.2s;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: border-color 0.2s;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: border-color 0.2s;"></div>
+              <div class="pin-box" style="width: 44px; height: 44px; background: #fff; border: 1px solid #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 24px; transition: border-color 0.2s;"></div>
             </div>
           </div>
 
@@ -1394,7 +1408,7 @@
             <div class="keypad-btn" data-val="7" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">7</div>
             <div class="keypad-btn" data-val="8" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">8</div>
             <div class="keypad-btn" data-val="9" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">9</div>
-            <div class="keypad-btn empty" style="background: #e5e5ea; height: 54px;"></div>
+            <div class="keypad-btn" data-val="." style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">.</div>
             <div class="keypad-btn" data-val="0" style="background: #fff; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 24px; font-weight: 500; cursor: pointer; user-select: none;">0</div>
             <div class="keypad-btn del" data-val="del" style="background: #e5e5ea; height: 54px; display: flex; align-items: center; justify-content: center; font-size: 20px; cursor: pointer; user-select: none;">
               <svg width="24" height="20" viewBox="0 0 24 20" fill="none" stroke="#000" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 6 7 6h13a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2z"></path><line x1="18" y1="9" x2="12" y2="15"></line><line x1="12" y1="9" x2="18" y2="15"></line></svg>
@@ -2794,8 +2808,8 @@ TimeChecklist:
       }
     });
 
-    // 用本地存储保存支付密码，首次设置后永久生效
-    let globalPayPassword = localStorage.getItem("myPayPassword") || "";
+    // 暂时不使用本地存储持久化密码，每次刷新页面后重置
+    let globalPayPassword = "";
 
     // 点击弹窗里的各个选项后，自动收起弹窗
     document.querySelectorAll(".inventory-item").forEach(item => {
@@ -2812,11 +2826,37 @@ TimeChecklist:
     const transferAmount = document.getElementById("transferAmount");
     const transferNote = document.getElementById("transferNote");
     const transferPwdHint = document.getElementById("transferPwdHint");
-    
+    const pinBoxContainer = document.getElementById("pinBoxContainer");
+    const amountLineWrap = document.getElementById("amountLineWrap");
+
     // 键盘和密码框核心
     const pinBoxes = document.querySelectorAll(".pin-box");
     const keypadBtns = document.querySelectorAll(".keypad-btn");
     let currentPin = "";
+    let keypadTarget = "amount"; // 记录当前安全键盘输入目标是“金额”还是“密码”
+
+    // UI同步函数：高亮当前选中的输入区
+    function updateKeypadTargetUI() {
+      if (keypadTarget === "amount") {
+        amountLineWrap.style.borderBottomColor = "#007aff";
+        pinBoxes.forEach(box => box.style.borderColor = "#ccc"); // 取消密码框高亮
+      } else {
+        amountLineWrap.style.borderBottomColor = "#eee";
+        updatePinUI(); // 让密码的逻辑接管其边框高亮
+      }
+    }
+
+    // 焦点切换：点击金额或密码框，把安全键盘打字目标切换过去
+    transferAmount.parentElement.addEventListener("click", (e) => {
+      e.stopPropagation();
+      keypadTarget = "amount";
+      updateKeypadTargetUI();
+    });
+    pinBoxContainer.addEventListener("click", (e) => {
+      e.stopPropagation();
+      keypadTarget = "pin";
+      updateKeypadTargetUI();
+    });
 
     // 更新6个密码格子的UI
     function updatePinUI() {
@@ -2828,8 +2868,8 @@ TimeChecklist:
           box.textContent = "";
         }
         
-        // 高亮下一个要输入的框 (类似微信蓝框效果)
-        if (index === currentPin.length) {
+        // 仅在输入目标为密码时，才高亮下一个框
+        if (keypadTarget === "pin" && index === currentPin.length) {
           box.style.borderColor = "#007aff";
         } else {
           box.style.borderColor = "#ccc";
@@ -2851,6 +2891,8 @@ TimeChecklist:
         transferAmount.value = "";
         transferNote.value = "";
         resetPin();
+        keypadTarget = "amount"; // 每次打开弹窗默认先输金额
+        updateKeypadTargetUI();
         
         transferMask.classList.add("show");
         setTimeout(() => { transferSheet.style.transform = "translateY(0)"; }, 10);
@@ -2873,20 +2915,44 @@ TimeChecklist:
           transferPwdHint.textContent = ""; // 清理掉错密码红字
 
           const val = btn.dataset.val;
-          if (!val) return; // 点到空白按键没反应
+          if (!val) return;
 
-          if (val === "del") {
-            currentPin = currentPin.slice(0, -1);
-            updatePinUI();
-          } else {
-            if (currentPin.length < 6) {
-              currentPin += val;
+          // ================= 金额输入逻辑 =================
+          if (keypadTarget === "amount") {
+            if (val === "del") {
+              transferAmount.value = transferAmount.value.slice(0, -1);
+            } else if (val === ".") {
+              if (!transferAmount.value.includes(".")) {
+                transferAmount.value += transferAmount.value === "" ? "0." : ".";
+              }
+            } else {
+              // 限制小数位最多两位
+              if (transferAmount.value.includes(".")) {
+                const parts = transferAmount.value.split(".");
+                if (parts[1].length >= 2) return;
+              }
+              // 自动替换开头的占位0
+              if (transferAmount.value === "0" && val !== ".") {
+                transferAmount.value = val;
+              } else {
+                transferAmount.value += val;
+              }
+            }
+          } 
+          // ================= 密码输入逻辑 =================
+          else if (keypadTarget === "pin") {
+            if (val === "del") {
+              currentPin = currentPin.slice(0, -1);
               updatePinUI();
-              
-              // 【核心】到第6位，自动触发验证
-              if (currentPin.length === 6) {
-                // 加一点点延迟，让第6个黑点先画出来再消失
-                setTimeout(verifyAndTransfer, 50); 
+            } else if (val !== ".") { // 密码不能输入小数点
+              if (currentPin.length < 6) {
+                currentPin += val;
+                updatePinUI();
+                
+                // 【核心】到第6位，自动触发验证
+                if (currentPin.length === 6) {
+                  setTimeout(verifyAndTransfer, 50); 
+                }
               }
             }
           }
@@ -2900,17 +2966,18 @@ TimeChecklist:
         if (isNaN(amount) || amount <= 0) {
           transferPwdHint.textContent = "请输入正确的转账金额";
           resetPin();
+          keypadTarget = "amount"; // 提示重输金额时跳回金额高亮
+          updateKeypadTargetUI();
           return;
         }
 
         // --- 核心：静默绑定与校验 ---
         if (!globalPayPassword) {
-          globalPayPassword = currentPin; // 首次绑定
-          localStorage.setItem("myPayPassword", currentPin);
+          globalPayPassword = currentPin; // 首次绑定直接通过，不再存入 localStorage
         } else if (globalPayPassword !== currentPin) {
           transferPwdHint.textContent = "密码错误，请重新输入";
-          resetPin(); // 输错直接清空
-          return;
+          resetPin();
+          return; // 输错直接清空
         }
 
         // --- 密码正确，写入结构化转账标签 ---
@@ -2919,7 +2986,6 @@ TimeChecklist:
 
         // 使用特殊的文本标签，在 renderChat 时动态解析成好看的卡片
         const transferText = `[TRANSFER|${amount.toFixed(2)}|${note}|pending|me]`;
-        
         contact.messages.push({
           from: "me",
           text: transferText,

@@ -1228,6 +1228,403 @@
         font-size: 16px;
       }
     }
+        /* ====== 表情包系统样式 ====== */
+    /* 禁止长按选择文字 */
+    .emoji-manager-screen, .emoji-panel-sheet, .emoji-panel-sheet * {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* 表情包管理页面 */
+    .emoji-manager-screen {
+      position: absolute;
+      inset: 0;
+      background: #f2f2f7;
+      display: none;
+      flex-direction: column;
+      z-index: 200;
+    }
+    .emoji-manager-screen.show { display: flex; }
+
+    .emoji-manager-header {
+      height: calc(54px + var(--safe-top));
+      padding-top: var(--safe-top);
+      background: #f2f2f7;
+      display: flex;
+      align-items: flex-end;
+      padding-bottom: 0;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+    .emoji-manager-header-bar {
+      width: 100%;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+    }
+    .emoji-manager-title {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .emoji-manager-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 16px;
+      overscroll-behavior: contain;
+    }
+
+    /* 分类列表 */
+    .emoji-cat-list {
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .emoji-cat-item {
+      display: flex;
+      align-items: center;
+      padding: 16px 18px;
+      border-bottom: 1px solid #f5f5f5;
+      cursor: pointer;
+      position: relative;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .emoji-cat-item:last-child { border-bottom: none; }
+    .emoji-cat-item-name {
+      flex: 1;
+      font-size: 16px;
+      font-weight: 500;
+      color: #111;
+    }
+    .emoji-cat-item-count {
+      font-size: 13px;
+      color: #aaa;
+      margin-right: 8px;
+    }
+    .emoji-cat-item-arrow {
+      color: #c7c7cc;
+      font-size: 18px;
+    }
+    .emoji-cat-drag-handle {
+      color: #ccc;
+      margin-right: 14px;
+      font-size: 18px;
+      cursor: grab;
+    }
+
+    /* 表情包内容页 */
+    .emoji-content-screen {
+      position: absolute;
+      inset: 0;
+      background: #f2f2f7;
+      display: none;
+      flex-direction: column;
+      z-index: 210;
+    }
+    .emoji-content-screen.show { display: flex; }
+    .emoji-content-header {
+      height: calc(54px + var(--safe-top));
+      padding-top: var(--safe-top);
+      background: #f2f2f7;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+      display: flex;
+      align-items: flex-end;
+    }
+    .emoji-content-header-bar {
+      width: 100%;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      padding: 0 8px;
+    }
+    .emoji-content-title {
+      flex: 1;
+      text-align: center;
+      font-size: 17px;
+      font-weight: 600;
+    }
+
+    .emoji-content-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      overscroll-behavior: contain;
+    }
+
+    /* 表情包格子 一排5个 */
+    .emoji-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+    }
+    .emoji-grid-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      -webkit-user-select: none;
+      user-select: none;
+      position: relative;
+    }
+    .emoji-grid-img {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      border-radius: 10px;
+      background: #eee;
+      display: block;
+    }
+    .emoji-grid-label {
+      font-size: 10px;
+      color: #666;
+      text-align: center;
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+    .emoji-grid-item.drag-over { opacity: 0.5; }
+    .emoji-grid-item.dragging { opacity: 0.3; }
+
+    /* 聊天界面表情包半屏弹窗 */
+    .emoji-panel-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      background: rgba(0,0,0,0.25);
+      display: none;
+    }
+    .emoji-panel-mask.show { display: block; }
+    .emoji-panel-sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 55vh;
+      background: #fff;
+      border-radius: 20px 20px 0 0;
+      display: flex;
+      flex-direction: column;
+      transform: translateY(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+      overflow: hidden;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .emoji-panel-mask.show .emoji-panel-sheet {
+      transform: translateY(0);
+    }
+    .emoji-panel-tabs {
+      display: flex;
+      border-bottom: 1px solid #f0f0f0;
+      overflow-x: auto;
+      flex-shrink: 0;
+      scrollbar-width: none;
+      padding: 0 8px;
+    }
+    .emoji-panel-tabs::-webkit-scrollbar { display: none; }
+    .emoji-panel-tab {
+      flex-shrink: 0;
+      padding: 12px 14px;
+      font-size: 13px;
+      color: #888;
+      font-weight: 500;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      white-space: nowrap;
+    }
+    .emoji-panel-tab.active {
+      color: #111;
+      font-weight: 700;
+      border-bottom-color: #111;
+    }
+    .emoji-panel-content {
+      flex: 1;
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      padding: 12px;
+    }
+    .emoji-panel-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+    }
+    .emoji-panel-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      cursor: pointer;
+    }
+    .emoji-panel-img {
+      width: 100%;
+      aspect-ratio: 1/1;
+      object-fit: cover;
+      border-radius: 8px;
+      background: #f0f0f0;
+      display: block;
+    }
+    .emoji-panel-label {
+      font-size: 9px;
+      color: #888;
+      text-align: center;
+      width: 100%;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* 通用自定义弹窗（风格一致）*/
+    .custom-dialog-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 300;
+      background: rgba(0,0,0,0.38);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .custom-dialog-mask.show { display: flex; }
+    .custom-dialog {
+      width: min(340px, calc(100vw - 48px));
+      background: #fff;
+      border-radius: 24px;
+      padding: 24px 22px 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+    }
+    .custom-dialog-title {
+      font-size: 17px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    .custom-dialog-input {
+      width: 100%;
+      height: 44px;
+      border: 1px solid #d0d5dd;
+      border-radius: 12px;
+      outline: none;
+      background: #f7f7f8;
+      color: #111;
+      padding: 0 14px;
+      font-size: 15px;
+      margin-bottom: 6px;
+    }
+    .custom-dialog-hint {
+      font-size: 12px;
+      color: #aaa;
+      margin-bottom: 16px;
+      min-height: 16px;
+    }
+    .custom-dialog-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .custom-dialog-btn-cancel {
+      flex: 1;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid #d8dde6;
+      background: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #111;
+    }
+    .custom-dialog-btn-confirm {
+      flex: 1.5;
+      height: 44px;
+      border-radius: 12px;
+      border: 0;
+      background: #111;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .custom-dialog-btn-danger {
+      flex: 1;
+      height: 44px;
+      border-radius: 12px;
+      border: 0;
+      background: #df3b3b;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* 表情包消息气泡图片 */
+    .emoji-msg-img {
+      max-width: 120px;
+      border-radius: 12px;
+      display: block;
+      cursor: pointer;
+    }
+
+    /* 批量上传区 */
+    .batch-upload-area {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+    }
+    .batch-upload-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f5f5f5;
+    }
+    .batch-upload-row:last-child { border-bottom: none; }
+    .batch-upload-img {
+      width: 50px;
+      height: 50px;
+      border-radius: 10px;
+      object-fit: cover;
+      flex-shrink: 0;
+      background: #eee;
+    }
+    .batch-upload-label-input {
+      flex: 1;
+      height: 36px;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 0 12px;
+      font-size: 14px;
+      outline: none;
+      background: #f7f7f8;
+      color: #111;
+    }
+    .batch-upload-del {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      border: 0;
+      background: #f0f0f0;
+      color: #888;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    /* 表情包发送后在聊天中显示 */
+    .bubble.is-emoji-sticker {
+      background: transparent !important;
+      padding: 0 !important;
+    }
+
   </style>
 </head>
 <body>
@@ -1281,8 +1678,9 @@
       </div>
 
       <ul class="menu">
-        <li>钱包</li>        <li>个人资料</li>
-                <li id="openStickerManagerBtn" style="cursor: pointer;">我的表情包</li>
+        <li>钱包</li>
+        <li>个人资料</li>
+        <li id="openEmojiManagerBtn" style="cursor: pointer;">表情包</li>
         <li id="openSettingsBtn" style="cursor: pointer;">设置</li>
       </ul>
     </section>
@@ -1538,7 +1936,7 @@
               placeholder="恨天地生万物而非仅你我"
               autocomplete="off"
             />
-            <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情包">
+            <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情">
               <img src="https://i.postimg.cc/y8pZRN6H/IMG-3205.png" alt="" />
             </button>
           </div>
@@ -1685,6 +2083,129 @@
           </div>
 
         </div>
+      </div>
+    </div>
+    <!-- ====== 表情包管理页面 ====== -->
+    <div class="emoji-manager-screen" id="emojiManagerScreen">
+      <div class="emoji-manager-header">
+        <div class="emoji-manager-header-bar">
+          <button class="header-btn" id="emojiManagerBackBtn" style="color:#111;">
+            <span class="back-char">‹</span>
+          </button>
+          <div class="emoji-manager-title">表情包</div>
+          <div style="width:50px;"></div>
+        </div>
+      </div>
+      <div class="emoji-manager-body">
+        <div style="font-size:13px;color:#8e8e93;margin:0 0 8px 4px;">分类管理</div>
+        <div class="emoji-cat-list" id="emojiCatList"></div>
+        <button id="addEmojiCatBtn" style="width:100%;height:48px;background:#fff;border-radius:16px;border:0;font-size:15px;font-weight:600;color:#111;cursor:pointer;margin-top:4px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">+ 新建分类</button>
+      </div>
+    </div>
+
+    <!-- ====== 表情包内容页（某分类下的表情） ====== -->
+    <div class="emoji-content-screen" id="emojiContentScreen">
+      <div class="emoji-content-header">
+        <div class="emoji-content-header-bar">
+          <button class="header-btn" id="emojiContentBackBtn" style="color:#111;">
+            <span class="back-char">‹</span>
+          </button>
+          <div class="emoji-content-title" id="emojiContentTitle">分类名</div>
+          <button id="emojiCatBatchBtn" style="appearance:none;border:0;background:transparent;font-size:14px;font-weight:600;color:#111;cursor:pointer;padding:0 16px 0 0;">批量</button>
+        </div>
+      </div>
+      <div class="emoji-content-body">
+        <div class="emoji-grid" id="emojiContentGrid"></div>
+        <button id="addSingleEmojiBtn" style="width:100%;height:48px;background:#fff;border-radius:16px;border:0;font-size:15px;font-weight:600;color:#111;cursor:pointer;margin-top:16px;box-shadow:0 1px 4px rgba(0,0,0,0.06);">+ 上传表情包</button>
+      </div>
+    </div>
+
+    <!-- ====== 批量上传弹窗 ====== -->
+    <div class="custom-dialog-mask" id="batchUploadMask">
+      <div class="custom-dialog" style="width:min(400px,calc(100vw - 32px));max-height:70vh;display:flex;flex-direction:column;padding:20px 18px 18px;">
+        <div class="custom-dialog-title">批量上传表情包</div>
+        <div style="font-size:12px;color:#aaa;margin-bottom:12px;text-align:center;">每行一个，可填写表情包链接或选择本地图片</div>
+        <div id="batchUploadList" style="flex:1;overflow-y:auto;margin-bottom:12px;">
+          <div class="batch-upload-area" id="batchUploadArea"></div>
+        </div>
+        <button id="batchAddLinkRowBtn" style="width:100%;height:40px;background:#f7f7f8;border-radius:12px;border:1px solid #e0e0e0;font-size:14px;color:#555;cursor:pointer;margin-bottom:10px;">+ 添加一行（链接）</button>
+        <button id="batchAddFileRowBtn" style="width:100%;height:40px;background:#f7f7f8;border-radius:12px;border:1px solid #e0e0e0;font-size:14px;color:#555;cursor:pointer;margin-bottom:14px;">+ 从相册/文件选择</button>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="batchUploadCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="batchUploadConfirmBtn">上传全部</button>
+        </div>
+      </div>
+    </div>
+    <input type="file" id="batchFileInput" accept="image/*" multiple style="display:none;" />
+
+    <!-- ====== 单个上传表情包弹窗 ====== -->
+    <div class="custom-dialog-mask" id="singleUploadMask">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title">上传表情包</div>
+        <div id="singleUploadPreviewWrap" style="display:flex;justify-content:center;margin-bottom:14px;">
+          <img id="singleUploadPreviewImg" style="width:80px;height:80px;border-radius:12px;object-fit:cover;background:#eee;" src="" />
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button id="singlePickAlbumBtn" style="flex:1;height:38px;border-radius:10px;border:1px solid #d8dde6;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#111;">相册照片</button>
+          <button id="singlePickFileBtn" style="flex:1;height:38px;border-radius:10px;border:1px solid #d8dde6;background:#fff;font-size:13px;font-weight:600;cursor:pointer;color:#111;">文件照片</button>
+        </div>
+        <input type="file" id="singleFileInput" accept="image/*" style="display:none;" />
+        <input class="custom-dialog-input" id="singleEmojiLabelInput" placeholder="表情包意思（如：开心、好的）" />
+        <div class="custom-dialog-hint" id="singleUploadHint"></div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="singleUploadCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="singleUploadConfirmBtn">上传</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 新建/重命名分类弹窗 ====== -->
+    <div class="custom-dialog-mask" id="catNameDialogMask">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title" id="catNameDialogTitle">新建分类</div>
+        <input class="custom-dialog-input" id="catNameInput" placeholder="分类名称（如：日常、撒娇）" maxlength="20" />
+        <div class="custom-dialog-hint" id="catNameHint"></div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="catNameCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="catNameConfirmBtn">确定</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 表情包长按操作弹窗 ====== -->
+    <div class="custom-dialog-mask" id="emojiItemMenuMask">
+      <div class="custom-dialog" style="padding:10px 0 10px;">
+        <div id="emojiItemMenuEdit" style="padding:16px 22px;font-size:16px;text-align:center;cursor:pointer;border-bottom:1px solid #f5f5f5;color:#111;">修改意思</div>
+        <div id="emojiItemMenuDelete" style="padding:16px 22px;font-size:16px;text-align:center;cursor:pointer;color:#df3b3b;">删除表情包</div>
+      </div>
+    </div>
+
+    <!-- ====== 分类长按操作弹窗 ====== -->
+    <div class="custom-dialog-mask" id="catItemMenuMask">
+      <div class="custom-dialog" style="padding:10px 0 10px;">
+        <div id="catItemMenuRename" style="padding:16px 22px;font-size:16px;text-align:center;cursor:pointer;border-bottom:1px solid #f5f5f5;color:#111;">修改分类名称</div>
+        <div id="catItemMenuDelete" style="padding:16px 22px;font-size:16px;text-align:center;cursor:pointer;color:#df3b3b;">删除分类（含所有表情）</div>
+      </div>
+    </div>
+
+    <!-- ====== 修改表情包意思弹窗 ====== -->
+    <div class="custom-dialog-mask" id="editEmojiLabelMask">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title">修改表情包意思</div>
+        <input class="custom-dialog-input" id="editEmojiLabelInput" placeholder="表情包意思" maxlength="20" />
+        <div class="custom-dialog-hint"></div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="editEmojiLabelCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="editEmojiLabelConfirmBtn">保存</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 聊天界面表情包半屏弹窗 ====== -->
+    <div class="emoji-panel-mask" id="emojiPanelMask">
+      <div class="emoji-panel-sheet" id="emojiPanelSheet">
+        <div class="emoji-panel-tabs" id="emojiPanelTabs"></div>
+        <div class="emoji-panel-content" id="emojiPanelContent"></div>
       </div>
     </div>
 
@@ -2281,6 +2802,18 @@
             } else if (msg.text.startsWith("【系统消息】")) {
               bubble.classList.add("is-transfer"); 
               textSpan.innerHTML = `<div class="system-msg">${msg.text.replace("【系统消息】", "")}</div>`;
+            } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
+              // 渲染表情包图片
+              const parts = msg.text.slice(1, -1).split("|");
+              const stickerUrl = parts[1];
+              const stickerLabel = parts[2] || "";
+              bubble.classList.add("is-emoji-sticker");
+              const stickerImg = document.createElement("img");
+              stickerImg.className = "emoji-msg-img";
+              stickerImg.src = stickerUrl;
+              stickerImg.title = stickerLabel;
+              bubble.appendChild(stickerImg);
+              textSpan.remove && textSpan.remove();
             } else {
               textSpan.innerHTML = msg.text;
             }
@@ -3185,429 +3718,395 @@ TimeChecklist:
       });
     }
     // =========================================================
-            // ========== 表情包系统 ==========
-    // state 里新增表情包数据结构
-    state.stickerCategories = []; // [{ id, name, stickers: [{id, url, meaning}] }]
+            // ========== 表情包系统全局数据 ==========
+    // state.emojiCategories = [{ id, name, items: [{id, url, label}] }]
+    if (!state.emojiCategories) state.emojiCategories = [];
 
-    function makeStickerCatId() { return "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
-    function makeStickerId() { return "st_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
+    // ========== 工具函数 ==========
+    function makeEmojiId() { return "em_" + Date.now() + "_" + Math.random().toString(36).slice(2,7); }
 
-    // ----- 表情包半屏弹窗（聊天界面点击表情图标弹出）-----
-    const stickerSheetMask = document.createElement("div");
-    stickerSheetMask.id = "stickerSheetMask";
-    stickerSheetMask.style.cssText = "position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.3);display:none;align-items:flex-end;justify-content:center;";
-    document.body.appendChild(stickerSheetMask);
+    // ========== 打开表情包管理页 ==========
+    document.getElementById("openEmojiManagerBtn").addEventListener("click", () => {
+      screens.me.classList.remove("active");
+      document.getElementById("emojiManagerScreen").classList.add("show");
+      renderEmojiCatList();
+    });
+    document.getElementById("emojiManagerBackBtn").addEventListener("click", () => {
+      document.getElementById("emojiManagerScreen").classList.remove("show");
+      screens.me.classList.add("active");
+    });
 
-    const stickerSheet = document.createElement("div");
-    stickerSheet.id = "stickerSheet";
-    stickerSheet.style.cssText = "width:100%;max-width:600px;height:55vh;background:#fff;border-radius:20px 20px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25,1,0.3,1);overflow:hidden;";
-    stickerSheetMask.appendChild(stickerSheet);
-
-    // 表情包弹窗顶部分类 tabs
-    const stickerTabBar = document.createElement("div");
-    stickerTabBar.style.cssText = "display:flex;overflow-x:auto;padding:12px 12px 0;gap:8px;border-bottom:1px solid #f0f0f0;flex-shrink:0;scrollbar-width:none;";
-    stickerSheet.appendChild(stickerTabBar);
-
-    // 表情包弹窗内容区
-    const stickerGrid = document.createElement("div");
-    stickerGrid.style.cssText = "flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-content:start;";
-    stickerSheet.appendChild(stickerGrid);
-
-    function openStickerSheet() {
-      stickerSheetMask.style.display = "flex";
-      setTimeout(() => { stickerSheet.style.transform = "translateY(0)"; }, 10);
-      renderStickerSheet();
-    }
-    function closeStickerSheet() {
-      stickerSheet.style.transform = "translateY(100%)";
-      setTimeout(() => { stickerSheetMask.style.display = "none"; }, 300);
-    }
-    stickerSheetMask.addEventListener("click", (e) => { if (e.target === stickerSheetMask) closeStickerSheet(); });
-
-    let activeStickerCatIndex = 0;
-
-    function renderStickerSheet() {
-      // 渲染分类 tabs
-      stickerTabBar.innerHTML = "";
-      if (!state.stickerCategories.length) {
-        stickerGrid.innerHTML = "<div style='grid-column:1/-1;text-align:center;color:#bbb;padding:40px 0;font-size:14px;'>还没有表情包，去「我的表情包」添加吧</div>";
+    // ========== 渲染分类列表 ==========
+    function renderEmojiCatList() {
+      const list = document.getElementById("emojiCatList");
+      list.innerHTML = "";
+      if (state.emojiCategories.length === 0) {
+        list.innerHTML = '<div style="padding:24px;text-align:center;color:#bbb;font-size:14px;">还没有分类，点下方新建</div>';
         return;
       }
-      state.stickerCategories.forEach((cat, i) => {
-        const tab = document.createElement("button");
-        tab.textContent = cat.name;
-        tab.style.cssText = "flex-shrink:0;padding:6px 14px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;";
-        tab.style.background = i === activeStickerCatIndex ? "#111" : "#f2f2f7";
-        tab.style.color = i === activeStickerCatIndex ? "#fff" : "#333";
-        tab.onclick = () => { activeStickerCatIndex = i; renderStickerSheet(); };
-        stickerTabBar.appendChild(tab);
+      state.emojiCategories.forEach((cat, catIdx) => {
+        const item = document.createElement("div");
+        item.className = "emoji-cat-item";
+        item.draggable = true;
+        item.dataset.catIdx = catIdx;
+        item.innerHTML = `
+          <span class="emoji-cat-drag-handle">☰</span>
+          <span class="emoji-cat-item-name">${cat.name}</span>
+          <span class="emoji-cat-item-count">${cat.items.length}个</span>
+          <span class="emoji-cat-item-arrow">›</span>
+        `;
+        // 点击进入分类
+        item.addEventListener("click", () => openEmojiContent(catIdx));
+        // 长按操作
+        let catLongTimer = null;
+        item.addEventListener("touchstart", (e) => {
+          catLongTimer = setTimeout(() => { openCatMenu(catIdx); }, 600);
+        }, {passive:true});
+        item.addEventListener("touchend", () => clearTimeout(catLongTimer));
+        item.addEventListener("touchmove", () => clearTimeout(catLongTimer));
+        item.addEventListener("touchcancel", () => clearTimeout(catLongTimer));
+        item.addEventListener("mousedown", () => { catLongTimer = setTimeout(() => openCatMenu(catIdx), 600); });
+        item.addEventListener("mouseup", () => clearTimeout(catLongTimer));
+        item.addEventListener("mouseleave", () => clearTimeout(catLongTimer));
+        // 拖动排序
+        item.addEventListener("dragstart", (e) => { e.dataTransfer.setData("catDragIdx", catIdx); item.style.opacity="0.4"; });
+        item.addEventListener("dragend", () => { item.style.opacity="1"; });
+        item.addEventListener("dragover", (e) => { e.preventDefault(); item.style.background="#f0f0f0"; });
+        item.addEventListener("dragleave", () => { item.style.background=""; });
+        item.addEventListener("drop", (e) => {
+          e.preventDefault();
+          item.style.background="";
+          const from = parseInt(e.dataTransfer.getData("catDragIdx"));
+          const to = catIdx;
+          if (from !== to) {
+            const moved = state.emojiCategories.splice(from, 1)[0];
+            state.emojiCategories.splice(to, 0, moved);
+            renderEmojiCatList();
+          }
+        });
+        list.appendChild(item);
       });
+    }
 
-      // 渲染表情包格子
-      stickerGrid.innerHTML = "";
-      const cat = state.stickerCategories[activeStickerCatIndex];
-      if (!cat || !cat.stickers.length) {
-        stickerGrid.innerHTML = "<div style='grid-column:1/-1;text-align:center;color:#bbb;padding:40px 0;font-size:14px;'>这个分类还没有表情包</div>";
-        return;
+    // ========== 新建分类弹窗 ==========
+    let catNameDialogMode = "add"; // "add" | "rename"
+    let catNameTargetIdx = -1;
+
+    document.getElementById("addEmojiCatBtn").addEventListener("click", () => {
+      catNameDialogMode = "add";
+      catNameTargetIdx = -1;
+      document.getElementById("catNameDialogTitle").textContent = "新建分类";
+      document.getElementById("catNameInput").value = "";
+      document.getElementById("catNameHint").textContent = "";
+      document.getElementById("catNameDialogMask").classList.add("show");
+      setTimeout(() => document.getElementById("catNameInput").focus(), 80);
+    });
+    document.getElementById("catNameCancelBtn").addEventListener("click", () => {
+      document.getElementById("catNameDialogMask").classList.remove("show");
+    });
+    document.getElementById("catNameConfirmBtn").addEventListener("click", () => {
+      const name = document.getElementById("catNameInput").value.trim();
+      if (!name) { document.getElementById("catNameHint").textContent = "请输入分类名称"; return; }
+      if (catNameDialogMode === "add") {
+        state.emojiCategories.push({ id: makeEmojiId(), name, items: [] });
+      } else {
+        state.emojiCategories[catNameTargetIdx].name = name;
       }
-      cat.stickers.forEach(sticker => {
+      document.getElementById("catNameDialogMask").classList.remove("show");
+      renderEmojiCatList();
+    });
+
+    // ========== 分类长按菜单 ==========
+    let catMenuTargetIdx = -1;
+    function openCatMenu(catIdx) {
+      catMenuTargetIdx = catIdx;
+      document.getElementById("catItemMenuMask").classList.add("show");
+    }
+    document.getElementById("catItemMenuMask").addEventListener("click", (e) => {
+      if (e.target.id === "catItemMenuMask") document.getElementById("catItemMenuMask").classList.remove("show");
+    });
+    document.getElementById("catItemMenuRename").addEventListener("click", () => {
+      document.getElementById("catItemMenuMask").classList.remove("show");
+      catNameDialogMode = "rename";
+      catNameTargetIdx = catMenuTargetIdx;
+      document.getElementById("catNameDialogTitle").textContent = "修改分类名称";
+      document.getElementById("catNameInput").value = state.emojiCategories[catMenuTargetIdx].name;
+      document.getElementById("catNameHint").textContent = "";
+      document.getElementById("catNameDialogMask").classList.add("show");
+      setTimeout(() => document.getElementById("catNameInput").focus(), 80);
+    });
+    document.getElementById("catItemMenuDelete").addEventListener("click", () => {
+      document.getElementById("catItemMenuMask").classList.remove("show");
+      state.emojiCategories.splice(catMenuTargetIdx, 1);
+      renderEmojiCatList();
+    });
+
+    // ========== 打开某分类内容 ==========
+    let currentCatIdx = -1;
+    function openEmojiContent(catIdx) {
+      currentCatIdx = catIdx;
+      document.getElementById("emojiContentTitle").textContent = state.emojiCategories[catIdx].name;
+      renderEmojiContentGrid();
+      document.getElementById("emojiContentScreen").classList.add("show");
+    }
+    document.getElementById("emojiContentBackBtn").addEventListener("click", () => {
+      document.getElementById("emojiContentScreen").classList.remove("show");
+      renderEmojiCatList();
+    });
+
+    function renderEmojiContentGrid() {
+      const grid = document.getElementById("emojiContentGrid");
+      grid.innerHTML = "";
+      const cat = state.emojiCategories[currentCatIdx];
+      if (!cat) return;
+      cat.items.forEach((item, itemIdx) => {
         const cell = document.createElement("div");
-        cell.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;";
-        const img = document.createElement("img");
-        img.src = sticker.url;
-        img.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;border:1px solid #f0f0f0;";
-        img.onerror = () => { img.style.background="#f5f5f5"; };
-        const label = document.createElement("div");
-        label.style.cssText = "font-size:10px;color:#999;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-        label.textContent = sticker.meaning || "";
-        cell.appendChild(img);
-        cell.appendChild(label);
-        // 点击发送
-        cell.onclick = () => {
-          sendStickerMessage(sticker);
-          closeStickerSheet();
-        };
-        stickerGrid.appendChild(cell);
+        cell.className = "emoji-grid-item";
+        cell.draggable = true;
+        cell.dataset.itemIdx = itemIdx;
+        cell.innerHTML = `
+          <img class="emoji-grid-img" src="${item.url}" />
+          <span class="emoji-grid-label">${item.label || ""}</span>
+        `;
+        // 长按弹菜单
+        let itemLongTimer = null;
+        cell.addEventListener("touchstart", (e) => {
+          e.stopPropagation();
+          itemLongTimer = setTimeout(() => openEmojiItemMenu(itemIdx), 600);
+        }, {passive:true});
+        cell.addEventListener("touchend", () => clearTimeout(itemLongTimer));
+        cell.addEventListener("touchmove", () => clearTimeout(itemLongTimer));
+        cell.addEventListener("touchcancel", () => clearTimeout(itemLongTimer));
+        cell.addEventListener("mousedown", () => { itemLongTimer = setTimeout(() => openEmojiItemMenu(itemIdx), 600); });
+        cell.addEventListener("mouseup", () => clearTimeout(itemLongTimer));
+        cell.addEventListener("mouseleave", () => clearTimeout(itemLongTimer));
+        // 拖动排序
+        cell.addEventListener("dragstart", (e) => { e.dataTransfer.setData("emojiDragIdx", itemIdx); cell.classList.add("dragging"); });
+        cell.addEventListener("dragend", () => cell.classList.remove("dragging"));
+        cell.addEventListener("dragover", (e) => { e.preventDefault(); cell.classList.add("drag-over"); });
+        cell.addEventListener("dragleave", () => cell.classList.remove("drag-over"));
+        cell.addEventListener("drop", (e) => {
+          e.preventDefault();
+          cell.classList.remove("drag-over");
+          const from = parseInt(e.dataTransfer.getData("emojiDragIdx"));
+          const to = itemIdx;
+          if (from !== to) {
+            const moved = cat.items.splice(from, 1)[0];
+            cat.items.splice(to, 0, moved);
+            renderEmojiContentGrid();
+          }
+        });
+        grid.appendChild(cell);
       });
     }
 
-    // 发送表情包消息（我发 + 通知AI）
-    function sendStickerMessage(sticker) {
+    // ========== 表情包长按菜单 ==========
+    let emojiMenuTargetIdx = -1;
+    function openEmojiItemMenu(itemIdx) {
+      emojiMenuTargetIdx = itemIdx;
+      document.getElementById("emojiItemMenuMask").classList.add("show");
+    }
+    document.getElementById("emojiItemMenuMask").addEventListener("click", (e) => {
+      if (e.target.id === "emojiItemMenuMask") document.getElementById("emojiItemMenuMask").classList.remove("show");
+    });
+    document.getElementById("emojiItemMenuDelete").addEventListener("click", () => {
+      document.getElementById("emojiItemMenuMask").classList.remove("show");
+      state.emojiCategories[currentCatIdx].items.splice(emojiMenuTargetIdx, 1);
+      renderEmojiContentGrid();
+    });
+    document.getElementById("emojiItemMenuEdit").addEventListener("click", () => {
+      document.getElementById("emojiItemMenuMask").classList.remove("show");
+      document.getElementById("editEmojiLabelInput").value = state.emojiCategories[currentCatIdx].items[emojiMenuTargetIdx].label || "";
+      document.getElementById("editEmojiLabelMask").classList.add("show");
+      setTimeout(() => document.getElementById("editEmojiLabelInput").focus(), 80);
+    });
+    document.getElementById("editEmojiLabelCancelBtn").addEventListener("click", () => {
+      document.getElementById("editEmojiLabelMask").classList.remove("show");
+    });
+    document.getElementById("editEmojiLabelConfirmBtn").addEventListener("click", () => {
+      const val = document.getElementById("editEmojiLabelInput").value.trim();
+      state.emojiCategories[currentCatIdx].items[emojiMenuTargetIdx].label = val;
+      document.getElementById("editEmojiLabelMask").classList.remove("show");
+      renderEmojiContentGrid();
+    });
+
+    // ========== 单个上传 ==========
+    let singleUploadDataUrl = "";
+    document.getElementById("addSingleEmojiBtn").addEventListener("click", () => {
+      singleUploadDataUrl = "";
+      document.getElementById("singleUploadPreviewImg").src = "";
+      document.getElementById("singleEmojiLabelInput").value = "";
+      document.getElementById("singleUploadHint").textContent = "";
+      document.getElementById("singleUploadMask").classList.add("show");
+    });
+    document.getElementById("singlePickAlbumBtn").addEventListener("click", () => {
+      document.getElementById("singleFileInput").click();
+    });
+    document.getElementById("singlePickFileBtn").addEventListener("click", () => {
+      document.getElementById("singleFileInput").click();
+    });
+    document.getElementById("singleFileInput").addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        singleUploadDataUrl = ev.target.result;
+        document.getElementById("singleUploadPreviewImg").src = singleUploadDataUrl;
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    });
+    document.getElementById("singleUploadCancelBtn").addEventListener("click", () => {
+      document.getElementById("singleUploadMask").classList.remove("show");
+    });
+    document.getElementById("singleUploadConfirmBtn").addEventListener("click", () => {
+      if (!singleUploadDataUrl) { document.getElementById("singleUploadHint").textContent = "请先选择图片"; return; }
+      const label = document.getElementById("singleEmojiLabelInput").value.trim();
+      state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: singleUploadDataUrl, label });
+      document.getElementById("singleUploadMask").classList.remove("show");
+      renderEmojiContentGrid();
+    });
+
+    // ========== 批量上传 ==========
+    let batchRows = []; // [{url, label}]
+    document.getElementById("emojiCatBatchBtn").addEventListener("click", () => {
+      batchRows = [];
+      renderBatchRows();
+      document.getElementById("batchUploadMask").classList.add("show");
+    });
+    document.getElementById("batchUploadCancelBtn").addEventListener("click", () => {
+      document.getElementById("batchUploadMask").classList.remove("show");
+    });
+    document.getElementById("batchUploadConfirmBtn").addEventListener("click", () => {
+      // 过滤有效行（有url的）
+      const valid = batchRows.filter(r => r.url.trim());
+      valid.forEach(r => {
+        state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: r.url, label: r.label });
+      });
+      document.getElementById("batchUploadMask").classList.remove("show");
+      renderEmojiContentGrid();
+    });
+    document.getElementById("batchAddLinkRowBtn").addEventListener("click", () => {
+      batchRows.push({ url: "", label: "", isFile: false });
+      renderBatchRows();
+    });
+    document.getElementById("batchAddFileRowBtn").addEventListener("click", () => {
+      document.getElementById("batchFileInput").click();
+    });
+    document.getElementById("batchFileInput").addEventListener("change", (e) => {
+      const files = Array.from(e.target.files);
+      let loaded = 0;
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          batchRows.push({ url: ev.target.result, label: "", isFile: true });
+          loaded++;
+          if (loaded === files.length) renderBatchRows();
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = "";
+    });
+    function renderBatchRows() {
+      const area = document.getElementById("batchUploadArea");
+      area.innerHTML = "";
+      batchRows.forEach((row, idx) => {
+        const div = document.createElement("div");
+        div.className = "batch-upload-row";
+        if (row.isFile || row.url.startsWith("data:")) {
+          div.innerHTML = `
+            <img class="batch-upload-img" src="${row.url}" />
+            <input class="batch-upload-label-input" placeholder="表情包意思" value="${row.label}" />
+            <button class="batch-upload-del">×</button>
+          `;
+        } else {
+          div.innerHTML = `
+            <input class="batch-upload-label-input" style="flex:2;" placeholder="图片链接 https://..." value="${row.url}" />
+            <input class="batch-upload-label-input" placeholder="意思" value="${row.label}" />
+            <button class="batch-upload-del">×</button>
+          `;
+          div.querySelector("input:first-child").addEventListener("input", (e) => { batchRows[idx].url = e.target.value; });
+        }
+        div.querySelector(".batch-upload-label-input:last-of-type").addEventListener("input", (e) => { batchRows[idx].label = e.target.value; });
+        div.querySelector(".batch-upload-del").addEventListener("click", () => {
+          batchRows.splice(idx, 1);
+          renderBatchRows();
+        });
+        area.appendChild(div);
+      });
+    }
+
+    // ========== 聊天界面表情包半屏弹窗 ==========
+    document.getElementById("emojiBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      renderEmojiPanel();
+      const mask = document.getElementById("emojiPanelMask");
+      mask.classList.add("show");
+    });
+    document.getElementById("emojiPanelMask").addEventListener("click", (e) => {
+      if (e.target === document.getElementById("emojiPanelMask")) {
+        document.getElementById("emojiPanelMask").classList.remove("show");
+      }
+    });
+
+    function renderEmojiPanel() {
+      const tabs = document.getElementById("emojiPanelTabs");
+      const content = document.getElementById("emojiPanelContent");
+      tabs.innerHTML = "";
+      content.innerHTML = "";
+      if (state.emojiCategories.length === 0) {
+        content.innerHTML = '<div style="padding:40px 0;text-align:center;color:#bbb;font-size:14px;">还没有表情包<br>前往「我」→「表情包」添加</div>';
+        return;
+      }
+      let activeCatIdx = 0;
+      function showCatContent(idx) {
+        activeCatIdx = idx;
+        // 更新tab样式
+        tabs.querySelectorAll(".emoji-panel-tab").forEach((t, i) => t.classList.toggle("active", i === idx));
+        // 渲染内容
+        content.innerHTML = "";
+        const cat = state.emojiCategories[idx];
+        const grid = document.createElement("div");
+        grid.className = "emoji-panel-grid";
+        cat.items.forEach(item => {
+          const cell = document.createElement("div");
+          cell.className = "emoji-panel-item";
+          cell.innerHTML = `<img class="emoji-panel-img" src="${item.url}" /><span class="emoji-panel-label">${item.label||""}</span>`;
+          cell.addEventListener("click", () => {
+            sendEmojiSticker(item.url, item.label);
+            document.getElementById("emojiPanelMask").classList.remove("show");
+          });
+          grid.appendChild(cell);
+        });
+        content.appendChild(grid);
+      }
+      state.emojiCategories.forEach((cat, idx) => {
+        const tab = document.createElement("div");
+        tab.className = "emoji-panel-tab" + (idx === 0 ? " active" : "");
+        tab.textContent = cat.name;
+        tab.addEventListener("click", () => showCatContent(idx));
+        tabs.appendChild(tab);
+      });
+      showCatContent(0);
+    }
+
+    // ========== 发送表情包 ==========
+    function sendEmojiSticker(url, label) {
       const contact = getContact(state.activeContactId);
       if (!contact) return;
-      // 以图片形式发送，意思作为文字
       contact.messages.push({
         from: "me",
-        text: sticker.meaning ? `[表情包：${sticker.meaning}]` : "[发送了一个表情包]",
-        image: sticker.url,
+        text: `[EMOJI_STICKER|${url}|${label||""}]`,
         time: getCurrentTime(),
         hasAnimated: false
       });
       contact.lastTime = getCurrentTime();
       renderChat();
-      triggerAIReply();
     }
 
-    document.getElementById("emojiBtn").addEventListener("click", (e) => {
-      e.stopPropagation();
-      openStickerSheet();
-    });
-
-    // ----- 表情包管理页（从"我"页面进入）-----
-    const stickerManagerScreen = document.createElement("section");
-    stickerManagerScreen.id = "screen-sticker-manager";
-    stickerManagerScreen.className = "screen chat-screen";
-    stickerManagerScreen.style.cssText = "background:#f2f2f7;";
-    stickerManagerScreen.innerHTML = `
-      <div class="chat-header" style="border-bottom:none;background:#f2f2f7;">
-        <div class="chat-header-bar">
-          <button class="header-btn" id="stickerMgrBackBtn"><span class="back-char">‹</span></button>
-          <div class="chat-title" style="font-size:17px;font-weight:600;">我的表情包</div>
-          <div style="width:50px;"></div>
-        </div>
-      </div>
-      <div class="chat-body" style="padding:16px;background:#f2f2f7;bottom:0;top:calc(72px + var(--safe-top));">
-        <div style="display:flex;gap:10px;margin-bottom:20px;">
-          <button id="stickerAddCatBtn" style="flex:1;height:44px;background:#fff;border-radius:12px;border:1px dashed #ccc;font-size:15px;font-weight:600;color:#333;cursor:pointer;">+ 分类</button>
-          <button id="stickerBatchUploadBtn" style="flex:1;height:44px;background:#fff;border-radius:12px;border:1px dashed #ccc;font-size:15px;font-weight:600;color:#333;cursor:pointer;">批量上传</button>
-        </div>
-        <div id="stickerCatList" style="display:flex;flex-direction:column;gap:12px;"></div>
-      </div>
-    `;
-    document.querySelector(".app").appendChild(stickerManagerScreen);
-    screens.stickerManager = stickerManagerScreen;
-
-    // 拖拽排序辅助
-    let dragSrcCatIndex = null;
-    let dragSrcStickerIndex = null;
-    let dragSrcCatForSticker = null;
-
-    function renderStickerManager() {
-      const list = document.getElementById("stickerCatList");
-      list.innerHTML = "";
-      state.stickerCategories.forEach((cat, catIdx) => {
-        const catCard = document.createElement("div");
-        catCard.style.cssText = "background:#fff;border-radius:16px;padding:14px;";
-        catCard.draggable = true;
-        catCard.dataset.catIdx = catIdx;
-
-        // 分类标题行
-        const catHeader = document.createElement("div");
-        catHeader.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;";
-        const catName = document.createElement("div");
-        catName.style.cssText = "font-size:16px;font-weight:700;color:#111;";
-        catName.textContent = cat.name;
-        const catActions = document.createElement("div");
-        catActions.style.cssText = "display:flex;gap:8px;";
-        const uploadBtn = document.createElement("button");
-        uploadBtn.style.cssText = "height:30px;padding:0 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:13px;cursor:pointer;";
-        uploadBtn.textContent = "上传";
-        uploadBtn.onclick = () => openStickerUpload(catIdx);
-        catActions.appendChild(uploadBtn);
-        catHeader.appendChild(catName);
-        catHeader.appendChild(catActions);
-        catCard.appendChild(catHeader);
-
-        // 表情包网格（一排5个）
-        const grid = document.createElement("div");
-        grid.style.cssText = "display:grid;grid-template-columns:repeat(5,1fr);gap:8px;";
-        cat.stickers.forEach((sticker, stkIdx) => {
-          const cell = document.createElement("div");
-          cell.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:3px;";
-          cell.draggable = true;
-          cell.dataset.stkIdx = stkIdx;
-          cell.dataset.catIdx = catIdx;
-
-          const img = document.createElement("img");
-          img.src = sticker.url;
-          img.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;border:1px solid #f0f0f0;";
-          img.onerror = () => { img.style.background="#f5f5f5"; };
-
-          const meaning = document.createElement("div");
-          meaning.style.cssText = "font-size:10px;color:#999;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
-          meaning.textContent = sticker.meaning || "";
-
-          cell.appendChild(img);
-          cell.appendChild(meaning);
-
-          // 长按菜单（删除/修改链接）
-          let stkLongPressTimer = null;
-          cell.addEventListener("touchstart", () => {
-            stkLongPressTimer = setTimeout(() => { showStickerMenu(catIdx, stkIdx); }, 600);
-          }, { passive: true });
-          cell.addEventListener("touchend", () => clearTimeout(stkLongPressTimer));
-          cell.addEventListener("touchmove", () => clearTimeout(stkLongPressTimer));
-
-          // 拖拽排序
-          cell.addEventListener("dragstart", () => { dragSrcStickerIndex = stkIdx; dragSrcCatForSticker = catIdx; });
-          cell.addEventListener("dragover", (e) => { e.preventDefault(); });
-          cell.addEventListener("drop", () => {
-            if (dragSrcCatForSticker === catIdx && dragSrcStickerIndex !== null && dragSrcStickerIndex !== stkIdx) {
-              const arr = cat.stickers;
-              const moved = arr.splice(dragSrcStickerIndex, 1)[0];
-              arr.splice(stkIdx, 0, moved);
-              dragSrcStickerIndex = null;
-              renderStickerManager();
-            }
-          });
-
-          grid.appendChild(cell);
-        });
-        catCard.appendChild(grid);
-
-        // 分类长按拖拽排序
-        let catLongPressTimer = null;
-        catHeader.addEventListener("touchstart", () => {
-          catLongPressTimer = setTimeout(() => { showCatMenu(catIdx); }, 600);
-        }, { passive: true });
-        catHeader.addEventListener("touchend", () => clearTimeout(catLongPressTimer));
-        catHeader.addEventListener("touchmove", () => clearTimeout(catLongPressTimer));
-
-        catCard.addEventListener("dragstart", (e) => {
-          if (e.target !== catCard) return;
-          dragSrcCatIndex = catIdx;
-        });
-        catCard.addEventListener("dragover", (e) => { e.preventDefault(); });
-        catCard.addEventListener("drop", () => {
-          if (dragSrcCatIndex !== null && dragSrcCatIndex !== catIdx) {
-            const arr = state.stickerCategories;
-            const moved = arr.splice(dragSrcCatIndex, 1)[0];
-            arr.splice(catIdx, 0, moved);
-            dragSrcCatIndex = null;
-            renderStickerManager();
-          }
-        });
-
-        list.appendChild(catCard);
-      });
-    }
-
-    // 分类长按菜单
-    function showCatMenu(catIdx) {
-      const cat = state.stickerCategories[catIdx];
-      const mask = document.createElement("div");
-      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:center;justify-content:center;";
-      mask.innerHTML = `
-        <div style="background:#fff;width:260px;border-radius:14px;overflow:hidden;">
-          <div style="padding:18px 16px;font-size:16px;font-weight:700;text-align:center;border-bottom:1px solid #eee;">${cat.name}</div>
-          <div id="catMenuRename" style="padding:16px;font-size:16px;text-align:center;border-bottom:1px solid #eee;cursor:pointer;">修改分类名称</div>
-          <div id="catMenuDelete" style="padding:16px;font-size:16px;text-align:center;color:#df3b3b;cursor:pointer;">删除该分类（含全部表情包）</div>
-          <div id="catMenuCancel" style="padding:16px;font-size:16px;text-align:center;color:#999;cursor:pointer;">取消</div>
-        </div>
-      `;
-      document.body.appendChild(mask);
-      mask.querySelector("#catMenuCancel").onclick = () => document.body.removeChild(mask);
-      mask.querySelector("#catMenuDelete").onclick = () => {
-        state.stickerCategories.splice(catIdx, 1);
-        document.body.removeChild(mask);
-        renderStickerManager();
-      };
-      mask.querySelector("#catMenuRename").onclick = () => {
-        document.body.removeChild(mask);
-        const newName = prompt("请输入新的分类名称：", cat.name);
-        if (newName && newName.trim()) {
-          cat.name = newName.trim();
-          renderStickerManager();
-        }
-      };
-    }
-
-    // 表情包长按菜单
-    function showStickerMenu(catIdx, stkIdx) {
-      const sticker = state.stickerCategories[catIdx].stickers[stkIdx];
-      const mask = document.createElement("div");
-      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:center;justify-content:center;";
-      mask.innerHTML = `
-        <div style="background:#fff;width:260px;border-radius:14px;overflow:hidden;">
-          <div style="padding:16px;font-size:14px;text-align:center;color:#999;border-bottom:1px solid #eee;">表情包操作</div>
-          <div id="stkMenuEditLink" style="padding:16px;font-size:16px;text-align:center;border-bottom:1px solid #eee;cursor:pointer;">修改表情包链接</div>
-          <div id="stkMenuDelete" style="padding:16px;font-size:16px;text-align:center;color:#df3b3b;cursor:pointer;">删除此表情包</div>
-          <div id="stkMenuCancel" style="padding:16px;font-size:16px;text-align:center;color:#999;cursor:pointer;">取消</div>
-        </div>
-      `;
-      document.body.appendChild(mask);
-      mask.querySelector("#stkMenuCancel").onclick = () => document.body.removeChild(mask);
-      mask.querySelector("#stkMenuDelete").onclick = () => {
-        state.stickerCategories[catIdx].stickers.splice(stkIdx, 1);
-        document.body.removeChild(mask);
-        renderStickerManager();
-      };
-      mask.querySelector("#stkMenuEditLink").onclick = () => {
-        document.body.removeChild(mask);
-        const newUrl = prompt("请输入新的表情包链接：", sticker.url);
-        if (newUrl && newUrl.trim()) {
-          sticker.url = newUrl.trim();
-          renderStickerManager();
-        }
-      };
-    }
-
-    // 创建分类弹窗
-    document.getElementById("stickerAddCatBtn").addEventListener("click", () => {
-      const name = prompt("请输入分类名称：");
-      if (name && name.trim()) {
-        state.stickerCategories.push({ id: makeStickerCatId(), name: name.trim(), stickers: [] });
-        renderStickerManager();
-      }
-    });
-
-    // 批量上传弹窗
-    document.getElementById("stickerBatchUploadBtn").addEventListener("click", () => {
-      if (!state.stickerCategories.length) { alert("请先创建一个分类"); return; }
-      openBatchUploadModal(null);
-    });
-
-    // 单个分类上传
-    function openStickerUpload(catIdx) {
-      openBatchUploadModal(catIdx);
-    }
-
-    // 通用上传弹窗
-    function openBatchUploadModal(fixedCatIdx) {
-      const mask = document.createElement("div");
-      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:flex-end;justify-content:center;";
-      
-      let catOptions = state.stickerCategories.map((c,i) => `<option value="${i}"${fixedCatIdx===i?" selected":""}>${c.name}</option>`).join("");
-      
-      mask.innerHTML = `
-        <div style="width:100%;max-width:600px;background:#fff;border-radius:20px 20px 0 0;padding:20px;max-height:75vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;">
-          <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">批量上传表情包</div>
-          <div>
-            <label style="font-size:13px;color:#666;margin-bottom:6px;display:block;">选择目标分类</label>
-            <select id="batchCatSelect" style="width:100%;height:40px;border-radius:10px;border:1px solid #ddd;padding:0 10px;font-size:14px;">${catOptions}</select>
-          </div>
-          <div id="batchItemList" style="display:flex;flex-direction:column;gap:10px;"></div>
-          <div style="display:flex;gap:10px;">
-            <button id="batchAddLinkBtn" style="flex:1;height:40px;border-radius:10px;border:1px dashed #ccc;background:#fff;font-size:14px;cursor:pointer;">+ 添加链接</button>
-            <button id="batchAddFileBtn" style="flex:1;height:40px;border-radius:10px;border:1px dashed #ccc;background:#fff;font-size:14px;cursor:pointer;">+ 选择相册/文件</button>
-          </div>
-          <input type="file" id="batchFileInput" accept="image/*" multiple style="display:none;">
-          <div style="display:flex;gap:10px;margin-top:4px;">
-            <button id="batchCancelBtn" style="flex:1;height:44px;border-radius:12px;border:1px solid #ddd;background:#fff;font-size:15px;font-weight:600;cursor:pointer;">取消</button>
-            <button id="batchSaveBtn" style="flex:1;height:44px;border-radius:12px;border:none;background:#111;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">保存</button>
-          </div>
-        </div>
-      `;
-      document.body.appendChild(mask);
-
-      const batchItems = []; // [{url, meaning, isFile}]
-
-      function renderBatchItems() {
-        const listEl = mask.querySelector("#batchItemList");
-        listEl.innerHTML = "";
-        batchItems.forEach((item, i) => {
-          const row = document.createElement("div");
-          row.style.cssText = "display:flex;align-items:center;gap:8px;background:#f7f7f8;border-radius:10px;padding:8px 10px;";
-          const preview = document.createElement("img");
-          preview.src = item.url;
-          preview.style.cssText = "width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;";
-          preview.onerror = () => { preview.style.background="#eee"; };
-          const meaningInput = document.createElement("input");
-          meaningInput.value = item.meaning;
-          meaningInput.placeholder = "表情包意思（可选）";
-          meaningInput.style.cssText = "flex:1;border:none;background:transparent;font-size:14px;outline:none;";
-          meaningInput.oninput = () => { batchItems[i].meaning = meaningInput.value; };
-          const delBtn = document.createElement("button");
-          delBtn.textContent = "×";
-          delBtn.style.cssText = "width:24px;height:24px;border-radius:50%;border:none;background:#ddd;color:#666;font-size:16px;cursor:pointer;flex-shrink:0;";
-          delBtn.onclick = () => { batchItems.splice(i,1); renderBatchItems(); };
-          row.appendChild(preview);
-          row.appendChild(meaningInput);
-          row.appendChild(delBtn);
-          listEl.appendChild(row);
-        });
-      }
-
-      mask.querySelector("#batchAddLinkBtn").onclick = () => {
-        const url = prompt("请输入表情包图片链接：");
-        if (url && url.trim()) { batchItems.push({ url: url.trim(), meaning: "" }); renderBatchItems(); }
-      };
-
-      mask.querySelector("#batchAddFileBtn").onclick = () => { mask.querySelector("#batchFileInput").click(); };
-
-      mask.querySelector("#batchFileInput").onchange = (e) => {
-        const files = Array.from(e.target.files);
-        let loaded = 0;
-        files.forEach(file => {
-          const reader = new FileReader();
-          reader.onload = (ev) => {
-            batchItems.push({ url: ev.target.result, meaning: "" });
-            loaded++;
-            if (loaded === files.length) renderBatchItems();
-          };
-          reader.readAsDataURL(file);
-        });
-        e.target.value = "";
-      };
-
-      mask.querySelector("#batchCancelBtn").onclick = () => document.body.removeChild(mask);
-
-      mask.querySelector("#batchSaveBtn").onclick = () => {
-        const selCatIdx = parseInt(mask.querySelector("#batchCatSelect").value);
-        const targetCat = state.stickerCategories[selCatIdx];
-        if (!targetCat) { alert("请选择分类"); return; }
-        batchItems.forEach(item => {
-          targetCat.stickers.push({ id: makeStickerId(), url: item.url, meaning: item.meaning });
-        });
-        document.body.removeChild(mask);
-        renderStickerManager();
-      };
-    }
-
-    // 返回
-    document.getElementById("stickerMgrBackBtn").addEventListener("click", () => {
-      stickerManagerScreen.classList.remove("active");
-      screens.me.classList.add("active");
-      tabbar.classList.remove("hidden");
-    });
-
-    // "我"页面点击"我的表情包"
-    document.getElementById("openStickerManagerBtn").addEventListener("click", () => {
-      screens.me.classList.remove("active");
-      tabbar.classList.add("hidden");
-      renderStickerManager();
-      stickerManagerScreen.classList.add("active");
-    });
+    // ========== AI也可以发表情包 ==========
+    // 在AI系统prompt里告知，以及解析AI回复中的表情包指令
+    // 在 renderChat 的 textSpan 渲染处已自动处理 [EMOJI_STICKER|...|...] 格式
    document.getElementById("voiceBtn").addEventListener("click", () => {
       triggerAIReply();
     });

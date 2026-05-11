@@ -1281,8 +1281,8 @@
       </div>
 
       <ul class="menu">
-        <li>钱包</li>
-        <li>个人资料</li>
+        <li>钱包</li>        <li>个人资料</li>
+                <li id="openStickerManagerBtn" style="cursor: pointer;">我的表情包</li>
         <li id="openSettingsBtn" style="cursor: pointer;">设置</li>
       </ul>
     </section>
@@ -1538,7 +1538,7 @@
               placeholder="恨天地生万物而非仅你我"
               autocomplete="off"
             />
-            <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情">
+            <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情包">
               <img src="https://i.postimg.cc/y8pZRN6H/IMG-3205.png" alt="" />
             </button>
           </div>
@@ -3185,11 +3185,430 @@ TimeChecklist:
       });
     }
     // =========================================================
-        document.getElementById("emojiBtn").addEventListener("click", () => {
-      chatInput.value += "🙂";
-      chatInput.focus();
+            // ========== 表情包系统 ==========
+    // state 里新增表情包数据结构
+    state.stickerCategories = []; // [{ id, name, stickers: [{id, url, meaning}] }]
+
+    function makeStickerCatId() { return "sc_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
+    function makeStickerId() { return "st_" + Date.now() + "_" + Math.random().toString(36).slice(2,6); }
+
+    // ----- 表情包半屏弹窗（聊天界面点击表情图标弹出）-----
+    const stickerSheetMask = document.createElement("div");
+    stickerSheetMask.id = "stickerSheetMask";
+    stickerSheetMask.style.cssText = "position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.3);display:none;align-items:flex-end;justify-content:center;";
+    document.body.appendChild(stickerSheetMask);
+
+    const stickerSheet = document.createElement("div");
+    stickerSheet.id = "stickerSheet";
+    stickerSheet.style.cssText = "width:100%;max-width:600px;height:55vh;background:#fff;border-radius:20px 20px 0 0;display:flex;flex-direction:column;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.25,1,0.3,1);overflow:hidden;";
+    stickerSheetMask.appendChild(stickerSheet);
+
+    // 表情包弹窗顶部分类 tabs
+    const stickerTabBar = document.createElement("div");
+    stickerTabBar.style.cssText = "display:flex;overflow-x:auto;padding:12px 12px 0;gap:8px;border-bottom:1px solid #f0f0f0;flex-shrink:0;scrollbar-width:none;";
+    stickerSheet.appendChild(stickerTabBar);
+
+    // 表情包弹窗内容区
+    const stickerGrid = document.createElement("div");
+    stickerGrid.style.cssText = "flex:1;overflow-y:auto;padding:12px;display:grid;grid-template-columns:repeat(5,1fr);gap:8px;align-content:start;";
+    stickerSheet.appendChild(stickerGrid);
+
+    function openStickerSheet() {
+      stickerSheetMask.style.display = "flex";
+      setTimeout(() => { stickerSheet.style.transform = "translateY(0)"; }, 10);
+      renderStickerSheet();
+    }
+    function closeStickerSheet() {
+      stickerSheet.style.transform = "translateY(100%)";
+      setTimeout(() => { stickerSheetMask.style.display = "none"; }, 300);
+    }
+    stickerSheetMask.addEventListener("click", (e) => { if (e.target === stickerSheetMask) closeStickerSheet(); });
+
+    let activeStickerCatIndex = 0;
+
+    function renderStickerSheet() {
+      // 渲染分类 tabs
+      stickerTabBar.innerHTML = "";
+      if (!state.stickerCategories.length) {
+        stickerGrid.innerHTML = "<div style='grid-column:1/-1;text-align:center;color:#bbb;padding:40px 0;font-size:14px;'>还没有表情包，去「我的表情包」添加吧</div>";
+        return;
+      }
+      state.stickerCategories.forEach((cat, i) => {
+        const tab = document.createElement("button");
+        tab.textContent = cat.name;
+        tab.style.cssText = "flex-shrink:0;padding:6px 14px;border-radius:999px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;";
+        tab.style.background = i === activeStickerCatIndex ? "#111" : "#f2f2f7";
+        tab.style.color = i === activeStickerCatIndex ? "#fff" : "#333";
+        tab.onclick = () => { activeStickerCatIndex = i; renderStickerSheet(); };
+        stickerTabBar.appendChild(tab);
+      });
+
+      // 渲染表情包格子
+      stickerGrid.innerHTML = "";
+      const cat = state.stickerCategories[activeStickerCatIndex];
+      if (!cat || !cat.stickers.length) {
+        stickerGrid.innerHTML = "<div style='grid-column:1/-1;text-align:center;color:#bbb;padding:40px 0;font-size:14px;'>这个分类还没有表情包</div>";
+        return;
+      }
+      cat.stickers.forEach(sticker => {
+        const cell = document.createElement("div");
+        cell.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;";
+        const img = document.createElement("img");
+        img.src = sticker.url;
+        img.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;border:1px solid #f0f0f0;";
+        img.onerror = () => { img.style.background="#f5f5f5"; };
+        const label = document.createElement("div");
+        label.style.cssText = "font-size:10px;color:#999;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+        label.textContent = sticker.meaning || "";
+        cell.appendChild(img);
+        cell.appendChild(label);
+        // 点击发送
+        cell.onclick = () => {
+          sendStickerMessage(sticker);
+          closeStickerSheet();
+        };
+        stickerGrid.appendChild(cell);
+      });
+    }
+
+    // 发送表情包消息（我发 + 通知AI）
+    function sendStickerMessage(sticker) {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+      // 以图片形式发送，意思作为文字
+      contact.messages.push({
+        from: "me",
+        text: sticker.meaning ? `[表情包：${sticker.meaning}]` : "[发送了一个表情包]",
+        image: sticker.url,
+        time: getCurrentTime(),
+        hasAnimated: false
+      });
+      contact.lastTime = getCurrentTime();
+      renderChat();
+      triggerAIReply();
+    }
+
+    document.getElementById("emojiBtn").addEventListener("click", (e) => {
+      e.stopPropagation();
+      openStickerSheet();
     });
-    document.getElementById("voiceBtn").addEventListener("click", () => {
+
+    // ----- 表情包管理页（从"我"页面进入）-----
+    const stickerManagerScreen = document.createElement("section");
+    stickerManagerScreen.id = "screen-sticker-manager";
+    stickerManagerScreen.className = "screen chat-screen";
+    stickerManagerScreen.style.cssText = "background:#f2f2f7;";
+    stickerManagerScreen.innerHTML = `
+      <div class="chat-header" style="border-bottom:none;background:#f2f2f7;">
+        <div class="chat-header-bar">
+          <button class="header-btn" id="stickerMgrBackBtn"><span class="back-char">‹</span></button>
+          <div class="chat-title" style="font-size:17px;font-weight:600;">我的表情包</div>
+          <div style="width:50px;"></div>
+        </div>
+      </div>
+      <div class="chat-body" style="padding:16px;background:#f2f2f7;bottom:0;top:calc(72px + var(--safe-top));">
+        <div style="display:flex;gap:10px;margin-bottom:20px;">
+          <button id="stickerAddCatBtn" style="flex:1;height:44px;background:#fff;border-radius:12px;border:1px dashed #ccc;font-size:15px;font-weight:600;color:#333;cursor:pointer;">+ 分类</button>
+          <button id="stickerBatchUploadBtn" style="flex:1;height:44px;background:#fff;border-radius:12px;border:1px dashed #ccc;font-size:15px;font-weight:600;color:#333;cursor:pointer;">批量上传</button>
+        </div>
+        <div id="stickerCatList" style="display:flex;flex-direction:column;gap:12px;"></div>
+      </div>
+    `;
+    document.querySelector(".app").appendChild(stickerManagerScreen);
+    screens.stickerManager = stickerManagerScreen;
+
+    // 拖拽排序辅助
+    let dragSrcCatIndex = null;
+    let dragSrcStickerIndex = null;
+    let dragSrcCatForSticker = null;
+
+    function renderStickerManager() {
+      const list = document.getElementById("stickerCatList");
+      list.innerHTML = "";
+      state.stickerCategories.forEach((cat, catIdx) => {
+        const catCard = document.createElement("div");
+        catCard.style.cssText = "background:#fff;border-radius:16px;padding:14px;";
+        catCard.draggable = true;
+        catCard.dataset.catIdx = catIdx;
+
+        // 分类标题行
+        const catHeader = document.createElement("div");
+        catHeader.style.cssText = "display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;";
+        const catName = document.createElement("div");
+        catName.style.cssText = "font-size:16px;font-weight:700;color:#111;";
+        catName.textContent = cat.name;
+        const catActions = document.createElement("div");
+        catActions.style.cssText = "display:flex;gap:8px;";
+        const uploadBtn = document.createElement("button");
+        uploadBtn.style.cssText = "height:30px;padding:0 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font-size:13px;cursor:pointer;";
+        uploadBtn.textContent = "上传";
+        uploadBtn.onclick = () => openStickerUpload(catIdx);
+        catActions.appendChild(uploadBtn);
+        catHeader.appendChild(catName);
+        catHeader.appendChild(catActions);
+        catCard.appendChild(catHeader);
+
+        // 表情包网格（一排5个）
+        const grid = document.createElement("div");
+        grid.style.cssText = "display:grid;grid-template-columns:repeat(5,1fr);gap:8px;";
+        cat.stickers.forEach((sticker, stkIdx) => {
+          const cell = document.createElement("div");
+          cell.style.cssText = "display:flex;flex-direction:column;align-items:center;gap:3px;";
+          cell.draggable = true;
+          cell.dataset.stkIdx = stkIdx;
+          cell.dataset.catIdx = catIdx;
+
+          const img = document.createElement("img");
+          img.src = sticker.url;
+          img.style.cssText = "width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px;border:1px solid #f0f0f0;";
+          img.onerror = () => { img.style.background="#f5f5f5"; };
+
+          const meaning = document.createElement("div");
+          meaning.style.cssText = "font-size:10px;color:#999;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
+          meaning.textContent = sticker.meaning || "";
+
+          cell.appendChild(img);
+          cell.appendChild(meaning);
+
+          // 长按菜单（删除/修改链接）
+          let stkLongPressTimer = null;
+          cell.addEventListener("touchstart", () => {
+            stkLongPressTimer = setTimeout(() => { showStickerMenu(catIdx, stkIdx); }, 600);
+          }, { passive: true });
+          cell.addEventListener("touchend", () => clearTimeout(stkLongPressTimer));
+          cell.addEventListener("touchmove", () => clearTimeout(stkLongPressTimer));
+
+          // 拖拽排序
+          cell.addEventListener("dragstart", () => { dragSrcStickerIndex = stkIdx; dragSrcCatForSticker = catIdx; });
+          cell.addEventListener("dragover", (e) => { e.preventDefault(); });
+          cell.addEventListener("drop", () => {
+            if (dragSrcCatForSticker === catIdx && dragSrcStickerIndex !== null && dragSrcStickerIndex !== stkIdx) {
+              const arr = cat.stickers;
+              const moved = arr.splice(dragSrcStickerIndex, 1)[0];
+              arr.splice(stkIdx, 0, moved);
+              dragSrcStickerIndex = null;
+              renderStickerManager();
+            }
+          });
+
+          grid.appendChild(cell);
+        });
+        catCard.appendChild(grid);
+
+        // 分类长按拖拽排序
+        let catLongPressTimer = null;
+        catHeader.addEventListener("touchstart", () => {
+          catLongPressTimer = setTimeout(() => { showCatMenu(catIdx); }, 600);
+        }, { passive: true });
+        catHeader.addEventListener("touchend", () => clearTimeout(catLongPressTimer));
+        catHeader.addEventListener("touchmove", () => clearTimeout(catLongPressTimer));
+
+        catCard.addEventListener("dragstart", (e) => {
+          if (e.target !== catCard) return;
+          dragSrcCatIndex = catIdx;
+        });
+        catCard.addEventListener("dragover", (e) => { e.preventDefault(); });
+        catCard.addEventListener("drop", () => {
+          if (dragSrcCatIndex !== null && dragSrcCatIndex !== catIdx) {
+            const arr = state.stickerCategories;
+            const moved = arr.splice(dragSrcCatIndex, 1)[0];
+            arr.splice(catIdx, 0, moved);
+            dragSrcCatIndex = null;
+            renderStickerManager();
+          }
+        });
+
+        list.appendChild(catCard);
+      });
+    }
+
+    // 分类长按菜单
+    function showCatMenu(catIdx) {
+      const cat = state.stickerCategories[catIdx];
+      const mask = document.createElement("div");
+      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:center;justify-content:center;";
+      mask.innerHTML = `
+        <div style="background:#fff;width:260px;border-radius:14px;overflow:hidden;">
+          <div style="padding:18px 16px;font-size:16px;font-weight:700;text-align:center;border-bottom:1px solid #eee;">${cat.name}</div>
+          <div id="catMenuRename" style="padding:16px;font-size:16px;text-align:center;border-bottom:1px solid #eee;cursor:pointer;">修改分类名称</div>
+          <div id="catMenuDelete" style="padding:16px;font-size:16px;text-align:center;color:#df3b3b;cursor:pointer;">删除该分类（含全部表情包）</div>
+          <div id="catMenuCancel" style="padding:16px;font-size:16px;text-align:center;color:#999;cursor:pointer;">取消</div>
+        </div>
+      `;
+      document.body.appendChild(mask);
+      mask.querySelector("#catMenuCancel").onclick = () => document.body.removeChild(mask);
+      mask.querySelector("#catMenuDelete").onclick = () => {
+        state.stickerCategories.splice(catIdx, 1);
+        document.body.removeChild(mask);
+        renderStickerManager();
+      };
+      mask.querySelector("#catMenuRename").onclick = () => {
+        document.body.removeChild(mask);
+        const newName = prompt("请输入新的分类名称：", cat.name);
+        if (newName && newName.trim()) {
+          cat.name = newName.trim();
+          renderStickerManager();
+        }
+      };
+    }
+
+    // 表情包长按菜单
+    function showStickerMenu(catIdx, stkIdx) {
+      const sticker = state.stickerCategories[catIdx].stickers[stkIdx];
+      const mask = document.createElement("div");
+      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:center;justify-content:center;";
+      mask.innerHTML = `
+        <div style="background:#fff;width:260px;border-radius:14px;overflow:hidden;">
+          <div style="padding:16px;font-size:14px;text-align:center;color:#999;border-bottom:1px solid #eee;">表情包操作</div>
+          <div id="stkMenuEditLink" style="padding:16px;font-size:16px;text-align:center;border-bottom:1px solid #eee;cursor:pointer;">修改表情包链接</div>
+          <div id="stkMenuDelete" style="padding:16px;font-size:16px;text-align:center;color:#df3b3b;cursor:pointer;">删除此表情包</div>
+          <div id="stkMenuCancel" style="padding:16px;font-size:16px;text-align:center;color:#999;cursor:pointer;">取消</div>
+        </div>
+      `;
+      document.body.appendChild(mask);
+      mask.querySelector("#stkMenuCancel").onclick = () => document.body.removeChild(mask);
+      mask.querySelector("#stkMenuDelete").onclick = () => {
+        state.stickerCategories[catIdx].stickers.splice(stkIdx, 1);
+        document.body.removeChild(mask);
+        renderStickerManager();
+      };
+      mask.querySelector("#stkMenuEditLink").onclick = () => {
+        document.body.removeChild(mask);
+        const newUrl = prompt("请输入新的表情包链接：", sticker.url);
+        if (newUrl && newUrl.trim()) {
+          sticker.url = newUrl.trim();
+          renderStickerManager();
+        }
+      };
+    }
+
+    // 创建分类弹窗
+    document.getElementById("stickerAddCatBtn").addEventListener("click", () => {
+      const name = prompt("请输入分类名称：");
+      if (name && name.trim()) {
+        state.stickerCategories.push({ id: makeStickerCatId(), name: name.trim(), stickers: [] });
+        renderStickerManager();
+      }
+    });
+
+    // 批量上传弹窗
+    document.getElementById("stickerBatchUploadBtn").addEventListener("click", () => {
+      if (!state.stickerCategories.length) { alert("请先创建一个分类"); return; }
+      openBatchUploadModal(null);
+    });
+
+    // 单个分类上传
+    function openStickerUpload(catIdx) {
+      openBatchUploadModal(catIdx);
+    }
+
+    // 通用上传弹窗
+    function openBatchUploadModal(fixedCatIdx) {
+      const mask = document.createElement("div");
+      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:500;display:flex;align-items:flex-end;justify-content:center;";
+      
+      let catOptions = state.stickerCategories.map((c,i) => `<option value="${i}"${fixedCatIdx===i?" selected":""}>${c.name}</option>`).join("");
+      
+      mask.innerHTML = `
+        <div style="width:100%;max-width:600px;background:#fff;border-radius:20px 20px 0 0;padding:20px;max-height:75vh;overflow-y:auto;display:flex;flex-direction:column;gap:14px;">
+          <div style="font-size:17px;font-weight:700;text-align:center;margin-bottom:4px;">批量上传表情包</div>
+          <div>
+            <label style="font-size:13px;color:#666;margin-bottom:6px;display:block;">选择目标分类</label>
+            <select id="batchCatSelect" style="width:100%;height:40px;border-radius:10px;border:1px solid #ddd;padding:0 10px;font-size:14px;">${catOptions}</select>
+          </div>
+          <div id="batchItemList" style="display:flex;flex-direction:column;gap:10px;"></div>
+          <div style="display:flex;gap:10px;">
+            <button id="batchAddLinkBtn" style="flex:1;height:40px;border-radius:10px;border:1px dashed #ccc;background:#fff;font-size:14px;cursor:pointer;">+ 添加链接</button>
+            <button id="batchAddFileBtn" style="flex:1;height:40px;border-radius:10px;border:1px dashed #ccc;background:#fff;font-size:14px;cursor:pointer;">+ 选择相册/文件</button>
+          </div>
+          <input type="file" id="batchFileInput" accept="image/*" multiple style="display:none;">
+          <div style="display:flex;gap:10px;margin-top:4px;">
+            <button id="batchCancelBtn" style="flex:1;height:44px;border-radius:12px;border:1px solid #ddd;background:#fff;font-size:15px;font-weight:600;cursor:pointer;">取消</button>
+            <button id="batchSaveBtn" style="flex:1;height:44px;border-radius:12px;border:none;background:#111;color:#fff;font-size:15px;font-weight:600;cursor:pointer;">保存</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(mask);
+
+      const batchItems = []; // [{url, meaning, isFile}]
+
+      function renderBatchItems() {
+        const listEl = mask.querySelector("#batchItemList");
+        listEl.innerHTML = "";
+        batchItems.forEach((item, i) => {
+          const row = document.createElement("div");
+          row.style.cssText = "display:flex;align-items:center;gap:8px;background:#f7f7f8;border-radius:10px;padding:8px 10px;";
+          const preview = document.createElement("img");
+          preview.src = item.url;
+          preview.style.cssText = "width:44px;height:44px;object-fit:cover;border-radius:6px;flex-shrink:0;";
+          preview.onerror = () => { preview.style.background="#eee"; };
+          const meaningInput = document.createElement("input");
+          meaningInput.value = item.meaning;
+          meaningInput.placeholder = "表情包意思（可选）";
+          meaningInput.style.cssText = "flex:1;border:none;background:transparent;font-size:14px;outline:none;";
+          meaningInput.oninput = () => { batchItems[i].meaning = meaningInput.value; };
+          const delBtn = document.createElement("button");
+          delBtn.textContent = "×";
+          delBtn.style.cssText = "width:24px;height:24px;border-radius:50%;border:none;background:#ddd;color:#666;font-size:16px;cursor:pointer;flex-shrink:0;";
+          delBtn.onclick = () => { batchItems.splice(i,1); renderBatchItems(); };
+          row.appendChild(preview);
+          row.appendChild(meaningInput);
+          row.appendChild(delBtn);
+          listEl.appendChild(row);
+        });
+      }
+
+      mask.querySelector("#batchAddLinkBtn").onclick = () => {
+        const url = prompt("请输入表情包图片链接：");
+        if (url && url.trim()) { batchItems.push({ url: url.trim(), meaning: "" }); renderBatchItems(); }
+      };
+
+      mask.querySelector("#batchAddFileBtn").onclick = () => { mask.querySelector("#batchFileInput").click(); };
+
+      mask.querySelector("#batchFileInput").onchange = (e) => {
+        const files = Array.from(e.target.files);
+        let loaded = 0;
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            batchItems.push({ url: ev.target.result, meaning: "" });
+            loaded++;
+            if (loaded === files.length) renderBatchItems();
+          };
+          reader.readAsDataURL(file);
+        });
+        e.target.value = "";
+      };
+
+      mask.querySelector("#batchCancelBtn").onclick = () => document.body.removeChild(mask);
+
+      mask.querySelector("#batchSaveBtn").onclick = () => {
+        const selCatIdx = parseInt(mask.querySelector("#batchCatSelect").value);
+        const targetCat = state.stickerCategories[selCatIdx];
+        if (!targetCat) { alert("请选择分类"); return; }
+        batchItems.forEach(item => {
+          targetCat.stickers.push({ id: makeStickerId(), url: item.url, meaning: item.meaning });
+        });
+        document.body.removeChild(mask);
+        renderStickerManager();
+      };
+    }
+
+    // 返回
+    document.getElementById("stickerMgrBackBtn").addEventListener("click", () => {
+      stickerManagerScreen.classList.remove("active");
+      screens.me.classList.add("active");
+      tabbar.classList.remove("hidden");
+    });
+
+    // "我"页面点击"我的表情包"
+    document.getElementById("openStickerManagerBtn").addEventListener("click", () => {
+      screens.me.classList.remove("active");
+      tabbar.classList.add("hidden");
+      renderStickerManager();
+      stickerManagerScreen.classList.add("active");
+    });
+   document.getElementById("voiceBtn").addEventListener("click", () => {
       triggerAIReply();
     });
     menuBtn.addEventListener("click", () => {

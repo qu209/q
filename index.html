@@ -3188,9 +3188,26 @@ TimeChecklist:
       
       combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
       combinedPersona += "【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：\n[INNER_VOICE|你的颜文字|你的内心想法]。\n例如：[INNER_VOICE|(*/ω＼*)|他居然这么懂我，有点心动了！]。\n⚠️警告：内心想法（心声正文）必须精简，字数请严格控制在 80 字以内！这部分仅作心声记录，绝对不能让用户在聊天气泡中直接看到。\n";
+
+      // 动态注入表情包库（核心修复：让AI知道有哪些表情包可用）
+      if (state.emojiCategories && state.emojiCategories.length > 0) {
+        let emojiListStr = "";
+        state.emojiCategories.forEach(cat => {
+          cat.items.forEach(item => {
+            if (item.url) {
+              const labelDesc = item.label ? item.label : "无特定描述的表情包";
+              emojiListStr += `- 表达【${labelDesc}】时使用链接: ${item.url}\n`;
+            }
+          });
+        });
+        if (emojiListStr) {
+          combinedPersona += `\n【专属表情包库（极其重要）】\n你拥有以下表情包。在聊天中，如果你觉得当前情绪和语境合适，你可以发送对应的表情包！\n发送规则：必须单独占一行输出指令：[EMOJI_STICKER|图片链接|意思]。\n例如：[EMOJI_STICKER|https://xxx.jpg|开心]。\n当前你可用的表情包列表如下：\n${emojiListStr}\n`;
+        }
+      }
+
       // 检查是否开启了翻译模式，并注入超强逻辑覆写
       if (api.enableTranslation) {
-        combinedPersona += `\n【⚠️ 绝对逻辑覆写 / Absolute Logic Overwrite】
+       combinedPersona += `\n【⚠️ 绝对逻辑覆写 / Absolute Logic Overwrite】
 1. 语言强制 (Language Core): 你的思维已被锁定。你必须且只能使用【符合你角色设定的外语（任何语言均可）】进行回复。禁止在 HTML 模板外部输出任何中文！
 2. 格式协议 (Format Protocol): 说完外语后，必须紧接着提供对应的中文翻译。
 3. 严格输出模板 (Strict Template): 结合上方"每次回复必须拆分成多行"的规则，你的**每一行独立回复**都必须分别使用以下完整的 HTML 结构包裹！切记：每一行必须是一个完整的 <details> 标签组，**行与行之间必须用换行符(回车)隔开**，且 HTML 标签内部绝对不能换行！

@@ -1730,7 +1730,9 @@
 
     /* 表情包消息气泡图片 */
     .emoji-msg-img {
-      max-width: 120px;
+      width: 120px;
+      height: 120px;
+      object-fit: contain; /* 保证表情包完整显示，小的等比放大，大的等比缩小 */
       border-radius: 12px;
       display: block;
       cursor: pointer;
@@ -3086,7 +3088,8 @@ if (msg.isTyping) {
             if (msg.image) {
               const imgEl = document.createElement("img");
               imgEl.src = msg.image;
-              imgEl.style.maxWidth = "100%";
+              imgEl.style.width = "160px"; /* 强制规定所有图片的显示宽度 */
+              imgEl.style.height = "auto"; /* 高度自动跟随，这样大的会等比缩小，小的会等比放大，且绝对不会变形 */
               imgEl.style.borderRadius = "8px";
               imgEl.style.marginTop = msg.text ? "8px" : "0";
               imgEl.style.display = "block";

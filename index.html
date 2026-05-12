@@ -1271,6 +1271,140 @@
         font-size: 16px;
       }
     }
+        /* ====== 聊天背景与气泡自定义样式 ====== */
+    .chat-bg-customizable {
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+    }
+    /* 气泡颜色预设选择器 */
+    .bubble-preset-select {
+      flex: 1;
+      height: 36px;
+      border: 1px solid #d0d5dd;
+      border-radius: 8px;
+      font-size: 14px;
+      padding: 0 10px;
+      background: #fff;
+      color: #111;
+      outline: none;
+      cursor: pointer;
+    }
+    .bubble-color-swatch {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: 2px solid #e0e0e0;
+      cursor: pointer;
+      flex-shrink: 0;
+      overflow: hidden;
+      position: relative;
+    }
+    .bubble-color-swatch input[type=color] {
+      position: absolute;
+      inset: -4px;
+      width: calc(100% + 8px);
+      height: calc(100% + 8px);
+      opacity: 0;
+      cursor: pointer;
+      border: none;
+      padding: 0;
+    }
+    .bubble-section-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+    .bubble-section-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: #444;
+      white-space: nowrap;
+      min-width: 64px;
+    }
+    .bubble-css-textarea {
+      width: 100%;
+      min-height: 80px;
+      border: 1px solid #d0d5dd;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-family: monospace;
+      color: #111;
+      background: #f7f7f8;
+      resize: vertical;
+      outline: none;
+      line-height: 1.5;
+    }
+    /* 气泡样式预览区 */
+    .bubble-preview-area {
+      background: #f2f4f8;
+      border-radius: 14px;
+      padding: 16px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .bubble-preview-row-left {
+      display: flex;
+      justify-content: flex-start;
+    }
+    .bubble-preview-row-right {
+      display: flex;
+      justify-content: flex-end;
+    }
+    .bubble-preview-left {
+      padding: 8px 14px;
+      font-size: 15px;
+      line-height: 1.5;
+      border-radius: 22px;
+      max-width: 75%;
+      word-break: break-word;
+      background: #F2F4F8;
+      color: #111;
+    }
+    .bubble-preview-right {
+      padding: 8px 14px;
+      font-size: 15px;
+      line-height: 1.5;
+      border-radius: 22px;
+      max-width: 75%;
+      word-break: break-word;
+      background: #111111;
+      color: #fff;
+    }
+    /* 背景预览区 */
+    .bg-preview-box {
+      width: 100%;
+      height: 100px;
+      border-radius: 12px;
+      background: #f2f4f8;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      border: 1px solid #e5e5ea;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #b0b0b0;
+      font-size: 13px;
+      margin-bottom: 10px;
+      position: relative;
+      overflow: hidden;
+    }
+    .details-section-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 16px;
+      margin-bottom: 16px;
+    }
+    .details-section-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #111;
+      margin-bottom: 14px;
+    }
     /* ====== 表情包系统样式 ====== */
     /* 禁止长按选择文字，同时彻底屏蔽长按弹出系统菜单 */
     .emoji-manager-screen, .emoji-content-screen, .emoji-panel-sheet, .emoji-panel-sheet * {
@@ -2009,7 +2143,8 @@
       </div>
       <div class="chat-body" style="padding: 20px 16px; background: #f2f2f7; bottom: 0;">
         
-        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+        <!-- 角色基本信息卡片 -->
+        <div class="details-section-card">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <div id="detailsAvatarPreview" style="width: 60px; height: 60px; flex-shrink: 0; border-radius: 50%; background: #eee; position: relative; background-size: cover; background-position: center;">
                <img id="detailsFrameOverlay" src="" style="position: absolute; pointer-events: none; display: none; object-fit: contain;" />
@@ -2039,6 +2174,91 @@
           <div class="field" style="margin-bottom: 0;">
             <label style="font-size: 15px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">我的人设</label>
             <textarea class="textarea" id="detailsMyPersonaInput" placeholder="输入你在TA面前的人设" style="background: #f7f7f8; border: none; border-radius: 12px; min-height: 80px;"></textarea>
+          </div>
+        </div>
+
+        <!-- 更换聊天背景卡片 -->
+        <div class="details-section-card">
+          <div class="details-section-title">聊天界面背景</div>
+          <div class="bg-preview-box" id="detailsBgPreviewBox">
+            <span id="detailsBgPreviewHint">未设置背景</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-light" id="changeChatBgBtn" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
+              更换背景图
+              <input type="file" id="chatBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
+            </button>
+            <button class="btn btn-light" id="clearChatBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除背景</button>
+          </div>
+        </div>
+
+        <!-- 更换气泡样式卡片 -->
+        <div class="details-section-card">
+          <div class="details-section-title">气泡样式</div>
+
+          <!-- 第一排：选择预设 -->
+          <div class="bubble-section-row" style="margin-bottom: 14px; border-bottom: 1px solid #f2f2f7; padding-bottom: 14px;">
+            <div class="bubble-section-label">选择预设</div>
+            <select class="bubble-preset-select" id="bubblePresetSelect"></select>
+            <button id="deleteBubblePresetBtn" title="删除此预设" style="appearance:none;border:0;background:#f2f2f7;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#df3b3b;font-size:18px;font-weight:700;">×</button>
+            <button id="saveBubblePresetBtn" title="保存当前为预设" style="appearance:none;border:0;background:#111;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-size:16px;">✓</button>
+          </div>
+
+          <!-- 第二排：颜色选择 -->
+          <div style="margin-bottom: 14px; border-bottom: 1px solid #f2f2f7; padding-bottom: 14px;">
+            <div class="bubble-section-row" style="margin-bottom: 8px;">
+              <div class="bubble-section-label">角色气泡</div>
+              <div class="bubble-color-swatch" id="aiBgSwatch" title="角色气泡背景色">
+                <input type="color" id="aiBubbleBgColor" value="#F2F4F8" />
+              </div>
+              <span style="font-size:12px;color:#888;flex:1;">背景</span>
+              <div class="bubble-color-swatch" id="aiTextSwatch" title="角色气泡文字色">
+                <input type="color" id="aiBubbleTextColor" value="#111111" />
+              </div>
+              <span style="font-size:12px;color:#888;flex:1;">文字</span>
+            </div>
+            <div class="bubble-section-row" style="margin-bottom: 0;">
+              <div class="bubble-section-label">用户气泡</div>
+              <div class="bubble-color-swatch" id="meBgSwatch" title="用户气泡背景色">
+                <input type="color" id="meBubbleBgColor" value="#111111" />
+              </div>
+              <span style="font-size:12px;color:#888;flex:1;">背景</span>
+              <div class="bubble-color-swatch" id="meTextSwatch" title="用户气泡文字色">
+                <input type="color" id="meBubbleTextColor" value="#ffffff" />
+              </div>
+              <span style="font-size:12px;color:#888;flex:1;">文字</span>
+            </div>
+          </div>
+
+          <!-- 第三排：自定义CSS -->
+          <div style="margin-bottom: 14px; border-bottom: 1px solid #f2f2f7; padding-bottom: 14px;">
+            <div style="font-size: 13px; font-weight: 600; color: #444; margin-bottom: 8px;">自定义 CSS（可覆盖气泡所有样式）</div>
+            <div style="font-size: 11px; color: #aaa; margin-bottom: 6px;">例：border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);</div>
+            <div style="margin-bottom: 6px;">
+              <div style="font-size: 12px; color: #888; margin-bottom: 4px;">.bubble（两侧通用）</div>
+              <textarea class="bubble-css-textarea" id="bubbleCssCommon" placeholder="/* 两侧气泡通用CSS */"></textarea>
+            </div>
+            <div style="margin-bottom: 6px;">
+              <div style="font-size: 12px; color: #888; margin-bottom: 4px;">.message-row.ai .bubble（角色气泡）</div>
+              <textarea class="bubble-css-textarea" id="bubbleCssAi" placeholder="/* 角色气泡专属CSS */"></textarea>
+            </div>
+            <div>
+              <div style="font-size: 12px; color: #888; margin-bottom: 4px;">.message-row.me .bubble（用户气泡）</div>
+              <textarea class="bubble-css-textarea" id="bubbleCssMe" placeholder="/* 用户气泡专属CSS */"></textarea>
+            </div>
+          </div>
+
+          <!-- 第四排：实时预览 -->
+          <div>
+            <div style="font-size: 13px; font-weight: 600; color: #444; margin-bottom: 10px;">预览</div>
+            <div class="bubble-preview-area" id="bubblePreviewArea">
+              <div class="bubble-preview-row-left">
+                <div class="bubble-preview-left" id="previewBubbleLeft">如果你无法得到幸福</div>
+              </div>
+              <div class="bubble-preview-row-right">
+                <div class="bubble-preview-right" id="previewBubbleRight">那我做的一切都是徒劳</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -4641,6 +4861,9 @@ TimeChecklist:
         delete detailsAvatarPreview.dataset.tempAvatar;
       }
 
+      // 保存气泡样式到contact
+      applyBubbleStyleToContact(contact);
+
       screenChatDetails.classList.remove("active");
       screens.chat.classList.add("active");
       chatTitle.textContent = getDisplayName(contact);
@@ -4859,6 +5082,247 @@ TimeChecklist:
       }
       closeFrameModal();
     });
+    // ====== 聊天背景与气泡自定义功能 ======
+
+    const detailsBgPreviewBox = document.getElementById("detailsBgPreviewBox");
+    const detailsBgPreviewHint = document.getElementById("detailsBgPreviewHint");
+    const chatBgInput = document.getElementById("chatBgInput");
+    const clearChatBgBtn = document.getElementById("clearChatBgBtn");
+
+    const aiBubbleBgColor = document.getElementById("aiBubbleBgColor");
+    const aiBubbleTextColor = document.getElementById("aiBubbleTextColor");
+    const meBubbleBgColor = document.getElementById("meBubbleBgColor");
+    const meBubbleTextColor = document.getElementById("meBubbleTextColor");
+    const bubbleCssCommon = document.getElementById("bubbleCssCommon");
+    const bubbleCssAi = document.getElementById("bubbleCssAi");
+    const bubbleCssMe = document.getElementById("bubbleCssMe");
+    const previewBubbleLeft = document.getElementById("previewBubbleLeft");
+    const previewBubbleRight = document.getElementById("previewBubbleRight");
+    const bubblePresetSelect = document.getElementById("bubblePresetSelect");
+    const saveBubblePresetBtn = document.getElementById("saveBubblePresetBtn");
+    const deleteBubblePresetBtn = document.getElementById("deleteBubblePresetBtn");
+    const aiBgSwatch = document.getElementById("aiBgSwatch");
+    const meBgSwatch = document.getElementById("meBgSwatch");
+    const aiTextSwatch = document.getElementById("aiTextSwatch");
+    const meTextSwatch = document.getElementById("meTextSwatch");
+
+    // 全局预设存储（第一个是默认不可删除）
+    if (!state.bubblePresets) {
+      state.bubblePresets = [
+        { id: "default", name: "默认", aiBg: "#F2F4F8", aiText: "#111111", meBg: "#111111", meText: "#ffffff", cssCommon: "", cssAi: "", cssMe: "" }
+      ];
+    }
+
+    // 更新色块背景显示
+    function updateSwatchColors() {
+      aiBgSwatch.style.background = aiBubbleBgColor.value;
+      aiTextSwatch.style.background = aiBubbleTextColor.value;
+      meBgSwatch.style.background = meBubbleBgColor.value;
+      meTextSwatch.style.background = meBubbleTextColor.value;
+    }
+
+    // 实时更新预览气泡
+    function updateBubblePreview() {
+      const aiBg = aiBubbleBgColor.value;
+      const aiText = aiBubbleTextColor.value;
+      const meBg = meBubbleBgColor.value;
+      const meText = meBubbleTextColor.value;
+      const cssCommon = bubbleCssCommon.value;
+      const cssAi = bubbleCssAi.value;
+      const cssMe = bubbleCssMe.value;
+
+      previewBubbleLeft.style.cssText = `background:${aiBg};color:${aiText};padding:8px 14px;font-size:15px;line-height:1.5;border-radius:22px;max-width:75%;word-break:break-word;${cssCommon};${cssAi}`;
+      previewBubbleRight.style.cssText = `background:${meBg};color:${meText};padding:8px 14px;font-size:15px;line-height:1.5;border-radius:22px;max-width:75%;word-break:break-word;${cssCommon};${cssMe}`;
+      updateSwatchColors();
+    }
+
+    // 将当前气泡设置保存到contact对象
+    function applyBubbleStyleToContact(contact) {
+      contact.bubbleStyle = {
+        aiBg: aiBubbleBgColor.value,
+        aiText: aiBubbleTextColor.value,
+        meBg: meBubbleBgColor.value,
+        meText: meBubbleTextColor.value,
+        cssCommon: bubbleCssCommon.value,
+        cssAi: bubbleCssAi.value,
+        cssMe: bubbleCssMe.value
+      };
+      applyBubbleStyleToChat(contact);
+    }
+
+    // 把contact的气泡样式注入到聊天界面
+    function applyBubbleStyleToChat(contact) {
+      const styleId = "bubble-custom-style-" + (contact ? contact.id : "none");
+      let el = document.getElementById(styleId);
+      if (!el) {
+        el = document.createElement("style");
+        el.id = styleId;
+        document.head.appendChild(el);
+      }
+      if (!contact || !contact.bubbleStyle) {
+        el.textContent = "";
+        return;
+      }
+      const s = contact.bubbleStyle;
+      el.textContent = `
+        .message-row.ai .bubble { background: ${s.aiBg} !important; color: ${s.aiText} !important; ${s.cssCommon || ""} ${s.cssAi || ""} }
+        .message-row.me .bubble { background: ${s.meBg} !important; color: ${s.meText} !important; ${s.cssCommon || ""} ${s.cssMe || ""} }
+      `;
+    }
+
+    // 从contact加载气泡设置到面板
+    function loadBubbleStyleFromContact(contact) {
+      const s = contact && contact.bubbleStyle;
+      aiBubbleBgColor.value = (s && s.aiBg) ? s.aiBg : "#F2F4F8";
+      aiBubbleTextColor.value = (s && s.aiText) ? s.aiText : "#111111";
+      meBubbleBgColor.value = (s && s.meBg) ? s.meBg : "#111111";
+      meBubbleTextColor.value = (s && s.meText) ? s.meText : "#ffffff";
+      bubbleCssCommon.value = (s && s.cssCommon) ? s.cssCommon : "";
+      bubbleCssAi.value = (s && s.cssAi) ? s.cssAi : "";
+      bubbleCssMe.value = (s && s.cssMe) ? s.cssMe : "";
+      updateBubblePreview();
+    }
+
+    // 渲染预设下拉框
+    function renderBubblePresets() {
+      bubblePresetSelect.innerHTML = "";
+      state.bubblePresets.forEach(p => {
+        const opt = document.createElement("option");
+        opt.value = p.id;
+        opt.textContent = p.name;
+        bubblePresetSelect.appendChild(opt);
+      });
+    }
+
+    // 选择预设时加载
+    bubblePresetSelect.addEventListener("change", () => {
+      const p = state.bubblePresets.find(x => x.id === bubblePresetSelect.value);
+      if (!p) return;
+      aiBubbleBgColor.value = p.aiBg;
+      aiBubbleTextColor.value = p.aiText;
+      meBubbleBgColor.value = p.meBg;
+      meBubbleTextColor.value = p.meText;
+      bubbleCssCommon.value = p.cssCommon || "";
+      bubbleCssAi.value = p.cssAi || "";
+      bubbleCssMe.value = p.cssMe || "";
+      updateBubblePreview();
+    });
+
+    // 保存当前为预设
+    saveBubblePresetBtn.addEventListener("click", () => {
+      const name = prompt("请输入预设名称：", "我的预设");
+      if (!name) return;
+      const newPreset = {
+        id: "preset_" + Date.now(),
+        name: name.trim(),
+        aiBg: aiBubbleBgColor.value,
+        aiText: aiBubbleTextColor.value,
+        meBg: meBubbleBgColor.value,
+        meText: meBubbleTextColor.value,
+        cssCommon: bubbleCssCommon.value,
+        cssAi: bubbleCssAi.value,
+        cssMe: bubbleCssMe.value
+      };
+      state.bubblePresets.push(newPreset);
+      renderBubblePresets();
+      bubblePresetSelect.value = newPreset.id;
+    });
+
+    // 删除预设（默认预设不可删）
+    deleteBubblePresetBtn.addEventListener("click", () => {
+      const id = bubblePresetSelect.value;
+      if (id === "default") { alert("默认预设不可删除"); return; }
+      const idx = state.bubblePresets.findIndex(x => x.id === id);
+      if (idx !== -1) state.bubblePresets.splice(idx, 1);
+      renderBubblePresets();
+      updateBubblePreview();
+    });
+
+    // 颜色/CSS实时更新预览
+    [aiBubbleBgColor, aiBubbleTextColor, meBubbleBgColor, meBubbleTextColor].forEach(el => {
+      el.addEventListener("input", updateBubblePreview);
+    });
+    [bubbleCssCommon, bubbleCssAi, bubbleCssMe].forEach(el => {
+      el.addEventListener("input", updateBubblePreview);
+    });
+
+    // 背景图更换
+    chatBgInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const url = URL.createObjectURL(file);
+      const contact = getContact(state.activeContactId);
+      if (contact) {
+        contact.chatBg = url;
+        detailsBgPreviewBox.style.backgroundImage = `url(${url})`;
+        if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "none";
+        // 应用到聊天背景
+        const chatBody = document.getElementById("chatBody");
+        if (chatBody) {
+          chatBody.style.backgroundImage = `url(${url})`;
+          chatBody.classList.add("chat-bg-customizable");
+        }
+      }
+      chatBgInput.value = "";
+    });
+
+    // 清除背景
+    clearChatBgBtn.addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      if (contact) {
+        contact.chatBg = "";
+        detailsBgPreviewBox.style.backgroundImage = "";
+        if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "";
+        const chatBody = document.getElementById("chatBody");
+        if (chatBody) {
+          chatBody.style.backgroundImage = "";
+          chatBody.classList.remove("chat-bg-customizable");
+          chatBody.style.background = "#fff";
+        }
+      }
+    });
+
+    // 打开聊天详情时加载背景和气泡设置
+    const _origDetailsOpen = document.getElementById("chatDetailsBtn");
+    _origDetailsOpen && _origDetailsOpen.addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      // 加载背景预览
+      if (contact && contact.chatBg) {
+        detailsBgPreviewBox.style.backgroundImage = `url(${contact.chatBg})`;
+        if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "none";
+      } else {
+        detailsBgPreviewBox.style.backgroundImage = "";
+        if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "";
+      }
+      // 加载气泡设置
+      loadBubbleStyleFromContact(contact);
+      renderBubblePresets();
+    });
+
+    // 切换聊天时应用已保存的气泡和背景
+    const _origOpenChat = openChat;
+    openChat = function(contactId) {
+      _origOpenChat(contactId);
+      const contact = getContact(contactId);
+      if (contact) {
+        applyBubbleStyleToChat(contact);
+        const chatBodyEl = document.getElementById("chatBody");
+        if (chatBodyEl) {
+          if (contact.chatBg) {
+            chatBodyEl.style.backgroundImage = `url(${contact.chatBg})`;
+            chatBodyEl.classList.add("chat-bg-customizable");
+          } else {
+            chatBodyEl.style.backgroundImage = "";
+            chatBodyEl.classList.remove("chat-bg-customizable");
+            chatBodyEl.style.background = "#fff";
+          }
+        }
+      }
+    };
+
+    // 初始化预设
+    renderBubblePresets();
+    updateBubblePreview();
 
     // 初始化运行一次动态样式
     applyGlobalFontAndSize();

@@ -1323,20 +1323,6 @@
       white-space: nowrap;
       min-width: 64px;
     }
-    .bubble-css-textarea {
-      width: 100%;
-      min-height: 80px;
-      border: 1px solid #d0d5dd;
-      border-radius: 10px;
-      padding: 10px 12px;
-      font-size: 13px;
-      font-family: monospace;
-      color: #111;
-      background: #f7f7f8;
-      resize: vertical;
-      outline: none;
-      line-height: 1.5;
-    }
     /* 气泡样式预览区 */
     .bubble-preview-area {
       background: #f2f4f8;
@@ -2227,24 +2213,6 @@
                 <input type="color" id="meBubbleTextColor" value="#ffffff" />
               </div>
               <span style="font-size:12px;color:#888;flex:1;">文字</span>
-            </div>
-          </div>
-
-          <!-- 第三排：自定义CSS -->
-          <div style="margin-bottom: 14px; border-bottom: 1px solid #f2f2f7; padding-bottom: 14px;">
-            <div style="font-size: 13px; font-weight: 600; color: #444; margin-bottom: 8px;">自定义 CSS（可覆盖气泡所有样式）</div>
-            <div style="font-size: 11px; color: #aaa; margin-bottom: 6px;">例：border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);</div>
-            <div style="margin-bottom: 6px;">
-              <div style="font-size: 12px; color: #888; margin-bottom: 4px;">.bubble（两侧通用）</div>
-              <textarea class="bubble-css-textarea" id="bubbleCssCommon" placeholder="/* 两侧气泡通用CSS */"></textarea>
-            </div>
-            <div style="margin-bottom: 6px;">
-              <div style="font-size: 12px; color: #888; margin-bottom: 4px;">.message-row.ai .bubble（角色气泡）</div>
-              <textarea class="bubble-css-textarea" id="bubbleCssAi" placeholder="/* 角色气泡专属CSS */"></textarea>
-            </div>
-            <div>
-              <div style="font-size: 12px; color: #888; margin-bottom: 4px;">.message-row.me .bubble（用户气泡）</div>
-              <textarea class="bubble-css-textarea" id="bubbleCssMe" placeholder="/* 用户气泡专属CSS */"></textarea>
             </div>
           </div>
 
@@ -5093,9 +5061,6 @@ TimeChecklist:
     const aiBubbleTextColor = document.getElementById("aiBubbleTextColor");
     const meBubbleBgColor = document.getElementById("meBubbleBgColor");
     const meBubbleTextColor = document.getElementById("meBubbleTextColor");
-    const bubbleCssCommon = document.getElementById("bubbleCssCommon");
-    const bubbleCssAi = document.getElementById("bubbleCssAi");
-    const bubbleCssMe = document.getElementById("bubbleCssMe");
     const previewBubbleLeft = document.getElementById("previewBubbleLeft");
     const previewBubbleRight = document.getElementById("previewBubbleRight");
     const bubblePresetSelect = document.getElementById("bubblePresetSelect");
@@ -5109,7 +5074,7 @@ TimeChecklist:
     // 全局预设存储（第一个是默认不可删除）
     if (!state.bubblePresets) {
       state.bubblePresets = [
-        { id: "default", name: "默认", aiBg: "#F2F4F8", aiText: "#111111", meBg: "#111111", meText: "#ffffff", cssCommon: "", cssAi: "", cssMe: "" }
+        { id: "default", name: "默认", aiBg: "#F2F4F8", aiText: "#111111", meBg: "#111111", meText: "#ffffff" }
       ];
     }
 
@@ -5127,12 +5092,9 @@ TimeChecklist:
       const aiText = aiBubbleTextColor.value;
       const meBg = meBubbleBgColor.value;
       const meText = meBubbleTextColor.value;
-      const cssCommon = bubbleCssCommon.value;
-      const cssAi = bubbleCssAi.value;
-      const cssMe = bubbleCssMe.value;
 
-      previewBubbleLeft.style.cssText = `background:${aiBg};color:${aiText};padding:8px 14px;font-size:15px;line-height:1.5;border-radius:22px;max-width:75%;word-break:break-word;${cssCommon};${cssAi}`;
-      previewBubbleRight.style.cssText = `background:${meBg};color:${meText};padding:8px 14px;font-size:15px;line-height:1.5;border-radius:22px;max-width:75%;word-break:break-word;${cssCommon};${cssMe}`;
+      previewBubbleLeft.style.cssText = `background:${aiBg};color:${aiText};padding:8px 14px;font-size:15px;line-height:1.5;border-radius:22px;max-width:75%;word-break:break-word;`;
+      previewBubbleRight.style.cssText = `background:${meBg};color:${meText};padding:8px 14px;font-size:15px;line-height:1.5;border-radius:22px;max-width:75%;word-break:break-word;`;
       updateSwatchColors();
     }
 
@@ -5142,10 +5104,7 @@ TimeChecklist:
         aiBg: aiBubbleBgColor.value,
         aiText: aiBubbleTextColor.value,
         meBg: meBubbleBgColor.value,
-        meText: meBubbleTextColor.value,
-        cssCommon: bubbleCssCommon.value,
-        cssAi: bubbleCssAi.value,
-        cssMe: bubbleCssMe.value
+        meText: meBubbleTextColor.value
       };
       applyBubbleStyleToChat(contact);
     }
@@ -5167,16 +5126,12 @@ TimeChecklist:
       el.textContent = `
         /* 1. 先应用你的自定义美化样式（阴影、边框、颜色等） */
         .message-row.ai.single .bubble, .message-row.ai.first .bubble, .message-row.ai.middle .bubble, .message-row.ai.last .bubble { 
-            background: ${s.aiBg}; 
+            background: ${s.aiBg};
             color: ${s.aiText}; 
-            ${s.cssCommon || ""} 
-            ${s.cssAi || ""} 
         }
         .message-row.me.single .bubble, .message-row.me.first .bubble, .message-row.me.middle .bubble, .message-row.me.last .bubble { 
-            background: ${s.meBg}; 
+            background: ${s.meBg};
             color: ${s.meText}; 
-            ${s.cssCommon || ""} 
-            ${s.cssMe || ""} 
         }
         
         /* 2. 强制加锁保护贴合的圆角形状，绝不让自定义 CSS 破坏它！ */
@@ -5199,9 +5154,6 @@ TimeChecklist:
       aiBubbleTextColor.value = (s && s.aiText) ? s.aiText : "#111111";
       meBubbleBgColor.value = (s && s.meBg) ? s.meBg : "#111111";
       meBubbleTextColor.value = (s && s.meText) ? s.meText : "#ffffff";
-      bubbleCssCommon.value = (s && s.cssCommon) ? s.cssCommon : "";
-      bubbleCssAi.value = (s && s.cssAi) ? s.cssAi : "";
-      bubbleCssMe.value = (s && s.cssMe) ? s.cssMe : "";
       updateBubblePreview();
     }
 
@@ -5224,9 +5176,6 @@ TimeChecklist:
       aiBubbleTextColor.value = p.aiText;
       meBubbleBgColor.value = p.meBg;
       meBubbleTextColor.value = p.meText;
-      bubbleCssCommon.value = p.cssCommon || "";
-      bubbleCssAi.value = p.cssAi || "";
-      bubbleCssMe.value = p.cssMe || "";
       updateBubblePreview();
     });
 
@@ -5240,10 +5189,7 @@ TimeChecklist:
         aiBg: aiBubbleBgColor.value,
         aiText: aiBubbleTextColor.value,
         meBg: meBubbleBgColor.value,
-        meText: meBubbleTextColor.value,
-        cssCommon: bubbleCssCommon.value,
-        cssAi: bubbleCssAi.value,
-        cssMe: bubbleCssMe.value
+        meText: meBubbleTextColor.value
       };
       state.bubblePresets.push(newPreset);
       renderBubblePresets();
@@ -5262,9 +5208,6 @@ TimeChecklist:
 
     // 颜色/CSS实时更新预览
     [aiBubbleBgColor, aiBubbleTextColor, meBubbleBgColor, meBubbleTextColor].forEach(el => {
-      el.addEventListener("input", updateBubblePreview);
-    });
-    [bubbleCssCommon, bubbleCssAi, bubbleCssMe].forEach(el => {
       el.addEventListener("input", updateBubblePreview);
     });
 

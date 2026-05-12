@@ -2216,6 +2216,16 @@
             </div>
           </div>
 
+          <!-- 第三排：自定义CSS -->
+          <div style="margin-bottom: 14px; border-bottom: 1px solid #f2f2f7; padding-bottom: 14px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="font-size:13px;font-weight:600;color:#444;">自定义 CSS</div>
+              <button id="resetBubbleCssBtn" style="appearance:none;border:0;background:#f2f2f7;border-radius:6px;font-size:12px;color:#888;padding:2px 10px;cursor:pointer;">重置</button>
+            </div>
+            <textarea id="customBubbleCss" placeholder="/* 在这里写CSS美化气泡，例如：&#10;.message-row.ai .bubble { box-shadow: 0 2px 8px rgba(0,0,0,0.1); }&#10;.message-row.me .bubble { border-radius: 4px 22px 22px 22px; } */" style="width:100%;min-height:120px;border-radius:12px;border:1px solid #e0e0e0;background:#f7f7f8;padding:12px;font-size:12px;font-family:monospace;line-height:1.6;resize:vertical;outline:none;color:#111;box-sizing:border-box;"></textarea>
+            <div style="font-size:11px;color:#aaa;margin-top:6px;">提示：可直接用CSS覆盖气泡样式，实时生效。颜色选择器设定的颜色优先级更高。</div>
+          </div>
+
           <!-- 第四排：实时预览 -->
           <div>
             <div style="font-size: 13px; font-weight: 600; color: #444; margin-bottom: 10px;">预览</div>
@@ -5123,8 +5133,12 @@ TimeChecklist:
         return;
       }
       const s = contact.bubbleStyle;
+      const customCss = (contact && contact.customBubbleCss) ? contact.customBubbleCss : "";
       el.textContent = `
-        /* 1. 先应用你的自定义美化样式（阴影、边框、颜色等） */
+        /* 用户自定义CSS（最先写，优先级最低，方便被后面覆盖） */
+        ${customCss}
+
+        /* 颜色选择器设定的颜色（优先级高于自定义CSS） */
         .message-row.ai.single .bubble, .message-row.ai.first .bubble, .message-row.ai.middle .bubble, .message-row.ai.last .bubble { 
             background: ${s.aiBg};
             color: ${s.aiText}; 
@@ -5134,7 +5148,7 @@ TimeChecklist:
             color: ${s.meText}; 
         }
         
-        /* 2. 强制加锁保护贴合的圆角形状，绝不让自定义 CSS 破坏它！ */
+        /* 圆角锁定保护 */
         .message-row.ai.single .bubble { border-radius: 22px !important; }
         .message-row.ai.first .bubble { border-radius: 22px 22px 22px 4px !important; }
         .message-row.ai.middle .bubble { border-radius: 4px 22px 22px 4px !important; }
@@ -5210,6 +5224,26 @@ TimeChecklist:
     [aiBubbleBgColor, aiBubbleTextColor, meBubbleBgColor, meBubbleTextColor].forEach(el => {
       el.addEventListener("input", updateBubblePreview);
     });
+    // 自定义CSS实时应用
+    const customBubbleCssInput = document.getElementById("customBubbleCss");
+    const resetBubbleCssBtn = document.getElementById("resetBubbleCssBtn");
+
+    customBubbleCssInput.addEventListener("input", () => {
+      const contact = getContact(state.activeContactId);
+      if (contact) {
+        contact.customBubbleCss = customBubbleCssInput.value;
+        applyBubbleStyleToChat(contact);
+      }
+    });
+
+    resetBubbleCssBtn.addEventListener("click", () => {
+      customBubbleCssInput.value = "";
+      const contact = getContact(state.activeContactId);
+      if (contact) {
+        contact.customBubbleCss = "";
+        applyBubbleStyleToChat(contact);
+      }
+    });
 
     // 背景图更换
     chatBgInput.addEventListener("change", (e) => {
@@ -5262,6 +5296,8 @@ TimeChecklist:
       // 加载气泡设置
       loadBubbleStyleFromContact(contact);
       renderBubblePresets();
+      // 加载自定义CSS
+      customBubbleCssInput.value = (contact && contact.customBubbleCss) ? contact.customBubbleCss : "";
     });
 
     // 切换聊天时应用已保存的气泡和背景

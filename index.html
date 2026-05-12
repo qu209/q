@@ -2480,9 +2480,20 @@
 
         const sub = document.createElement("div");
         sub.className = "friend-sub";
-        sub.textContent = contact.messages.length
-          ? contact.messages[contact.messages.length - 1].text
-          : "[系统消息：开始与 AI 好友聊天吧]";
+        let previewText = "[系统消息：开始与 AI 好友聊天吧]";
+        if (contact.messages.length) {
+          const lastMsg = contact.messages[contact.messages.length - 1];
+          if (lastMsg.image) {
+            previewText = "[图片]";
+          } else if (lastMsg.text.startsWith("[EMOJI_STICKER|")) {
+            previewText = "[表情包]";
+          } else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) {
+            previewText = "[转账]";
+          } else {
+            previewText = lastMsg.text.replace(/<[^>]*>?/gm, '');
+          }
+        }
+        sub.textContent = previewText;
 
         main.appendChild(titleRow);
         main.appendChild(sub);
@@ -2916,28 +2927,45 @@
     document.getElementById("menuQuote").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       const msg = contact.messages[targetMsgIndex];
-      // 取纯文本作为引用
-      state.replyingToText = msg.text.replace(/<[^>]*>?/gm, ''); 
+      let quoteText = "";
+      if (msg.image) {
+        quoteText = "[图片]";
+      } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
+        quoteText = "[表情包]";
+      } else if (msg.text.startsWith("[TRANSFER|") || msg.text.startsWith("[TRANSFER_REPLY|")) {
+        quoteText = "[转账]";
+      } else {
+        quoteText = msg.text.replace(/<[^>]*>?/gm, ''); 
+      }
+      state.replyingToText = quoteText; 
       document.getElementById("replyPreviewText").textContent = "引用：" + state.replyingToText;
       document.getElementById("replyPreview").classList.add("show");
       document.getElementById("msgMenuMask").classList.remove("show");
       chatInput.focus();
     });
-
     document.getElementById("replyPreviewClose").addEventListener("click", () => {
       state.replyingToText = "";
       document.getElementById("replyPreview").classList.remove("show");
     });
-
     // 指令2：复制
     document.getElementById("menuCopy").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
-      const text = contact.messages[targetMsgIndex].text.replace(/<[^>]*>?/gm, '');
+      const msg = contact.messages[targetMsgIndex];
+      let copyText = "";
+      if (msg.image) {
+        copyText = "[图片]";
+      } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
+        copyText = "[表情包]";
+      } else if (msg.text.startsWith("[TRANSFER|") || msg.text.startsWith("[TRANSFER_REPLY|")) {
+        copyText = "[转账]";
+      } else {
+        copyText = msg.text.replace(/<[^>]*>?/gm, '');
+      }
       if (navigator.clipboard) {
-        navigator.clipboard.writeText(text);
+        navigator.clipboard.writeText(copyText);
       } else {
         const input = document.createElement('textarea');
-        input.value = text;
+        input.value = copyText;
         document.body.appendChild(input);
         input.select();
         document.execCommand('copy');

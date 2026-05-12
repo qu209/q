@@ -3974,23 +3974,39 @@ TimeChecklist:
     document.getElementById("batchUploadCancelBtn").addEventListener("click", () => {
       document.getElementById("batchUploadMask").classList.remove("show");
     });
-    document.getElementById("batchUploadConfirmBtn").addEventListener("click", () => {
+        document.getElementById("batchUploadConfirmBtn").addEventListener("click", () => {
       const text = document.getElementById("batchEmojiInput").value.trim();
       if (text) {
         // 按回车分行解析
         const lines = text.split('\n');
         lines.forEach(line => {
-          // 按加号分割 意思+链接
-          const parts = line.trim().split('+');
-          if (parts.length >= 2) {
-            const label = parts[0].trim();
-            const url = parts.slice(1).join('+').trim(); // 链接里如果有加号，重新拼回去
-            if (url) {
-              state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: url, label: label });
+          let str = line.trim();
+          if (!str) return;
+
+          let url = "";
+          let label = "";
+
+          // 智能寻找链接位置 (自动抓取 http 开头 或 data:image 开头的图片内容)
+          const urlMatch = str.match(/(https?:\/\/[^\s]+|data:image\/[^\s]+)/i);
+
+          if (urlMatch) {
+            // 成功提取出真正的图片链接
+            url = urlMatch[0];
+            // 剩下的部分就是意思 (自动剔除多余的加号和空格)
+            label = str.replace(url, "").replace(/^[+\s]+|[+\s]+$/g, "");
+          } else {
+            // 没找到标准的网址格式，兜底按加号硬拆
+            const parts = str.split('+');
+            if (parts.length >= 2) {
+              label = parts[0].trim();
+              url = parts.slice(1).join('+').trim();
+            } else {
+              url = str; 
             }
-          } else if (parts.length === 1 && parts[0].trim()) {
-             // 如果没写加号，默认整行全是链接，没有意思
-             state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: parts[0].trim(), label: "" });
+          }
+
+          if (url) {
+            state.emojiCategories[currentCatIdx].items.push({ id: makeEmojiId(), url: url, label: label });
           }
         });
       }

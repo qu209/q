@@ -5165,8 +5165,30 @@ TimeChecklist:
       }
       const s = contact.bubbleStyle;
       el.textContent = `
-        .message-row.ai .bubble { background: ${s.aiBg} !important; color: ${s.aiText} !important; ${s.cssCommon || ""} ${s.cssAi || ""} }
-        .message-row.me .bubble { background: ${s.meBg} !important; color: ${s.meText} !important; ${s.cssCommon || ""} ${s.cssMe || ""} }
+        /* 1. 先应用你的自定义美化样式（阴影、边框、颜色等） */
+        .message-row.ai.single .bubble, .message-row.ai.first .bubble, .message-row.ai.middle .bubble, .message-row.ai.last .bubble { 
+            background: ${s.aiBg}; 
+            color: ${s.aiText}; 
+            ${s.cssCommon || ""} 
+            ${s.cssAi || ""} 
+        }
+        .message-row.me.single .bubble, .message-row.me.first .bubble, .message-row.me.middle .bubble, .message-row.me.last .bubble { 
+            background: ${s.meBg}; 
+            color: ${s.meText}; 
+            ${s.cssCommon || ""} 
+            ${s.cssMe || ""} 
+        }
+        
+        /* 2. 强制加锁保护贴合的圆角形状，绝不让自定义 CSS 破坏它！ */
+        .message-row.ai.single .bubble { border-radius: 22px !important; }
+        .message-row.ai.first .bubble { border-radius: 22px 22px 22px 4px !important; }
+        .message-row.ai.middle .bubble { border-radius: 4px 22px 22px 4px !important; }
+        .message-row.ai.last .bubble { border-radius: 4px 22px 22px 22px !important; }
+
+        .message-row.me.single .bubble { border-radius: 22px !important; }
+        .message-row.me.first .bubble { border-radius: 22px 22px 4px 22px !important; }
+        .message-row.me.middle .bubble { border-radius: 22px 4px 4px 22px !important; }
+        .message-row.me.last .bubble { border-radius: 22px 4px 22px 22px !important; }
       `;
     }
 

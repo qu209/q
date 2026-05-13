@@ -1792,6 +1792,69 @@
       padding: 0 !important;
     }
 
+    /* ================= 钱包页面专属样式 ================= */
+    .wallet-screen {
+      background: #f4f5f7;
+      display: flex;
+      flex-direction: column;
+      z-index: 20; /* 提高层级，保证绝对盖住底部导航栏 */
+    }
+    .wallet-card {
+      margin: 16px;
+      aspect-ratio: 1.586 / 1;
+      background: linear-gradient(135deg, #232526 0%, #414345 100%);
+      background-size: cover !important;
+      background-position: center !important;
+      border-radius: 16px;
+      padding: 18px 24px; /* 上下内间距调小到了18px，左右保持24px */
+      color: #fff;
+      box-shadow: 0 16px 32px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .wallet-card::after {
+      content: "";
+      position: absolute;
+      top: -100px;
+      right: -50px;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(255,255,255,0.06) 0%, transparent 60%);
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    .wallet-card-chip {
+      width: 42px;
+      height: 30px;
+      background: linear-gradient(135deg, #d4af37 0%, #aa7c11 100%);
+      border-radius: 6px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: inset 0 1px 2px rgba(255,255,255,0.5), 0 2px 4px rgba(0,0,0,0.2);
+      margin-bottom: 12px; /* 芯片底部间距也稍微缩小一点 */
+      cursor: pointer; /* 增加小手光标，提示可点击 */
+      z-index: 10;
+    }
+    .wallet-card-chip::after {
+      content: "";
+      position: absolute;
+      inset: 4px;
+      border: 1px solid rgba(0,0,0,0.3);
+      border-radius: 4px;
+    }
+    .wallet-card-title { font-size: 13px; opacity: 0.7; margin-bottom: 4px; display: flex; align-items: center; gap: 6px; letter-spacing: 1px; }
+    .wallet-balance-wrap { display: flex; align-items: baseline; gap: 6px; cursor: pointer; position: relative; z-index: 2; }
+    .wallet-currency { font-size: 20px; font-weight: 500; opacity: 0.9; }
+    .wallet-balance { font-size: 40px; font-weight: 700; letter-spacing: 0px; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
+    .wallet-edit-icon { font-size: 14px; opacity: 0.5; margin-left: 8px; }
+    .wallet-card-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; position: relative; z-index: 2; }
+    .wallet-card-logo { font-size: 16px; font-weight: 800; font-style: italic; opacity: 0.8; letter-spacing: 1px; }
+    .wallet-list-wrap { flex: 1; background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.03); overflow-y: auto; overscroll-behavior: contain; }
+    .wallet-list-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 16px; }
+
   </style>
 </head>
 <body>
@@ -1845,11 +1908,46 @@
       </div>
 
       <ul class="menu">
-        <li>钱包</li>
+        <li id="openWalletBtn" style="cursor: pointer;">钱包</li>
         <li>个人资料</li>
         <li id="openEmojiManagerBtn" style="cursor: pointer;">表情包</li>
         <li id="openSettingsBtn" style="cursor: pointer;">设置</li>
       </ul>
+    </section>
+
+    <section class="screen wallet-screen" id="screen-wallet" style="display: none;">
+      <div style="position: sticky; top: 0; z-index: 8; height: calc(54px + var(--safe-top)); padding-top: var(--safe-top); background: #f4f5f7;">
+        <div style="height: 54px; display: grid; grid-template-columns: 50px 1fr 50px; align-items: center;">
+          <button class="header-btn" id="walletBackBtn" aria-label="返回">
+            <span class="back-char">‹</span>
+          </button>
+          <div style="text-align: center; font-size: 17px; font-weight: 600; color: #111;">钱包</div>
+          <div></div>
+        </div>
+      </div>
+      
+      <div class="wallet-card" id="walletCardBg">
+        <div>
+          <div class="wallet-card-chip" id="walletChipBtn" title="点击更换卡面背景"></div>
+          <input type="file" id="walletBgInput" accept="image/*" style="display: none;" />
+          <div class="wallet-card-title">我的余额</div>
+          <div class="wallet-balance-wrap" id="walletBalanceWrap" title="点击修改金额">
+            <span class="wallet-currency">¥</span>
+            <span class="wallet-balance" id="walletBalanceDisplay">100.00</span>
+            <span class="wallet-edit-icon">✎</span>
+          </div>
+        </div>
+        <div class="wallet-card-bottom">
+          <div style="font-size: 14px; opacity: 0.6; font-family: monospace; letter-spacing: 2px;">**** **** **** 8888</div>
+          <div class="wallet-card-logo">BLACK CARD</div>
+        </div>
+      </div>
+
+      <div class="wallet-list-wrap">
+        <div class="wallet-list-title">账单明细</div>
+        <div id="walletListContainer">
+          </div>
+      </div>
     </section>
 
     <section class="screen chat-screen" id="screen-settings">
@@ -2571,6 +2669,11 @@
       currentTab: "friends",
       activeContactId: null,
       uploadedFrames: [], // 全局保存用户上传过的头像框历史
+      wallet: {
+        balance: 100.00,
+        transactions: []
+      },
+     
       contacts: [
         {
           id: makeId(),
@@ -2619,7 +2722,8 @@
       moments: document.getElementById("screen-moments"),
       me: document.getElementById("screen-me"),
       chat: document.getElementById("screen-chat"),
-      settings: document.getElementById("screen-settings")
+      settings: document.getElementById("screen-settings"),
+      wallet: document.getElementById("screen-wallet")
     };
 
     const tabbar = document.getElementById("tabbar");
@@ -3029,10 +3133,17 @@ if (msg.isTyping) {
                       `;
                       document.body.appendChild(modalHtml);
                       
-                      modalHtml.querySelector('#btn-accept').onclick = () => {
+                                            modalHtml.querySelector('#btn-accept').onclick = () => {
                         contact.messages[index].text = `[TRANSFER|${amt}|${note}|accepted|ai]`;
                         contact.messages.push({ from: "me", text: `[TRANSFER_REPLY|${amt}|accepted|me]`, time: getCurrentTime() }); // 发送接收卡片
                         document.body.removeChild(modalHtml);
+                        
+                        // 联动：钱包收到钱
+                        state.wallet.balance += parseFloat(amt);
+                        state.wallet.transactions.unshift({
+                            id: Date.now(), title: `收到转账 - ${note}`, time: getCurrentTime(), amount: parseFloat(amt), type: 'income'
+                        });
+
                         renderChat();
                       };
                       modalHtml.querySelector('#btn-return').onclick = () => {
@@ -3916,6 +4027,12 @@ TimeChecklist:
         });
         contact.lastTime = getCurrentTime();
         
+        // 联动：钱包扣钱
+        state.wallet.balance -= amount;
+        state.wallet.transactions.unshift({
+            id: Date.now(), title: `转账给 ${getDisplayName(contact)} - ${note}`, time: getCurrentTime(), amount: amount, type: 'expense'
+        });
+
         // 发送完转账后，仅刷新界面关闭弹窗，不再自动回复，由用户手动点回复按钮
         renderChat();
         closeTransfer();
@@ -5381,6 +5498,136 @@ TimeChecklist:
         }
       }
     };
+
+    // ================= 钱包界面交互逻辑 =================
+    const openWalletBtn = document.getElementById("openWalletBtn");
+    const walletBackBtn = document.getElementById("walletBackBtn");
+    const walletBalanceDisplay = document.getElementById("walletBalanceDisplay");
+    const walletListContainer = document.getElementById("walletListContainer");
+    const walletBalanceWrap = document.getElementById("walletBalanceWrap");
+
+    // 新增：钱包专用时间格式化工具
+    function formatWalletTime(timestamp) {
+      const timeVal = parseInt(timestamp);
+      if (isNaN(timeVal)) return timestamp; // 防报错兼容
+      
+      const now = Date.now();
+      const diffDays = (now - timeVal) / (1000 * 60 * 60 * 24);
+      const date = new Date(timeVal);
+      
+      const y = date.getFullYear();
+      const m = date.getMonth() + 1;
+      const d = date.getDate();
+      const h = String(date.getHours()).padStart(2, '0');
+      const min = String(date.getMinutes()).padStart(2, '0');
+
+      if (diffDays > 100) {
+        return `${y}年${m}月${d}日`;
+      } else {
+        return `${m}月${d}日 ${h}:${min}`;
+      }
+    }
+
+    function renderWallet() {
+      walletBalanceDisplay.textContent = state.wallet.balance.toFixed(2);
+      walletListContainer.innerHTML = "";
+      
+      if (state.wallet.transactions.length === 0) {
+        walletListContainer.innerHTML = '<div style="text-align:center; padding: 40px 0; color:#bbb; font-size:14px;">暂无明细</div>';
+        return;
+      }
+
+      state.wallet.transactions.forEach(t => {
+        const item = document.createElement("div");
+        item.style.cssText = "display: flex; align-items: center; padding: 16px 0; border-bottom: 1px solid #f0f0f0;";
+        
+        const isIncome = t.type === 'income';
+        const color = isIncome ? '#f09a37' : '#111';
+        const bgColor = isIncome ? 'rgba(240, 154, 55, 0.1)' : '#f2f2f7';
+        const iconSvg = isIncome 
+          ? `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>` 
+          : `<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
+        const sign = isIncome ? '+' : '-';
+        
+        // 使用新函数智能格式化时间
+        const displayTime = formatWalletTime(t.id);
+        
+        item.innerHTML = `
+          <div style="width:44px; height:44px; border-radius:50%; background:${bgColor}; color:${color}; display:flex; align-items:center; justify-content:center; margin-right:14px; flex-shrink:0;">
+            ${iconSvg}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-size:16px; font-weight:600; color:#111; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${t.title}</div>
+            <div style="font-size:13px; color:#999;">${displayTime}</div>
+          </div>
+          <div style="font-size:17px; font-weight:700; color:${color};">
+            ${sign} ${Math.abs(t.amount).toFixed(2)}
+          </div>
+        `;
+        walletListContainer.appendChild(item);
+      });
+    }
+
+    if(openWalletBtn) {
+      openWalletBtn.addEventListener("click", () => {
+        screens.me.classList.remove("active");
+        screens.wallet.style.display = "flex";
+        screens.wallet.classList.add("active");
+        tabbar.classList.add("hidden");
+        renderWallet();
+      });
+    }
+
+    if(walletBackBtn) {
+      walletBackBtn.addEventListener("click", () => {
+        screens.wallet.classList.remove("active");
+        screens.wallet.style.display = "none"; // 立即隐藏，拒绝拖泥带水
+        screens.me.classList.add("active");
+        tabbar.classList.remove("hidden");
+      });
+    }
+
+    if(walletBalanceWrap) {
+      walletBalanceWrap.addEventListener("click", () => {
+        const newBalanceStr = prompt("修改您的钱包余额：", state.wallet.balance.toFixed(2));
+        if (newBalanceStr !== null) {
+          const newBalance = parseFloat(newBalanceStr);
+          if (!isNaN(newBalance)) {
+            state.wallet.balance = newBalance;
+            renderWallet(); // 重新渲染刷新数字
+          } else {
+            alert("必须输入有效的数字哦！");
+          }
+        }
+      });
+    }
+
+    // ================= 更换银行卡背景逻辑 =================
+    const walletChipBtn = document.getElementById("walletChipBtn");
+    const walletBgInput = document.getElementById("walletBgInput");
+    const walletCardBg = document.getElementById("walletCardBg");
+
+    if(walletChipBtn && walletBgInput && walletCardBg) {
+      walletChipBtn.addEventListener("click", (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        walletBgInput.click();
+      });
+
+      walletBgInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if (file) {
+          const fileUrl = URL.createObjectURL(file);
+          walletCardBg.style.backgroundImage = `url(${fileUrl})`;
+          state.wallet.bg = fileUrl; // 存入状态中，防止丢失
+        }
+        walletBgInput.value = ""; // 清空 value，允许重复选同一张图
+      });
+    }
+
+    // 恢复可能已保存的卡面背景
+    if(state.wallet && state.wallet.bg && walletCardBg) {
+        walletCardBg.style.backgroundImage = `url(${state.wallet.bg})`;
+    }
 
     // 初始化预设
     renderBubblePresets();

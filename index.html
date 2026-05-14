@@ -291,52 +291,47 @@
       background: #fff;
     }
 
-    .me-avatar {
-      width: 76px;
-      height: 76px;
-      border-radius: 50%;
-      background: #333;
+    .me-header-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
       margin-bottom: 16px;
     }
 
-    .me-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      margin-bottom: 6px;
+    .me-avatar {
+      width: 86px;
+      height: 86px;
+      border-radius: 50%;
+      background: #333;
+      flex-shrink: 0;
     }
 
     .me-name {
-      font-size: 22px;
-      font-weight: 700;
+      font-size: 24px;
+      font-weight: 800;
       color: #111;
-      line-height: 1.1;
     }
 
-    .status-pill {
-      height: 28px;
-      padding: 0 10px;
-      border-radius: 999px;
-      border: 1px solid #ededed;
-      display: inline-flex;
+    .me-status-row {
+      display: flex;
       align-items: center;
       gap: 6px;
-      color: #666;
-      font-size: 12px;
-      background: #fff;
-    }
-
-    .status-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #37d05f;
+      margin-bottom: 30px;
     }
 
     .handle {
-      font-size: 15px;
-      color: #adb1b8;
+      font-size: 14px;
+      color: #a1aab3;
+      font-weight: 500;
+    }
+
+    .me-quote {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 24px;
+      letter-spacing: 0.5px;
     }
 
     .menu {
@@ -344,14 +339,16 @@
       margin: 0;
       padding: 0;
       background: #fff;
+      border-top: 1px solid #f5f5f5;
     }
 
     .menu li {
-      height: 60px;
+      height: 65px;
       display: flex;
       align-items: center;
       padding: 0 24px;
       font-size: 16px;
+      font-weight: 500;
       color: #111;
       border-bottom: 1px solid #f5f5f5;
     }
@@ -1896,15 +1893,15 @@
 
     <section class="screen top-screen" id="screen-me">
       <div class="me-profile">
-        <div class="me-avatar"></div>
-        <div class="me-row">
+        <div class="me-header-row">
+          <div class="me-avatar"></div>
           <div class="me-name">{{user}}</div>
-          <div class="status-pill">
-            <span class="status-dot"></span>
-            <span>状态</span>
-          </div>
         </div>
-        <div class="handle">@user_ai</div>
+        <div class="me-status-row">
+          <img src="https://i.postimg.cc/bYGNFk7d/IMG-5009.png" style="width: 14px; height: 14px; margin-top: -2px; object-fit: contain;" alt="send icon" />
+          <div class="handle">Sent from 13:14PM</div>
+        </div>
+        <div class="me-quote">亲爱的，我甚至不知道如何不想你</div>
       </div>
 
       <ul class="menu">

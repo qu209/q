@@ -2555,49 +2555,6 @@
       <button class="tab-item" data-tab="me">我</button>
     </nav>
 
-    <div class="drawer-mask" id="drawerMask">
-      <div class="side-drawer" id="sideDrawer" aria-label="侧边菜单">
-        <div class="drawer-header">
-          <div class="drawer-avatar"></div>
-          <div class="drawer-name">user</div>
-          <div class="drawer-desc">文本文本文本文本</div>
-          <div class="drawer-stats">
-            <span>0关注</span>
-            <span>0粉丝</span>
-            <span>100小时</span>
-          </div>
-        </div>
-        <div class="drawer-list">
-          <div class="drawer-item">
-            <div class="drawer-item-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-            </div>
-            <div class="drawer-item-text">
-              <div class="dit-title">我喜欢的音乐</div>
-              <div class="dit-sub">2首</div>
-            </div>
-          </div>
-          <div class="drawer-item">
-            <div class="drawer-item-icon">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </div>
-            <div class="drawer-item-text">
-              <div class="dit-title">新建歌单</div>
-            </div>
-          </div>
-          <div class="drawer-item">
-            <div class="drawer-item-icon">
-               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            </div>
-            <div class="drawer-item-text">
-              <div class="dit-title">导入外部歌单</div>
-              <div class="dit-sub">轻松导入其他 APP 里的歌单</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
     <div class="modal-mask" id="modalMask">
       <div class="modal" role="dialog" aria-modal="true" aria-label="添加角色">
         <div class="field">
@@ -2750,9 +2707,6 @@
     const messagesEl = document.getElementById("messages");
     const chatInput = document.getElementById("chatInput");
     const sendBtn = document.getElementById("sendBtn");
-
-    const menuBtn = document.getElementById("menuBtn");
-    const drawerMask = document.getElementById("drawerMask");
 
     function makeId() {
       return "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
@@ -4585,14 +4539,6 @@ TimeChecklist:
     // 在 renderChat 的 textSpan 渲染处已自动处理 [EMOJI_STICKER|...|...] 格式
    document.getElementById("voiceBtn").addEventListener("click", () => {
       triggerAIReply();
-    });
-    menuBtn.addEventListener("click", () => {
-      drawerMask.classList.add("show");
-    });
-    drawerMask.addEventListener("click", (e) => {
-      if (e.target === drawerMask) {
-        drawerMask.classList.remove("show");
-      }
     });
 
     // ================== 新增：心声弹窗交互逻辑 ==================

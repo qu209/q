@@ -5242,20 +5242,21 @@ TimeChecklist:
 
     // 把contact的气泡样式注入到聊天界面
     function applyBubbleStyleToChat(contact) {
-      const styleId = "bubble-custom-style-" + (contact ? contact.id : "none");
+      // 核心修复：固定唯一的ID。这样每次切换角色，只会覆盖这一个标签，绝不会在网页里无限累加导致串号污染
+      const styleId = "bubble-custom-style-active";
       let el = document.getElementById(styleId);
       if (!el) {
         el = document.createElement("style");
         el.id = styleId;
         document.head.appendChild(el);
       }
+      // 如果当前角色没有专属的气泡配置，直接清空全局样式，保证不残留上一个角色的痕迹
       if (!contact || !contact.bubbleStyle) {
         el.textContent = "";
         return;
       }
       const s = contact.bubbleStyle;
-      const customCss = (contact && contact.customBubbleCss) ?
-      contact.customBubbleCss : "";
+      const customCss = (contact && contact.customBubbleCss) ? contact.customBubbleCss : "";
       el.textContent = `
         /* 用户自定义CSS（最先写，优先级最低，方便被后面覆盖） */
         ${customCss}
@@ -5271,23 +5272,15 @@ TimeChecklist:
         }
         
         /* 圆角锁定保护 */
-        .message-row.ai.single .bubble { border-radius: 22px !important;
-        }
-        .message-row.ai.first .bubble { border-radius: 22px 22px 22px 4px !important;
-        }
-        .message-row.ai.middle .bubble { border-radius: 4px 22px 22px 4px !important;
-        }
-        .message-row.ai.last .bubble { border-radius: 4px 22px 22px 22px !important;
-        }
+        .message-row.ai.single .bubble { border-radius: 22px !important; }
+        .message-row.ai.first .bubble { border-radius: 22px 22px 22px 4px !important; }
+        .message-row.ai.middle .bubble { border-radius: 4px 22px 22px 4px !important; }
+        .message-row.ai.last .bubble { border-radius: 4px 22px 22px 22px !important; }
 
-        .message-row.me.single .bubble { border-radius: 22px !important;
-        }
-        .message-row.me.first .bubble { border-radius: 22px 22px 4px 22px !important;
-        }
-        .message-row.me.middle .bubble { border-radius: 22px 4px 4px 22px !important;
-        }
-        .message-row.me.last .bubble { border-radius: 22px 4px 22px 22px !important;
-        }
+        .message-row.me.single .bubble { border-radius: 22px !important; }
+        .message-row.me.first .bubble { border-radius: 22px 22px 4px 22px !important; }
+        .message-row.me.middle .bubble { border-radius: 22px 4px 4px 22px !important; }
+        .message-row.me.last .bubble { border-radius: 22px 4px 22px 22px !important; }
       `;
     }
 

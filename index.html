@@ -1849,10 +1849,46 @@
     .wallet-edit-icon { font-size: 14px; opacity: 0.5; margin-left: 8px; }
     .wallet-card-bottom { display: flex; justify-content: space-between; align-items: flex-end; width: 100%; position: relative; z-index: 2; }
     .wallet-card-logo { font-size: 16px; font-weight: 800; font-style: italic; opacity: 0.8; letter-spacing: 1px; }
-    .wallet-list-wrap { flex: 1; background: #fff; border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.03); overflow-y: auto; overscroll-behavior: contain; }
-    .wallet-list-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 16px; }
+    .wallet-list-wrap { flex: 1; background: #fff;
+border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0,0,0,0.03); overflow-y: auto; overscroll-behavior: contain;
+    }
+    .wallet-list-title { font-size: 16px; font-weight: 700; color: #111; margin-bottom: 16px;
+    }
+
+    /* ====== 记忆总结专属样式 ====== */
+    .memory-block {
+      background: #f7f7f8;
+      border: 1px solid #e5e5ea;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 10px;
+      position: relative;
+    }
+    .memory-text {
+      font-size: 14px;
+      color: #333;
+      line-height: 1.5;
+      padding-right: 40px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .memory-actions {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .memory-action-btn {
+      appearance: none; border: 0; background: transparent; padding: 0;
+      font-size: 12px; cursor: pointer; font-weight: 600;
+    }
+    .memory-action-btn.edit { color: #007aff; }
+    .memory-action-btn.delete { color: #df3b3b; }
 
   </style>
+  
 </head>
 <body>
   <div class="app">
@@ -2254,12 +2290,50 @@
             <textarea class="textarea" id="detailsPersonaInput" style="background: #f7f7f8; border: none; border-radius: 12px; min-height: 80px;"></textarea>
           </div>
 
-          <div class="field" style="margin-bottom: 0;">
-            <label style="font-size: 15px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">我的人设</label>
-            <textarea class="textarea" id="detailsMyPersonaInput" placeholder="输入你在TA面前的人设" style="background: #f7f7f8; border: none; border-radius: 12px; min-height: 80px;"></textarea>
+<div class="field" style="margin-bottom: 0;">
+            <label style="font-size: 15px;
+font-weight: 600; color: #222; margin-bottom: 8px; display: block;">我的人设</label>
+            <textarea class="textarea" id="detailsMyPersonaInput" placeholder="输入你在TA面前的人设" style="background: #f7f7f8;
+border: none; border-radius: 12px; min-height: 80px;"></textarea>
           </div>
         </div>
 
+        <div class="details-section-card">
+          <div class="details-section-title">AI 记忆总结</div>
+          
+          <div style="font-size:13px; color:#666; margin-bottom:12px;">当前聊天条数：<span id="memoryMsgCount" style="font-weight:700; color:#111;">0</span> 条</div>
+          
+          <div class="toggle-row" style="margin-bottom: 12px;">
+            <label>开启自动总结记忆</label>
+            <label class="switch">
+              <input type="checkbox" id="autoSummarySwitch">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px; font-size:14px; color:#222;">
+            <span>每进行</span>
+            <input type="number" id="autoSummaryThreshold" class="input" style="width:70px; height:32px; text-align:center; padding:0;" value="20">
+            <span>条对话自动总结</span>
+          </div>
+
+          <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">AI 当前记住的事：</div>
+          <div id="memoryBlocksContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px;">
+            </div>
+
+          <div style="border-top: 1px solid #f2f2f7; padding-top: 16px;">
+            <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px;">手动提取记忆</div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:14px; color:#222;">
+              <span>总结第</span>
+              <input type="number" id="manualSummaryStart" class="input" style="width:60px; height:32px; text-align:center; padding:0;" value="1">
+              <span>到</span>
+              <input type="number" id="manualSummaryEnd" class="input" style="width:60px; height:32px; text-align:center; padding:0;" value="10">
+              <span>条</span>
+            </div>
+            <button class="btn btn-dark" id="manualSummaryBtn" style="width:100%; height:40px; border-radius:8px;">开始手动总结</button>
+          </div>
+        </div>
+        
         <!-- 更换聊天背景卡片 -->
         <div class="details-section-card">
           <div class="details-section-title">聊天界面背景</div>
@@ -2845,10 +2919,16 @@
         frameScale: 1,
         frameX: 0,
         frameY: 0,
+   
         showFrameInChat: true,
         showFrameInHeader: true,
         statusText: "在线中",
         statusColor: "#37d05f",
+        
+        memoryList: [],
+        autoSummary: false,
+        summaryThreshold: 20,
+        lastSummarizedLength: 0,
    
         lastTime: getCurrentTime(), // 新联系人默认当前时间
         messages: []
@@ -3391,9 +3471,9 @@ state.replyingToText = "";
 
       contact.messages.push(newMsg);
       contact.lastTime = getCurrentTime();
-
       chatInput.value = "";
       renderChat();
+      checkAndTriggerAutoSummary(contact); // 检查是否需要自动总结
     }
 
     async function triggerAIReply() {
@@ -3536,6 +3616,12 @@ TimeChecklist:
       if (contact.myPersona) {
         combinedPersona += `【与你对话的用户人设】：${contact.myPersona}\n`;
       }
+      
+      // ===== 注入记忆系统 =====
+      if (contact.memoryList && contact.memoryList.length > 0) {
+        combinedPersona += `\n【你们过去的记忆总结（非常重要，请牢记以下你们发生过的事/设定的关系）】：\n${contact.memoryList.join('\n')}\n`;
+      }
+      // ==========================
       
       combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
       combinedPersona += "【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：\n[INNER_VOICE|你的颜文字|你的内心想法]。\n例如：[INNER_VOICE|(*/ω＼*)|他居然这么懂我，有点心动了！]。\n⚠️警告：内心想法（心声正文）必须精简，字数请严格控制在 80 字以内！这部分仅作心声记录，绝对不能让用户在聊天气泡中直接看到。\n";
@@ -3731,7 +3817,7 @@ TimeChecklist:
             
             // 如果不是最后一条，就停顿一下再发下一条 (真实打字感)
             if (i < lines.length - 1) {
-              const typingTime = 400 + lines[i].length * 50; 
+              const typingTime = 400 + lines[i].length * 50;
               await delay(Math.min(typingTime, 1500)); 
             }
           }
@@ -3740,6 +3826,8 @@ TimeChecklist:
           if (state.activeContactId === contact.id) renderChat();
           else renderContacts();
         }
+        
+        checkAndTriggerAutoSummary(contact); // AI回复完后检查是否需要总结
         
       } catch (error) {
         // 请求失败时的提示：安全替换原思考对象
@@ -4904,6 +4992,15 @@ TimeChecklist:
       detailsPersonaInput.value = contact.persona || "";
       detailsMyPersonaInput.value = contact.myPersona || "";
       
+      // 初始化和渲染记忆面板
+      contact.memoryList = contact.memoryList || [];
+      document.getElementById("memoryMsgCount").textContent = contact.messages.length;
+      document.getElementById("autoSummarySwitch").checked = contact.autoSummary || false;
+      document.getElementById("autoSummaryThreshold").value = contact.summaryThreshold || 20;
+      document.getElementById("manualSummaryStart").value = 1;
+      document.getElementById("manualSummaryEnd").value = contact.messages.length > 0 ? contact.messages.length : 1;
+      renderMemoryBlocks(contact);
+      
       if (contact.avatar) {
         detailsAvatarPreview.style.backgroundImage = `url(${contact.avatar})`;
       } else {
@@ -5590,6 +5687,151 @@ TimeChecklist:
     if(state.wallet && state.wallet.bg && walletCardBg) {
         walletCardBg.style.backgroundImage = `url(${state.wallet.bg})`;
     }
+    // ================= AI 记忆总结核心逻辑 =================
+    function renderMemoryBlocks(contact) {
+      const container = document.getElementById("memoryBlocksContainer");
+      container.innerHTML = "";
+      if (!contact.memoryList || contact.memoryList.length === 0) {
+        container.innerHTML = '<div style="font-size:13px; color:#aaa; text-align:center; padding:16px 0;">暂无记忆，可以手动提取或等AI自动总结</div>';
+        return;
+      }
+      contact.memoryList.forEach((mem, index) => {
+        const block = document.createElement("div");
+        block.className = "memory-block";
+        block.innerHTML = `
+          <div class="memory-text">${mem}</div>
+          <div class="memory-actions">
+            <button class="memory-action-btn edit" data-idx="${index}">编辑</button>
+            <button class="memory-action-btn delete" data-idx="${index}">删除</button>
+          </div>
+        `;
+        container.appendChild(block);
+      });
+
+      // 绑定编辑/删除事件
+      container.querySelectorAll(".memory-action-btn.edit").forEach(btn => {
+        btn.onclick = () => {
+          const idx = btn.dataset.idx;
+          const newMem = prompt("编辑记忆内容：", contact.memoryList[idx]);
+          if (newMem !== null && newMem.trim() !== "") {
+            contact.memoryList[idx] = newMem.trim();
+            renderMemoryBlocks(contact);
+          }
+        };
+      });
+      container.querySelectorAll(".memory-action-btn.delete").forEach(btn => {
+        btn.onclick = () => {
+          const idx = btn.dataset.idx;
+          if (confirm("确定要彻底删除这条记忆吗？AI将彻底忘记这件事。")) {
+            contact.memoryList.splice(idx, 1);
+            renderMemoryBlocks(contact);
+          }
+        };
+      });
+    }
+
+    // 监听记忆设置的变更并实时保存
+    document.getElementById("autoSummarySwitch").addEventListener("change", (e) => {
+      const contact = getContact(state.activeContactId);
+      if (contact) contact.autoSummary = e.target.checked;
+    });
+    document.getElementById("autoSummaryThreshold").addEventListener("change", (e) => {
+      const contact = getContact(state.activeContactId);
+      if (contact) contact.summaryThreshold = parseInt(e.target.value) || 20;
+    });
+
+    // 核心提取函数
+    async function executeSummarize(messagesArray, contact, isManual = false) {
+      if (!messagesArray || messagesArray.length === 0) return;
+      const api = state.apiSettings;
+      if (!api.url || !api.key) {
+        if (isManual) alert("请先在设置中配置 API 地址和 Key！");
+        return;
+      }
+
+      // 把聊天记录拼在一起给AI看
+      let chatText = messagesArray.map(msg => {
+        if (msg.isTyping) return ""; // 忽略打字状态
+        let pureText = msg.text.replace(/<[^>]*>?/gm, ''); // 过滤掉卡片HTML
+        return `${msg.from === 'me' ? '我' : 'TA'}: ${pureText}`;
+      }).filter(t => t !== "").join('\n');
+
+      try {
+        const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${api.key}`
+          },
+          body: JSON.stringify({
+            model: api.model || "gpt-3.5-turbo",
+            messages: [
+              { role: 'system', content: '你是一个用于提炼聊天记忆的助手。请将以下对话提取出最重要的记忆点、人物关系、发生的事件，用简明扼要的语言总结（例如：1. 我今天去吃了火锅；2. TA今天心情不好）。如果给出的对话很短没有实际意义或没有营养，请只回复"无"一个字。' },
+              { role: 'user', content: chatText }
+            ],
+            temperature: 0.3
+          })
+        });
+
+        if (!response.ok) throw new Error("API报错");
+        const data = await response.json();
+        let summary = data.choices[0].message.content.trim();
+
+        if (summary !== '无' && summary !== '') {
+          contact.memoryList = contact.memoryList || [];
+          contact.memoryList.push(`[记忆点]: ${summary}`);
+          if (screenChatDetails.classList.contains("active")) {
+            renderMemoryBlocks(contact); // 顺便刷新UI
+          }
+        }
+        
+        contact.lastSummarizedLength = contact.messages.length;
+
+      } catch (e) {
+        console.error("总结记忆失败:", e);
+        if (isManual) alert("提取失败，请检查网络和 API 配置！");
+      }
+    }
+
+    // 触发自动总结
+    function checkAndTriggerAutoSummary(contact) {
+      if (!contact || !contact.autoSummary) return;
+      const threshold = contact.summaryThreshold || 20;
+      const unsummarizedCount = contact.messages.length - (contact.lastSummarizedLength || 0);
+      
+      if (unsummarizedCount >= threshold) {
+        const msgsToSummarize = contact.messages.slice(contact.lastSummarizedLength || 0);
+        executeSummarize(msgsToSummarize, contact, false); // 后台静默执行
+      }
+    }
+
+    // 手动总结按钮
+    document.getElementById("manualSummaryBtn").addEventListener("click", async () => {
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+      const startIdx = parseInt(document.getElementById("manualSummaryStart").value);
+      const endIdx = parseInt(document.getElementById("manualSummaryEnd").value);
+      
+      if (isNaN(startIdx) || isNaN(endIdx) || startIdx < 1 || endIdx > contact.messages.length || startIdx > endIdx) {
+        alert("输入的条数范围不正确！");
+        return;
+      }
+
+      const btn = document.getElementById("manualSummaryBtn");
+      btn.textContent = "大脑提取中...";
+      btn.style.opacity = "0.6";
+      btn.style.pointerEvents = "none";
+
+      const msgsToSummarize = contact.messages.slice(startIdx - 1, endIdx);
+      await executeSummarize(msgsToSummarize, contact, true);
+
+      btn.textContent = "开始手动总结";
+      btn.style.opacity = "1";
+      btn.style.pointerEvents = "auto";
+      alert("记忆提取跑完了！如果有新发现，上面已经多了一张记忆卡片！");
+    });
+    // =======================================================
 
     // 初始化预设
     renderBubblePresets();

@@ -1943,6 +1943,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       <ul class="menu">
         <li id="openWalletBtn" style="cursor: pointer;">钱包</li>
         <li>个人资料</li>
+        <li id="openLorebookManagerBtn" style="cursor: pointer;">世界书</li>
         <li id="openEmojiManagerBtn" style="cursor: pointer;">表情包</li>
         <li id="openSettingsBtn" style="cursor: pointer;">设置</li>
       </ul>
@@ -2321,7 +2322,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
           <div id="memoryBlocksContainer" style="max-height: 250px; overflow-y: auto; margin-bottom: 16px;">
             </div>
 
-          <div style="border-top: 1px solid #f2f2f7; padding-top: 16px;">
+<div style="border-top: 1px solid #f2f2f7; padding-top: 16px;">
             <div style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 12px;">手动提取记忆</div>
             <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px; font-size:14px; color:#222;">
               <span>总结第</span>
@@ -2333,7 +2334,14 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             <button class="btn btn-dark" id="manualSummaryBtn" style="width:100%; height:40px; border-radius:8px;">开始手动总结</button>
           </div>
         </div>
-        
+
+        <div class="details-section-card">
+          <div class="details-section-title">挂载世界书</div>
+          <div style="font-size:13px; color:#666; margin-bottom:12px;">勾选后，当聊天触发设定关键词时，AI将自动回忆起对应的世界书内容。</div>
+          <div id="chatDetailsLorebookList" style="display:flex; flex-direction:column; gap:4px;">
+            </div>
+        </div>
+                
         <!-- 更换聊天背景卡片 -->
         <div class="details-section-card">
           <div class="details-section-title">聊天界面背景</div>
@@ -2620,6 +2628,50 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       </div>
     </div>
 
+    <div class="emoji-manager-screen" id="lorebookManagerScreen" style="z-index: 200;">
+      <div class="emoji-manager-header">
+        <div class="emoji-manager-header-bar">
+          <button class="header-btn" id="lorebookManagerBackBtn" style="color:#111;">
+            <span class="back-char">‹</span>
+          </button>
+          <div class="emoji-manager-title">世界书</div>
+          <button id="addLorebookBtn" style="appearance:none;border:0;background:transparent;font-size:24px;font-weight:300;color:#111;cursor:pointer;padding:0 16px 0 0;">+</button>
+        </div>
+      </div>
+      <div id="lorebookCategoryTabs" style="display: flex; gap: 12px; padding: 12px 16px; background: #fff; border-bottom: 1px solid #f0f0f0; overflow-x: auto; flex-shrink: 0; scrollbar-width: none;">
+      </div>
+      <div class="emoji-manager-body" style="padding: 16px;">
+        <div id="lorebookListContainer" style="display: flex; flex-direction: column; gap: 12px;">
+          </div>
+      </div>
+    </div>
+
+    <div class="custom-dialog-mask" id="lorebookDialogMask" style="z-index: 300;">
+      <div class="custom-dialog" style="width: min(340px, calc(100vw - 48px)); padding: 24px 22px 20px;">
+        <div class="custom-dialog-title" id="lorebookDialogTitle">新建世界书</div>
+        <input type="hidden" id="lorebookEditId" value="" />
+        
+        <div class="field" style="display: flex; gap: 8px; margin-bottom: 12px;">
+            <select class="custom-dialog-input" id="lorebookCatSelect" style="flex: 2; padding: 0 12px; background: #f7f7f8; border: 1px solid #d0d5dd; outline: none; border-radius: 12px; font-size: 14px; appearance: auto;"></select>
+            <button class="btn btn-dark" id="lorebookNewCatBtn" style="flex: 1; height: 44px; border-radius: 12px; font-size: 14px; padding: 0;">新分类</button>
+        </div>
+
+        <div class="field" style="margin-bottom: 12px;">
+            <input class="custom-dialog-input" id="lorebookTitleInput" placeholder="世界书标题 (如：魔法设定)" />
+        </div>
+        <div class="field" style="margin-bottom: 12px;">
+            <input class="custom-dialog-input" id="lorebookKeyInput" placeholder="触发词 (不填则每次回复均全局生效)" />
+        </div>
+        <div class="field" style="margin-bottom: 16px;">
+            <textarea class="textarea" id="lorebookContentInput" placeholder="请输入世界书设定内容..." style="background: #f7f7f8; border: 1px solid #d0d5dd; width: 100%; border-radius: 12px; min-height: 120px; font-size: 14px; padding: 12px; outline: none;"></textarea>
+        </div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="lorebookCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="lorebookSaveBtn">保存</button>
+        </div>
+      </div>
+    </div>
+
     <nav class="tabbar" id="tabbar">
       <button class="tab-item active" data-tab="friends">好友</button>
       <button class="tab-item" data-tab="moments">朋友圈</button>
@@ -2701,6 +2753,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         balance: 100.00,
         transactions: []
       },
+      lorebooks: [], // 全局存储世界书
      
       contacts: [
         {
@@ -2929,8 +2982,10 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         autoSummary: false,
         summaryThreshold: 20,
         lastSummarizedLength: 0,
+        linkedLorebooks: [], // 绑定的世界书ID
    
         lastTime: getCurrentTime(), // 新联系人默认当前时间
+      
         messages: []
       };
       state.contacts.unshift(newContact);
@@ -3623,6 +3678,43 @@ TimeChecklist:
       }
       // ==========================
       
+      // ===== 注入世界书设定 =====
+      if (contact.linkedLorebooks && contact.linkedLorebooks.length > 0 && state.lorebooks) {
+        const activeLores = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id));
+        let injectedLoreText = [];
+        
+        // 提取用户最新发出的消息文本，用于判断关键词触发
+        let lastUserMsgText = "";
+        for(let i = contact.messages.length - 1; i >= 0; i--){
+            if(contact.messages[i].from === "me") {
+                lastUserMsgText = contact.messages[i].text;
+                break;
+            }
+        }
+        
+        activeLores.forEach(lore => {
+          let shouldInject = false;
+          if (!lore.keywords) {
+            // 如果没填关键词，默认为全局生效设定，总是注入
+            shouldInject = true;
+          } else {
+            // 如果填了关键词，按逗号切割并判断用户的消息里有没有提及
+            const keys = lore.keywords.split(/[,，]/).map(k => k.trim()).filter(k => k);
+            if (keys.some(k => lastUserMsgText.includes(k))) {
+                shouldInject = true;
+            }
+          }
+          if (shouldInject) {
+              injectedLoreText.push(`[设定《${lore.title}》: ${lore.content}]`);
+          }
+        });
+
+        if (injectedLoreText.length > 0) {
+          combinedPersona += `\n【当前触发的世界书背景设定（非常重要，请务必结合这些背景和用户聊天）】：\n${injectedLoreText.join('；\n')}\n`;
+        }
+      }
+      // ==========================
+
       combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
       combinedPersona += "【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：\n[INNER_VOICE|你的颜文字|你的内心想法]。\n例如：[INNER_VOICE|(*/ω＼*)|他居然这么懂我，有点心动了！]。\n⚠️警告：内心想法（心声正文）必须精简，字数请严格控制在 80 字以内！这部分仅作心声记录，绝对不能让用户在聊天气泡中直接看到。\n";
 
@@ -4994,6 +5086,7 @@ TimeChecklist:
       
       // 初始化和渲染记忆面板
       contact.memoryList = contact.memoryList || [];
+    
       document.getElementById("memoryMsgCount").textContent = contact.messages.length;
       document.getElementById("autoSummarySwitch").checked = contact.autoSummary || false;
       document.getElementById("autoSummaryThreshold").value = contact.summaryThreshold || 20;
@@ -5001,6 +5094,9 @@ TimeChecklist:
       document.getElementById("manualSummaryEnd").value = contact.messages.length > 0 ? contact.messages.length : 1;
       renderMemoryBlocks(contact);
       
+      // 渲染世界书挂载列表
+      renderChatDetailsLorebooks(contact);
+
       if (contact.avatar) {
         detailsAvatarPreview.style.backgroundImage = `url(${contact.avatar})`;
       } else {
@@ -5052,12 +5148,21 @@ TimeChecklist:
       contact.persona = detailsPersonaInput.value.trim();
       contact.myPersona = detailsMyPersonaInput.value.trim();
 
+      // 收集并保存挂载的世界书
+      const loreCheckboxes = document.querySelectorAll("#chatDetailsLorebookList .lore-toggle-checkbox");
+      if (loreCheckboxes.length > 0) {
+        contact.linkedLorebooks = Array.from(loreCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+      } else {
+        if(!contact.linkedLorebooks) contact.linkedLorebooks = [];
+      }
+
       if (detailsAvatarPreview.dataset.tempAvatar) {
         contact.avatar = detailsAvatarPreview.dataset.tempAvatar;
         delete detailsAvatarPreview.dataset.tempAvatar;
       }
 
       // 保存气泡样式到contact
+  
       applyBubbleStyleToContact(contact);
 
       screenChatDetails.classList.remove("active");
@@ -5831,6 +5936,247 @@ TimeChecklist:
       btn.style.pointerEvents = "auto";
       alert("记忆提取跑完了！如果有新发现，上面已经多了一张记忆卡片！");
     });
+    // ================= 世界书 (Lorebook) 交互逻辑 =================
+    const openLorebookManagerBtn = document.getElementById("openLorebookManagerBtn");
+    const lorebookManagerScreen = document.getElementById("lorebookManagerScreen");
+    const lorebookManagerBackBtn = document.getElementById("lorebookManagerBackBtn");
+    const addLorebookBtn = document.getElementById("addLorebookBtn");
+    const lorebookListContainer = document.getElementById("lorebookListContainer");
+    const lorebookCategoryTabs = document.getElementById("lorebookCategoryTabs");
+    const lorebookDialogMask = document.getElementById("lorebookDialogMask");
+    const lorebookCancelBtn = document.getElementById("lorebookCancelBtn");
+    const lorebookSaveBtn = document.getElementById("lorebookSaveBtn");
+    const lorebookCatSelect = document.getElementById("lorebookCatSelect");
+    const lorebookNewCatBtn = document.getElementById("lorebookNewCatBtn");
+
+    let currentLoreCategory = '默认分类';
+
+    // 渲染世界书分类标签栏
+    function renderLorebookTabs() {
+      if (!lorebookCategoryTabs) return;
+      lorebookCategoryTabs.innerHTML = "";
+      let categories = [...new Set((state.lorebooks || []).map(l => l.category || '默认分类'))];
+      if (categories.length === 0) categories = ['默认分类'];
+      if (!categories.includes(currentLoreCategory)) currentLoreCategory = categories[0];
+
+      categories.forEach(cat => {
+        const isActive = cat === currentLoreCategory;
+        const tab = document.createElement("div");
+        tab.style.cssText = `white-space: nowrap; padding: 6px 16px; border-radius: 999px; cursor: pointer; font-size: 14px; user-select: none; transition: all 0.2s; ${isActive ? 'background: #111; color: #fff; font-weight: 700;' : 'background: #f7f7f8; color: #666;'}`;
+        tab.textContent = cat;
+        tab.onclick = () => {
+          currentLoreCategory = cat;
+          renderLorebookManagerList();
+        };
+        lorebookCategoryTabs.appendChild(tab);
+      });
+    }
+
+    // 渲染主界面的世界书列表
+    function renderLorebookManagerList() {
+      renderLorebookTabs();
+      lorebookListContainer.innerHTML = "";
+      
+      const filteredLores = (state.lorebooks || []).filter(l => (l.category || '默认分类') === currentLoreCategory);
+
+      if (filteredLores.length === 0) {
+        lorebookListContainer.innerHTML = '<div style="text-align:center; padding: 40px 0; color:#bbb; font-size:14px;">当前分类空空如也，点击右上角 "+" 添加</div>';
+        return;
+      }
+
+      filteredLores.forEach(lore => {
+        const item = document.createElement("div");
+        item.style.cssText = "background: #fff; border-radius: 16px; padding: 16px; border: 1px solid #f0f0f0; position: relative;";
+        item.innerHTML = `
+          <div style="font-weight: 700; font-size: 16px; color: #111; margin-bottom: 4px; padding-right: 70px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${lore.title || '无标题'}</div>
+          <div style="font-size: 12px; color: #007aff; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">触发词：${lore.keywords || '无'}</div>
+          <div style="font-size: 13px; color: #666; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;">${lore.content}</div>
+          <div style="position: absolute; top: 16px; right: 16px; display: flex; gap: 12px;">
+            <span class="lore-edit-btn" style="color: #007aff; font-size: 13px; font-weight: 600; cursor: pointer;">编辑</span>
+            <span class="lore-del-btn" style="color: #df3b3b; font-size: 13px; font-weight: 600; cursor: pointer;">删除</span>
+          </div>
+        `;
+        item.querySelector('.lore-edit-btn').onclick = () => openLorebookDialog(lore);
+        item.querySelector('.lore-del-btn').onclick = () => {
+          if (confirm("确定要彻底删除这条设定吗？挂载了该设定的角色将无法再读取。")) {
+            state.lorebooks = state.lorebooks.filter(l => l.id !== lore.id);
+            // 同步清理角色挂载表里面的死链接
+            state.contacts.forEach(c => {
+                if(c.linkedLorebooks) c.linkedLorebooks = c.linkedLorebooks.filter(id => id !== lore.id);
+            });
+            renderLorebookManagerList();
+          }
+        };
+        lorebookListContainer.appendChild(item);
+      });
+    }
+
+    if(openLorebookManagerBtn) {
+      openLorebookManagerBtn.addEventListener("click", () => {
+        screens.me.classList.remove("active");
+        lorebookManagerScreen.classList.add("show");
+        renderLorebookManagerList();
+      });
+    }
+
+    if(lorebookManagerBackBtn) {
+      lorebookManagerBackBtn.addEventListener("click", () => {
+        lorebookManagerScreen.classList.remove("show");
+        screens.me.classList.add("active");
+      });
+    }
+
+    // 更新分类下拉框
+    function updateLorebookCatSelect(selectedCat) {
+      if(!lorebookCatSelect) return;
+      let categories = [...new Set((state.lorebooks || []).map(l => l.category || '默认分类'))];
+      if (!categories.includes('默认分类')) categories.unshift('默认分类');
+      if (selectedCat && !categories.includes(selectedCat)) categories.push(selectedCat);
+      
+      lorebookCatSelect.innerHTML = '';
+      categories.forEach(cat => {
+        const opt = document.createElement('option');
+        opt.value = cat;
+        opt.textContent = cat;
+        if (cat === (selectedCat || currentLoreCategory)) opt.selected = true;
+        lorebookCatSelect.appendChild(opt);
+      });
+    }
+
+    // 新建分类按钮
+    if(lorebookNewCatBtn) {
+      lorebookNewCatBtn.addEventListener("click", () => {
+        const newCat = prompt("请输入新分类名称：");
+        if (newCat && newCat.trim() !== "") {
+          updateLorebookCatSelect(newCat.trim());
+        }
+      });
+    }
+
+    function openLorebookDialog(lore = null) {
+      if (lore) {
+        document.getElementById("lorebookDialogTitle").textContent = "编辑世界书";
+        document.getElementById("lorebookEditId").value = lore.id;
+        document.getElementById("lorebookTitleInput").value = lore.title;
+        document.getElementById("lorebookKeyInput").value = lore.keywords;
+        document.getElementById("lorebookContentInput").value = lore.content;
+        updateLorebookCatSelect(lore.category || '默认分类');
+      } else {
+        document.getElementById("lorebookDialogTitle").textContent = "新建世界书";
+        document.getElementById("lorebookEditId").value = "";
+        document.getElementById("lorebookTitleInput").value = "";
+        document.getElementById("lorebookKeyInput").value = "";
+        document.getElementById("lorebookContentInput").value = "";
+        updateLorebookCatSelect(currentLoreCategory);
+      }
+      lorebookDialogMask.classList.add("show");
+    }
+
+    if(addLorebookBtn) addLorebookBtn.addEventListener("click", () => openLorebookDialog());
+    if(lorebookCancelBtn) lorebookCancelBtn.addEventListener("click", () => lorebookDialogMask.classList.remove("show"));
+    
+    if(lorebookSaveBtn) {
+        lorebookSaveBtn.addEventListener("click", () => {
+          const id = document.getElementById("lorebookEditId").value;
+          const title = document.getElementById("lorebookTitleInput").value.trim();
+          const keywords = document.getElementById("lorebookKeyInput").value.trim();
+          const content = document.getElementById("lorebookContentInput").value.trim();
+          const category = lorebookCatSelect.value || '默认分类';
+
+          if (!title || !content) {
+            alert("标题和设定内容不能空着哦");
+            return;
+          }
+
+          if (id) {
+            const lore = state.lorebooks.find(l => l.id === id);
+            if (lore) {
+              lore.title = title;
+              lore.keywords = keywords;
+              lore.content = content;
+              lore.category = category;
+            }
+          } else {
+            state.lorebooks.push({
+              id: "lore_" + Date.now() + "_" + Math.random().toString(36).slice(2,8),
+              title,
+              keywords,
+              content,
+              category
+            });
+          }
+          currentLoreCategory = category; // 保存后自动跳转到该分类
+          lorebookDialogMask.classList.remove("show");
+          renderLorebookManagerList();
+        });
+    }
+
+    // 渲染聊天详情页的可挂载列表（按世界书分类折叠呈现）
+    function renderChatDetailsLorebooks(contact) {
+      const container = document.getElementById("chatDetailsLorebookList");
+      if (!container) return;
+      container.innerHTML = "";
+      
+      if (!state.lorebooks || state.lorebooks.length === 0) {
+        container.innerHTML = '<div style="font-size:13px; color:#aaa; text-align:center;">暂无世界书设定，请前往"我"页面添加</div>';
+        return;
+      }
+
+      if (!contact.linkedLorebooks) contact.linkedLorebooks = [];
+
+      // 按分类分组
+      const grouped = {};
+      state.lorebooks.forEach(lore => {
+        const cat = lore.category || '默认分类';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(lore);
+      });
+
+      for (const cat in grouped) {
+        const catDiv = document.createElement("div");
+        catDiv.style.cssText = "background: #f7f7f8; border-radius: 12px; overflow: hidden; margin-bottom: 8px;";
+        
+        // 分类折叠头
+        const header = document.createElement("div");
+        header.style.cssText = "padding: 12px 14px; font-size: 14px; font-weight: 600; color: #111; background: #f0f0f0; cursor: pointer; display: flex; justify-content: space-between; align-items: center;";
+        header.innerHTML = `<span>${cat} <span style="color:#888; font-weight:normal; font-size:12px; margin-left:4px;">(${grouped[cat].length})</span></span><span style="color:#888; font-size:16px;">▾</span>`;
+        
+        const listDiv = document.createElement("div");
+        listDiv.style.cssText = "padding: 10px 14px; display: flex; flex-direction: column; gap: 8px;";
+        
+        header.onclick = () => {
+          if(listDiv.style.display === "none") {
+            listDiv.style.display = "flex";
+            header.querySelector("span:last-child").textContent = "▾";
+          } else {
+            listDiv.style.display = "none";
+            header.querySelector("span:last-child").textContent = "▸";
+          }
+        };
+
+        grouped[cat].forEach(lore => {
+          const isChecked = contact.linkedLorebooks.includes(lore.id);
+          const item = document.createElement("div");
+          item.className = "toggle-row";
+          item.style.marginBottom = "4px";
+          item.innerHTML = `
+            <div style="flex: 1; min-width: 0; padding-right: 16px;">
+              <div style="font-size: 14px; font-weight: 600; color: #222; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px;">${lore.title}</div>
+              <div style="font-size: 12px; color: #888; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">触发词: ${lore.keywords || '无'}</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" class="lore-toggle-checkbox" value="${lore.id}" ${isChecked ? 'checked' : ''}>
+              <span class="slider"></span>
+            </label>
+          `;
+          listDiv.appendChild(item);
+        });
+        
+        catDiv.appendChild(header);
+        catDiv.appendChild(listDiv);
+        container.appendChild(catDiv);
+      }
+    }
     // =======================================================
 
     // 初始化预设

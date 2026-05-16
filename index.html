@@ -7711,9 +7711,9 @@ ${contact.myPersona ? '与你对话的用户的设定：' + contact.myPersona : 
 
         let loreText = "";
         if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
-            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\\n");
+            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\n");
         }
-        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\\n") : "无";
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\n") : "无";
 
         let sysPrompt = `你现在是${getDisplayName(contact)}。
 你的设定：${contact.persona}
@@ -7721,11 +7721,23 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 【世界书】：${loreText || '无'}
 【记忆】：${memText}
 
-任务：距离你们上次聊天已经过去了一段时间，你现在要主动给用户发一条消息，挑起话题、分享生活或是表达关心。
+任务：距离你们上次聊天已经过去了一段时间，你现在要结合你们过去的聊天内容，主动给用户发一条消息，挑起话题、分享生活或是表达关心。必须基于你们聊过的话题，不要无中生有，不要说莫名其妙的话。
 注意：
 1. 必须要符合你的人设。
 2. 保持自然，不要像机器人。
-3. 纯文本回复，可以使用你设定的格式，也可以直接输出要发的话，绝对不要夹杂思考过程！`;
+3. 纯文本回复，直接输出要发的话，绝对不要夹杂思考过程！`;
+
+        // 构建包含历史聊天记录的消息数组
+        const msgPayload = [{ role: "system", content: sysPrompt }];
+        const history = contact.messages.slice(-20); // 最近20条作为上下文
+        history.forEach(msg => {
+            if (msg.isTyping) return;
+            let text = msg.text ? msg.text.replace(/<[^>]*>?/gm, '') : '';
+            msgPayload.push({
+                role: msg.from === "me" ? "user" : "assistant",
+                content: text || '[图片或特殊消息]'
+            });
+        });
 
         try {
             const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
@@ -7734,7 +7746,7 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
                 body: JSON.stringify({ 
                     model: api.model || "gpt-3.5-turbo", 
-                    messages: [{ role: "system", content: sysPrompt }], 
+                    messages: msgPayload, 
                     temperature: api.temperature 
                 })
             });
@@ -7749,7 +7761,6 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                         hasAnimated: false 
                     });
                     contact.lastTime = getCurrentTime();
-                    // 只有停留在当前聊天界面才渲染
                     if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
                         renderChat();
                     } else {
@@ -7769,16 +7780,32 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 
         let loreText = "";
         if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
-            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\\n");
+            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\n");
         }
-        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\\n") : "无";
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\n") : "无";
+
+        // 提取最近聊天记录作为参考
+        let chatContext = "无";
+        if (contact.messages && contact.messages.length > 0) {
+            const recentMsgs = contact.messages.slice(-15).filter(m => !m.isTyping);
+            if (recentMsgs.length > 0) {
+                chatContext = recentMsgs.map(m => {
+                    const who = m.from === "me" ? "用户" : getDisplayName(contact);
+                    const txt = m.text ? m.text.replace(/<[^>]*>?/gm, '') : '[图片]';
+                    return `${who}：${txt}`;
+                }).join("\n");
+            }
+        }
 
         let sysPrompt = `你现在是${getDisplayName(contact)}。
 你的设定：${contact.persona}
+${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 【世界书】：${loreText || '无'}
 【记忆】：${memText}
+【你们最近的聊天记录（请结合这些内容决定发什么朋友圈，不要与聊天内容毫无关联）】：
+${chatContext}
 
-任务：你现在要主动发一条微信朋友圈动态分享你的生活或心情。你可以只发文字，也可以要求配图。
+任务：你现在要结合以上所有信息，以符合你人设的方式主动发一条微信朋友圈动态，分享你的生活或心情。内容必须和你们的对话、人设、记忆有关联，不要胡乱发与任何背景无关的内容。你可以只发文字，也可以要求配图。
 严格按照以下格式输出你的决定：
 第一行：[文字] 你的朋友圈动态文案内容
 第二行：[配图] 如果需要配图，请在这里用英文写下用于AI绘画(DALL-E)的精确提示词（例如: A beautiful sunset over the ocean, hyper-realistic, 4k）。如果完全不需要配图，请写大写的 NONE`;

@@ -2415,9 +2415,26 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         </div>
 
         <div class="details-section-card">
+          <div class="details-section-title">后台自动活跃设置</div>
+          <div style="font-size:13px; color:#666; margin-bottom:12px;">设置 AI 角色在后台主动运作的频率（单位：分钟）。设为 0 或留空则不开启。</div>
+          
+          <div class="field" style="display: flex; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f2f2f7; padding-bottom: 12px;">
+            <label style="width: 140px; font-size: 14px; font-weight: 600; color: #222; margin: 0;">主动发消息(分钟)</label>
+            <input class="input" id="detailsAutoMsgInput" type="number" placeholder="距上次聊天X分钟后" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0;" />
+          </div>
+
+          <div class="field" style="display: flex; align-items: center; margin-bottom: 0;">
+            <label style="width: 140px; font-size: 14px; font-weight: 600; color: #222; margin: 0;">主动发动态(分钟)</label>
+            <input class="input" id="detailsAutoMomentInput" type="number" placeholder="每隔X分钟发一次" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0;" />
+          </div>
+        </div>
+
+        <div class="details-section-card">
           <div class="details-section-title">挂载世界书</div>
-          <div style="font-size:13px; color:#666; margin-bottom:12px;">勾选后，当聊天触发设定关键词时，AI将自动回忆起对应的世界书内容。</div>
-          <div id="chatDetailsLorebookList" style="display:flex; flex-direction:column; gap:4px;">
+          <div style="font-size:13px;
+ color:#666; margin-bottom:12px;">勾选后，当聊天触发设定关键词时，AI将自动回忆起对应的世界书内容。</div>
+          <div id="chatDetailsLorebookList" style="display:flex; flex-direction:column;
+ gap:4px;">
             </div>
         </div>
                 
@@ -3594,12 +3611,11 @@ if (msg.isTyping) {
         time: getCurrentTime(),
         hasAnimated: false 
       };
-      
       // 如果处于引用状态，就把引用内容挂载到消息体里
       if (state.replyingToText) {
         newMsg.quoteText = state.replyingToText;
         newMsg.quoteSender = state.replyingToSender;
-state.replyingToText = "";
+        state.replyingToText = "";
         state.replyingToSender = "";
         document.getElementById("replyPreview").classList.remove("show");
       }
@@ -3609,6 +3625,21 @@ state.replyingToText = "";
       chatInput.value = "";
       renderChat();
       checkAndTriggerAutoSummary(contact); // 检查是否需要自动总结
+
+      // ================= 新增：关键词触发自动发朋友圈 =================
+      const triggerWords = ["发动态", "发朋友圈", "发个动态", "发个朋友圈", "发条动态", "发条朋友圈", "更新动态", "更新朋友圈"];
+      const shouldTriggerMoment = triggerWords.some(word => text.includes(word));
+      
+      if (shouldTriggerMoment) {
+          // 确保已经加载了上一步的后台核心代码
+          if (typeof executeAutoMoment === "function") {
+              // 稍微延迟 2 秒执行，模拟 AI 看到消息后去想文案的真实感
+              setTimeout(() => {
+                  executeAutoMoment(contact);
+              }, 2000);
+          }
+      }
+      // =========================================================
     }
 
     async function triggerAIReply() {
@@ -5171,9 +5202,14 @@ TimeChecklist:
       detailsPersonaInput.value = contact.persona || "";
       detailsMyPersonaInput.value = contact.myPersona || "";
       
+      // 回显后台活动设置
+      document.getElementById("detailsAutoMsgInput").value = contact.autoMsgInterval || "";
+      document.getElementById("detailsAutoMomentInput").value = contact.autoMomentInterval || "";
+
       // 初始化和渲染记忆面板
       contact.memoryList = contact.memoryList || [];
     
+ 
       document.getElementById("memoryMsgCount").textContent = contact.messages.length;
       document.getElementById("autoSummarySwitch").checked = contact.autoSummary || false;
       document.getElementById("autoSummaryThreshold").value = contact.summaryThreshold || 20;
@@ -5239,9 +5275,16 @@ TimeChecklist:
       const loreCheckboxes = document.querySelectorAll("#chatDetailsLorebookList .lore-toggle-checkbox");
       if (loreCheckboxes.length > 0) {
         contact.linkedLorebooks = Array.from(loreCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
+ 
       } else {
         if(!contact.linkedLorebooks) contact.linkedLorebooks = [];
       }
+
+      // 保存后台活动设置并重置计时器基准点
+      contact.autoMsgInterval = parseInt(document.getElementById("detailsAutoMsgInput").value) || 0;
+      contact.autoMomentInterval = parseInt(document.getElementById("detailsAutoMomentInput").value) || 0;
+      contact.lastInteractTimeMs = Date.now(); // 重置消息计时基准点
+      if(!contact.lastAutoMomentTimeMs) contact.lastAutoMomentTimeMs = Date.now(); // 动态计时基准点
 
       if (detailsAvatarPreview.dataset.tempAvatar) {
         contact.avatar = detailsAvatarPreview.dataset.tempAvatar;
@@ -6581,13 +6624,32 @@ TimeChecklist:
         if(moment) {
             moment.comments.push({ 
                 id: "me_" + Date.now(), 
+ 
                 name: "我", 
                 text: text,
                 replyTo: activeReplyTargetName // 记录是谁回复的谁
             });
             renderMoments();
+            
+            // 触发 AI 评论回复逻辑
+            // 如果我是回复某个人，找找通讯录里有没有这个人
+            let targetAI = null;
+            if (activeReplyTargetName) {
+                targetAI = state.contacts.find(c => getDisplayName(c) === activeReplyTargetName);
+            } else {
+                // 如果是直接评论朋友圈，且这条朋友圈不是我发的（判断逻辑：发朋友圈时带了 calledAIs 或者有专属标志，但咱们逻辑里目前自己发的显示"我"）
+                // 找到第一个被提及或发这条动态的 AI
+                if (moment.calledAIs && moment.calledAIs.length > 0) {
+                    targetAI = getContact(moment.calledAIs[0]);
+                }
+            }
+            
+            if (targetAI) {
+                triggerAIMomentCommentReply(moment, targetAI, text);
+            }
         }
         
+       
         momentCommentInput.value = "";
         momentCommentBar.classList.remove("show");
         activeMomentIdForComment = null;
@@ -6703,12 +6765,276 @@ ${contact.myPersona ? '发朋友圈的人(我)的设定：' + contact.myPersona 
         }
     }
     
+    // ================== 后台自动化核心引擎 ==================
+
+    // AI 回复用户的评论
+    async function triggerAIMomentCommentReply(moment, contact, userCommentText) {
+        const api = state.apiSettings;
+        if(!api.url || !api.key) return;
+
+        moment.typingAIs = moment.typingAIs || [];
+        moment.typingAIs.push(getDisplayName(contact));
+        renderMoments();
+
+        let loreText = "";
+        if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
+            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\\n");
+        }
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\\n") : "无";
+
+        let sysPrompt = `你现在是${getDisplayName(contact)}。
+你的设定：${contact.persona}
+${contact.myPersona ? '与你对话的用户的设定：' + contact.myPersona : ''}
+【世界书参考】：${loreText || '无'}
+【记忆参考】：${memText}
+
+场景：在朋友圈里，用户刚刚对你的动态或评论进行了回复。
+朋友圈原文描述：${moment.text || "无文字配图"}
+用户的回复/评论是："${userCommentText}"
+
+请根据你的性格，给用户回复一条简短、自然的评论（禁止超过30个字）。绝对不要输出除了回复内容以外的任何废话或前缀标签！`;
+
+        try {
+            const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+                body: JSON.stringify({ 
+                    model: api.model || "gpt-3.5-turbo", 
+                    messages: [{ role: "system", content: sysPrompt }], 
+                    temperature: api.temperature 
+                })
+            });
+            if(!res.ok) throw new Error("API请求失败");
+            const data = await res.json();
+            const replyText = data.choices[0].message.content.trim();
+            
+            if(replyText) {
+                moment.comments.push({
+                    contactId: contact.id,
+                    name: getDisplayName(contact),
+                    text: replyText,
+                    replyTo: "我"
+                });
+            }
+        } catch(e) {
+            console.error("后台评论回复报错", e);
+        } finally {
+            moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
+            renderMoments();
+        }
+    }
+
+    // 后台发消息逻辑
+    async function executeAutoMessage(contact) {
+        const api = state.apiSettings;
+        if(!api.url || !api.key) return;
+
+        let loreText = "";
+        if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
+            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\\n");
+        }
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\\n") : "无";
+
+        let sysPrompt = `你现在是${getDisplayName(contact)}。
+你的设定：${contact.persona}
+${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
+【世界书】：${loreText || '无'}
+【记忆】：${memText}
+
+任务：距离你们上次聊天已经过去了一段时间，你现在要主动给用户发一条消息，挑起话题、分享生活或是表达关心。
+注意：
+1. 必须要符合你的人设。
+2. 保持自然，不要像机器人。
+3. 纯文本回复，可以使用你设定的格式，也可以直接输出要发的话，绝对不要夹杂思考过程！`;
+
+        try {
+            const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+                body: JSON.stringify({ 
+                    model: api.model || "gpt-3.5-turbo", 
+                    messages: [{ role: "system", content: sysPrompt }], 
+                    temperature: api.temperature 
+                })
+            });
+            if(res.ok) {
+                const data = await res.json();
+                let text = data.choices[0].message.content.trim();
+                if(text) {
+                    contact.messages.push({
+                        from: "ai",
+                        text: text,
+                        time: getCurrentTime(),
+                        hasAnimated: false 
+                    });
+                    contact.lastTime = getCurrentTime();
+                    // 只有停留在当前聊天界面才渲染
+                    if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+                        renderChat();
+                    } else {
+                        renderContacts();
+                    }
+                }
+            }
+        } catch(e) {
+            console.error("后台主动发消息报错", e);
+        }
+    }
+
+    // 后台发朋友圈逻辑
+    async function executeAutoMoment(contact) {
+        const api = state.apiSettings;
+        if(!api.url || !api.key) return;
+
+        let loreText = "";
+        if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
+            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\\n");
+        }
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\\n") : "无";
+
+        let sysPrompt = `你现在是${getDisplayName(contact)}。
+你的设定：${contact.persona}
+【世界书】：${loreText || '无'}
+【记忆】：${memText}
+
+任务：你现在要主动发一条微信朋友圈动态分享你的生活或心情。你可以只发文字，也可以要求配图。
+严格按照以下格式输出你的决定：
+第一行：[文字] 你的朋友圈动态文案内容
+第二行：[配图] 如果需要配图，请在这里用英文写下用于AI绘画(DALL-E)的精确提示词（例如: A beautiful sunset over the ocean, hyper-realistic, 4k）。如果完全不需要配图，请写大写的 NONE`;
+
+        try {
+            // 第一步：生成文案和决定是否配图
+            const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+                body: JSON.stringify({ 
+                    model: api.model || "gpt-3.5-turbo", 
+                    messages: [{ role: "system", content: sysPrompt }], 
+                    temperature: api.temperature 
+                })
+            });
+            
+            if(!res.ok) return;
+            const data = await res.json();
+            const resultText = data.choices[0].message.content.trim();
+            
+            let momentText = "";
+            let imagePrompt = "NONE";
+            
+            const lines = resultText.split("\n");
+            lines.forEach(line => {
+                if(line.startsWith("[文字]")) momentText = line.replace("[文字]", "").trim();
+                if(line.startsWith("[配图]")) imagePrompt = line.replace("[配图]", "").trim();
+            });
+
+            if(!momentText && imagePrompt === "NONE") return; // 失败保护
+
+            let imageUrl = "";
+
+            // 第二步：如果有配图需求，调用图片生成接口 (标准 OpenAI 格式)
+            if(imagePrompt !== "NONE" && imagePrompt.length > 5) {
+                try {
+                    const imgEndpoint = api.url.endsWith('/') ? api.url + 'images/generations' : api.url + '/images/generations';
+                    const imgRes = await fetch(imgEndpoint, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+                        body: JSON.stringify({
+                            prompt: imagePrompt,
+                            n: 1,
+                            size: "1024x1024" // 默认画质
+                        })
+                    });
+                    if (imgRes.ok) {
+                        const imgData = await imgRes.json();
+                        if (imgData && imgData.data && imgData.data.length > 0) {
+                            imageUrl = imgData.data[0].url; // 返回的一般是直链URL
+                        }
+                    } else {
+                        console.log("图片API不支持或调用失败，降级为纯文字朋友圈");
+                    }
+                } catch(e) {
+                    console.log("配图生成报错，降级为文字朋友圈", e);
+                }
+            }
+
+            // 第三步：创建动态并推送
+            const newMoment = {
+                id: "mom_" + Date.now(),
+                timestamp: Date.now(),
+                text: momentText,
+                image: imageUrl, // 可能为空
+                likes: [],
+                comments: [],
+                calledAIs: [contact.id], // 标记是该AI发的
+                typingAIs: [] 
+            };
+            
+            state.moments.unshift(newMoment);
+            // 只有在朋友圈界面才即时刷新，防止干扰
+            if(screens.moments.classList.contains("active")) {
+                renderMoments();
+            }
+
+        } catch(e) {
+            console.error("后台主动发动态报错", e);
+        }
+    }
+
+    // 后台心跳守护循环（每隔 30 秒检查一次所有的触发条件）
+    setInterval(() => {
+        const now = Date.now();
+        state.contacts.forEach(c => {
+            // 确保有个基准时间
+            if(!c.lastInteractTimeMs) c.lastInteractTimeMs = now;
+            if(!c.lastAutoMomentTimeMs) c.lastAutoMomentTimeMs = now;
+
+            // 1. 检查主动发消息
+            if (c.autoMsgInterval && c.autoMsgInterval > 0) {
+                // 计算当前时间距离上一次交互过了多少分钟
+                const diffMinutes = (now - c.lastInteractTimeMs) / 60000;
+                if (diffMinutes >= c.autoMsgInterval) {
+                    c.lastInteractTimeMs = now; // 重置，防止一分钟内疯狂触发
+                    executeAutoMessage(c);
+                }
+            }
+
+            // 2. 检查主动发朋友圈
+            if (c.autoMomentInterval && c.autoMomentInterval > 0) {
+                const diffMinutes = (now - c.lastAutoMomentTimeMs) / 60000;
+                if (diffMinutes >= c.autoMomentInterval) {
+                    c.lastAutoMomentTimeMs = now; // 重置
+                    executeAutoMoment(c);
+                }
+            }
+        });
+    }, 30000);
+
+    // 为了让用户发言后重置"发消息"的时间基数，拦截全局原生 send 事件
+    const origSendMessage = sendMessage;
+    sendMessage = function() {
+        const contact = getContact(state.activeContactId);
+        if (contact) {
+            contact.lastInteractTimeMs = Date.now();
+        }
+        origSendMessage();
+    }
+    const origTriggerAIReply = triggerAIReply;
+    triggerAIReply = async function() {
+        const contact = getContact(state.activeContactId);
+        if (contact) {
+            contact.lastInteractTimeMs = Date.now();
+        }
+        await origTriggerAIReply();
+    }
+
     // 初始化预设
     renderBubblePresets();
     updateBubblePreview();
-
     // 初始化运行一次动态样式
-applyGlobalFontAndSize();
+    applyGlobalFontAndSize();
     renderContacts();
     switchTab("friends");
   </script>

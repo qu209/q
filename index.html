@@ -2907,9 +2907,107 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       </div>
     </div>
 
+    <!-- ====== 通用提示弹窗 (替代alert) ====== -->
+    <div class="custom-dialog-mask" id="sysAlertMask" style="z-index: 9999;">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title" id="sysAlertTitle">提示</div>
+        <div id="sysAlertMsg" style="font-size:14px;color:#555;text-align:center;line-height:1.7;margin-bottom:20px;"></div>
+        <div class="custom-dialog-actions" style="justify-content:center;">
+          <button class="custom-dialog-btn-confirm" id="sysAlertOkBtn" style="flex:none;min-width:120px;">好的</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 通用确认弹窗 (替代confirm) ====== -->
+    <div class="custom-dialog-mask" id="sysConfirmMask" style="z-index: 9999;">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title" id="sysConfirmTitle">确认</div>
+        <div id="sysConfirmMsg" style="font-size:14px;color:#555;text-align:center;line-height:1.7;margin-bottom:20px;"></div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="sysConfirmCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="sysConfirmOkBtn">确认</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== 通用输入弹窗 (替代prompt) ====== -->
+    <div class="custom-dialog-mask" id="sysPromptMask" style="z-index: 9999;">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title" id="sysPromptTitle">输入</div>
+        <input class="custom-dialog-input" id="sysPromptInput" placeholder="" />
+        <div class="custom-dialog-hint" id="sysPromptHint"></div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="sysPromptCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="sysPromptOkBtn">确认</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
+      // ====== 替代系统弹窗的三个工具函数 ======
+    function sysAlert(msg, title = "提示") {
+      return new Promise(resolve => {
+        document.getElementById("sysAlertTitle").textContent = title;
+        document.getElementById("sysAlertMsg").textContent = msg;
+        document.getElementById("sysAlertMask").classList.add("show");
+        const ok = document.getElementById("sysAlertOkBtn");
+        const handler = () => {
+          document.getElementById("sysAlertMask").classList.remove("show");
+          ok.removeEventListener("click", handler);
+          resolve();
+        };
+        ok.addEventListener("click", handler);
+      });
+    }
+
+    function sysConfirm(msg, title = "确认", danger = false) {
+      return new Promise(resolve => {
+        document.getElementById("sysConfirmTitle").textContent = title;
+        document.getElementById("sysConfirmMsg").textContent = msg;
+        const okBtn = document.getElementById("sysConfirmOkBtn");
+        okBtn.className = danger ? "custom-dialog-btn-danger" : "custom-dialog-btn-confirm";
+        document.getElementById("sysConfirmMask").classList.add("show");
+        const ok = document.getElementById("sysConfirmOkBtn");
+        const cancel = document.getElementById("sysConfirmCancelBtn");
+        const close = (val) => {
+          document.getElementById("sysConfirmMask").classList.remove("show");
+          ok.removeEventListener("click", okHandler);
+          cancel.removeEventListener("click", cancelHandler);
+          resolve(val);
+        };
+        const okHandler = () => close(true);
+        const cancelHandler = () => close(false);
+        ok.addEventListener("click", okHandler);
+        cancel.addEventListener("click", cancelHandler);
+      });
+    }
+
+    function sysPrompt(msg, defaultVal = "", hint = "") {
+      return new Promise(resolve => {
+        document.getElementById("sysPromptTitle").textContent = msg;
+        document.getElementById("sysPromptInput").value = defaultVal;
+        document.getElementById("sysPromptHint").textContent = hint;
+        document.getElementById("sysPromptMask").classList.add("show");
+        const input = document.getElementById("sysPromptInput");
+        const ok = document.getElementById("sysPromptOkBtn");
+        const cancel = document.getElementById("sysPromptCancelBtn");
+        setTimeout(() => input.focus(), 80);
+        const close = (val) => {
+          document.getElementById("sysPromptMask").classList.remove("show");
+          ok.removeEventListener("click", okHandler);
+          cancel.removeEventListener("click", cancelHandler);
+          resolve(val);
+        };
+        const okHandler = () => close(input.value);
+        const cancelHandler = () => close(null);
+        ok.addEventListener("click", okHandler);
+        cancel.addEventListener("click", cancelHandler);
+      });
+    }
+    // ====== 工具函数结束 ======
+
     // 辅助函数：获取当前时间格式 (例如 "PM 09:04")
     function getCurrentTime() {
       const now = new Date();
@@ -3202,15 +3300,14 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         delBtn.className = "msg-menu-item";
         delBtn.style.color = "#df3b3b";
         delBtn.textContent = "删除好友";
-        delBtn.onclick = () => {
-            if (confirm(`确定要彻底删除与 ${getDisplayName(contact)} 的所有数据吗？删除后将无法恢复。`)) {
-                // 在数组中彻底过滤掉该好友
+        delBtn.onclick = async () => {
+            const ok = await sysConfirm(`确定要彻底删除与 ${getDisplayName(contact)} 的所有数据吗？删除后将无法恢复。`, "删除好友", true);
+            if (ok) {
                 state.contacts = state.contacts.filter(c => c.id !== contactId);
-                // 如果恰好正在和这个好友聊天，顺便清空激活状态
                 if (state.activeContactId === contactId) {
                     state.activeContactId = null;
                 }
-                renderContacts(); // 重新渲染列表
+                renderContacts();
             }
             document.body.removeChild(mask);
         };
@@ -3777,9 +3874,10 @@ if (msg.isTyping) {
       renderChat();
     });
 
-    document.getElementById("multiSelectDelete").addEventListener("click", () => {
+        document.getElementById("multiSelectDelete").addEventListener("click", async () => {
       if(state.selectedMsgs.size === 0) return;
-      if(!confirm(`确定要删除选定的 ${state.selectedMsgs.size} 条消息吗？`)) return;
+      const _delOk = await sysConfirm(`确定要删除选定的 ${state.selectedMsgs.size} 条消息吗？`, "删除消息", true);
+      if(!_delOk) return;
       
       const contact = getContact(state.activeContactId);
       // 必须从大到小删，否则删了上面的，下面的索引就全错位了
@@ -4549,13 +4647,13 @@ TimeChecklist:
     // ========== 升级版：3. 终极“重回” (彻底删干净并刷新时间) ==========
     const regenerateBtn = document.getElementById("regenerateBtn");
     if (regenerateBtn) {
-      regenerateBtn.addEventListener("click", (e) => {
+            regenerateBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
         inventoryPopup.classList.remove("show"); // 先关掉左下角的菜单
 
         const contact = getContact(state.activeContactId);
         if (!contact || contact.messages.length === 0) {
-            alert("还没有聊天记录呢！");
+            await sysAlert("还没有聊天记录呢！");
             return;
         }
 
@@ -4590,7 +4688,7 @@ TimeChecklist:
         }
 
         if (!deletedSomething) {
-            alert("上一条是你发的消息哦，等TA回复了之后才能重回！");
+            await sysAlert("上一条是你发的消息哦，等TA回复了之后才能重回！");
             return;
         }
 
@@ -5179,7 +5277,7 @@ TimeChecklist:
       const url = apiUrlInput.value.trim();
       const key = apiKeyInput.value.trim();
       if (!url || !key) {
-        alert("请先填写反代地址和密钥");
+        await sysAlert("请先填写反代地址和密钥");
         return;
       }
       fetchModelsBtn.textContent = "拉取中...";
@@ -5192,12 +5290,12 @@ TimeChecklist:
         const data = await res.json();
         if (data.data && data.data.length > 0) {
           modelSelect.innerHTML = data.data.map(m => `<option value="${m.id}">${m.id}</option>`).join("");
-          alert("模型拉取成功！");
+          await sysAlert("模型拉取成功！");
         } else {
-          alert("未获取到模型列表，请检查接口返回格式");
+          await sysAlert("未获取到模型列表，请检查接口返回格式");
         }
       } catch (err) {
-        alert("拉取模型失败，请检查地址和密钥是否正确。\n" + err.message);
+        await sysAlert("拉取模型失败，请检查地址和密钥是否正确。\n" + err.message);
       } finally {
         fetchModelsBtn.textContent = "拉取可用模型";
       }
@@ -5221,8 +5319,8 @@ TimeChecklist:
     });
 
     // 保存预设
-    saveFontPresetBtn.addEventListener("click", () => {
-      const name = prompt("请输入预设名称：", "自定义预设");
+        saveFontPresetBtn.addEventListener("click", async () => {
+      const name = await sysPrompt("请输入预设名称：", "自定义预设");
       if (!name) return;
       const newPreset = {
         id: "preset_" + Date.now(),
@@ -5233,16 +5331,16 @@ TimeChecklist:
       state.fontPresets.push(newPreset);
       state.fontSettings.currentPresetId = newPreset.id;
       renderFontPresets();
-      alert("预设已保存！");
+      await sysAlert("预设已保存！");
     });
 
     // 删除预设
-    deleteFontPresetBtn.addEventListener("click", () => {
+        deleteFontPresetBtn.addEventListener("click", async () => {
       if (state.fontSettings.currentPresetId === "default") {
-        alert("默认预设不可删除");
+        await sysAlert("默认预设不可删除");
         return;
       }
-      if (confirm("确定要删除当前预设吗？")) {
+      if (await sysConfirm("确定要删除当前预设吗？", "删除预设")) {
         state.fontPresets = state.fontPresets.filter(p => p.id !== state.fontSettings.currentPresetId);
         state.fontSettings.currentPresetId = "default";
         // 回退到 default
@@ -5304,13 +5402,13 @@ TimeChecklist:
     });
 
     // 总体保存
-    saveSettingsBtn.addEventListener("click", () => {
+        saveSettingsBtn.addEventListener("click", async () => {
       state.apiSettings.url = apiUrlInput.value.trim();
       state.apiSettings.key = apiKeyInput.value.trim();
       state.apiSettings.model = modelSelect.value;
       state.apiSettings.temperature = parseFloat(tempInput.value);
       state.apiSettings.enableTranslation = translationToggle.checked;
-      alert("设置已保存");
+      await sysAlert("设置已保存");
       
       screens.settings.classList.remove("active");
       screens.me.classList.add("active");
@@ -5963,8 +6061,8 @@ TimeChecklist:
     });
 
     // 保存当前为预设
-    saveBubblePresetBtn.addEventListener("click", () => {
-      const name = prompt("请输入预设名称：", "我的预设");
+        saveBubblePresetBtn.addEventListener("click", async () => {
+      const name = await sysPrompt("请输入预设名称：", "我的预设");
       if (!name) return;
       const newPreset = {
         id: "preset_" + Date.now(),
@@ -5980,9 +6078,9 @@ TimeChecklist:
     });
 
     // 删除预设（默认预设不可删）
-    deleteBubblePresetBtn.addEventListener("click", () => {
+        deleteBubblePresetBtn.addEventListener("click", async () => {
       const id = bubblePresetSelect.value;
-      if (id === "default") { alert("默认预设不可删除"); return; }
+      if (id === "default") { await sysAlert("默认预设不可删除"); return; }
       const idx = state.bubblePresets.findIndex(x => x.id === id);
       if (idx !== -1) state.bubblePresets.splice(idx, 1);
       renderBubblePresets();
@@ -6213,15 +6311,15 @@ TimeChecklist:
     }
 
     if(walletBalanceWrap) {
-      walletBalanceWrap.addEventListener("click", () => {
-        const newBalanceStr = prompt("修改您的钱包余额：", state.wallet.balance.toFixed(2));
+            walletBalanceWrap.addEventListener("click", async () => {
+        const newBalanceStr = await sysPrompt("修改您的钱包余额：", state.wallet.balance.toFixed(2));
         if (newBalanceStr !== null) {
           const newBalance = parseFloat(newBalanceStr);
           if (!isNaN(newBalance)) {
             state.wallet.balance = newBalance;
-            renderWallet(); // 重新渲染刷新数字
+            renderWallet();
           } else {
-            alert("必须输入有效的数字哦！");
+            await sysAlert("必须输入有效的数字哦！");
           }
         }
       });
@@ -6230,15 +6328,15 @@ TimeChecklist:
     // ================= 修改支付密码逻辑 =================
     const walletCardNumberBtn = document.getElementById("walletCardNumberBtn");
     if(walletCardNumberBtn) {
-      walletCardNumberBtn.addEventListener("click", (e) => {
+            walletCardNumberBtn.addEventListener("click", async (e) => {
         e.stopPropagation();
-        const newPwd = prompt("请输入新的6位数字支付密码（直接修改，无需验证旧密码）：");
+        const newPwd = await sysPrompt("请输入新的6位数字支付密码（直接修改，无需验证旧密码）：", "", "必须是完整的6位纯数字");
         if (newPwd !== null) {
           if (/^\d{6}$/.test(newPwd)) {
             globalPayPassword = newPwd;
-            alert("支付密码修改成功！下次转账请使用新密码。");
+            await sysAlert("支付密码修改成功！下次转账请使用新密码。");
           } else {
-            alert("修改失败：支付密码必须是完整的 6 位纯数字！");
+            await sysAlert("修改失败：支付密码必须是完整的 6 位纯数字！");
           }
         }
       });
@@ -6293,9 +6391,9 @@ TimeChecklist:
 
       // 绑定编辑/删除事件
       container.querySelectorAll(".memory-action-btn.edit").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async () => {
           const idx = btn.dataset.idx;
-          const newMem = prompt("编辑记忆内容：", contact.memoryList[idx]);
+          const newMem = await sysPrompt("编辑记忆内容：", contact.memoryList[idx]);
           if (newMem !== null && newMem.trim() !== "") {
             contact.memoryList[idx] = newMem.trim();
             renderMemoryBlocks(contact);
@@ -6303,9 +6401,9 @@ TimeChecklist:
         };
       });
       container.querySelectorAll(".memory-action-btn.delete").forEach(btn => {
-        btn.onclick = () => {
+        btn.onclick = async () => {
           const idx = btn.dataset.idx;
-          if (confirm("确定要彻底删除这条记忆吗？AI将彻底忘记这件事。")) {
+          if (await sysConfirm("确定要彻底删除这条记忆吗？AI将彻底忘记这件事。", "删除记忆", true)) {
             contact.memoryList.splice(idx, 1);
             renderMemoryBlocks(contact);
           }
@@ -6328,7 +6426,7 @@ TimeChecklist:
       if (!messagesArray || messagesArray.length === 0) return;
       const api = state.apiSettings;
       if (!api.url || !api.key) {
-        if (isManual) alert("请先在设置中配置 API 地址和 Key！");
+        if (isManual) await sysAlert("请先在设置中配置 API 地址和 Key！");
         return;
       }
 
@@ -6373,7 +6471,7 @@ TimeChecklist:
 
       } catch (e) {
         console.error("总结记忆失败:", e);
-        if (isManual) alert("提取失败，请检查网络和 API 配置！");
+        if (isManual) await sysAlert("提取失败，请检查网络和 API 配置！");
       }
     }
 
@@ -6397,7 +6495,7 @@ TimeChecklist:
       const endIdx = parseInt(document.getElementById("manualSummaryEnd").value);
       
       if (isNaN(startIdx) || isNaN(endIdx) || startIdx < 1 || endIdx > contact.messages.length || startIdx > endIdx) {
-        alert("输入的条数范围不正确！");
+        await sysAlert("输入的条数范围不正确！");
         return;
       }
 
@@ -6412,7 +6510,7 @@ TimeChecklist:
       btn.textContent = "开始手动总结";
       btn.style.opacity = "1";
       btn.style.pointerEvents = "auto";
-      alert("记忆提取跑完了！如果有新发现，上面已经多了一张记忆卡片！");
+      await sysAlert("记忆提取跑完了！如果有新发现，上面已经多了一张记忆卡片！");
     });
     // ================= 世界书 (Lorebook) 交互逻辑 =================
     const openLorebookManagerBtn = document.getElementById("openLorebookManagerBtn");
@@ -6475,8 +6573,8 @@ TimeChecklist:
           </div>
         `;
         item.querySelector('.lore-edit-btn').onclick = () => openLorebookDialog(lore);
-        item.querySelector('.lore-del-btn').onclick = () => {
-          if (confirm("确定要彻底删除这条设定吗？挂载了该设定的角色将无法再读取。")) {
+                item.querySelector('.lore-del-btn').onclick = async () => {
+          if (await sysConfirm("确定要彻底删除这条设定吗？挂载了该设定的角色将无法再读取。", "删除世界书", true)) {
             state.lorebooks = state.lorebooks.filter(l => l.id !== lore.id);
             // 同步清理角色挂载表里面的死链接
             state.contacts.forEach(c => {
@@ -6523,8 +6621,8 @@ TimeChecklist:
 
     // 新建分类按钮
     if(lorebookNewCatBtn) {
-      lorebookNewCatBtn.addEventListener("click", () => {
-        const newCat = prompt("请输入新分类名称：");
+            lorebookNewCatBtn.addEventListener("click", async () => {
+        const newCat = await sysPrompt("新分类名称：", "");
         if (newCat && newCat.trim() !== "") {
           updateLorebookCatSelect(newCat.trim());
         }
@@ -6554,7 +6652,7 @@ TimeChecklist:
     if(lorebookCancelBtn) lorebookCancelBtn.addEventListener("click", () => lorebookDialogMask.classList.remove("show"));
     
     if(lorebookSaveBtn) {
-        lorebookSaveBtn.addEventListener("click", () => {
+        lorebookSaveBtn.addEventListener("click", async () => {
           const id = document.getElementById("lorebookEditId").value;
           const title = document.getElementById("lorebookTitleInput").value.trim();
           const keywords = document.getElementById("lorebookKeyInput").value.trim();
@@ -6562,7 +6660,7 @@ TimeChecklist:
           const category = lorebookCatSelect.value || '默认分类';
 
           if (!title || !content) {
-            alert("标题和设定内容不能空着哦");
+            await sysAlert("标题和设定内容不能空着哦");
             return;
           }
 
@@ -6753,10 +6851,10 @@ TimeChecklist:
     }
 
     // 4. 正式发布逻辑
-    doPublishBtn.addEventListener("click", () => {
+        doPublishBtn.addEventListener("click", async () => {
         const text = publishMomentText.value.trim();
         if(!text && !tempPublishImgBase64) {
-            alert("总得发点图片或者文字吧~");
+            await sysAlert("总得发点图片或者文字吧~");
             return;
         }
         
@@ -6890,9 +6988,9 @@ TimeChecklist:
 
         // 绑定"删除"事件 (基于SVG外层)
         document.querySelectorAll(".moment-delete-icon").forEach(btn => {
-            btn.addEventListener("click", (e) => {
+                        btn.addEventListener("click", async (e) => {
                 e.stopPropagation();
-                if(confirm("确定删除这条朋友圈吗？")) {
+                if(await sysConfirm("确定删除这条朋友圈吗？", "删除动态", true)) {
                     const mid = e.currentTarget.dataset.id;
                     state.moments = state.moments.filter(x => x.id !== mid);
                     renderMoments();

@@ -2018,10 +2018,11 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     </section>
 
     <section class="screen top-screen" id="screen-moments">
-      <div class="moments-cover">
+      <div class="moments-cover" id="momentsCover" style="cursor: pointer;" title="点击更换背景图">
+        <input type="file" id="momentsCoverInput" accept="image/*" style="display: none;" />
         <img class="moments-cam" id="openPublishMomentBtn" src="https://i.postimg.cc/9Mm1yQ3M/IMG-5017.png" alt="发布动态" style="cursor: pointer; width: 30px; height: 30px;" />
         <div class="moments-profile">
-          <div class="moments-name">{{user}}</div>
+          <div class="moments-name" id="momentsDisplayName">{{user}}</div>
           <div class="moments-avatar"></div>
         </div>
       </div>
@@ -2061,13 +2062,13 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       <div class="me-profile">
         <div class="me-header-row">
           <div class="me-avatar"></div>
-          <div class="me-name">{{user}}</div>
+          <div class="me-name" id="meDisplayName" style="cursor: pointer;" title="点击修改名字">{{user}}</div>
         </div>
-        <div class="me-status-row">
+        <div class="me-status-row" style="cursor: pointer;" id="meHandleRow" title="点击修改签名">
           <img src="https://i.postimg.cc/bYGNFk7d/IMG-5009.png" style="width: 17px; height: 17px; margin-top: -1px; object-fit: contain;" alt="send icon" />
-          <div class="handle">Sent from 13:14PM</div>
+          <div class="handle" id="meHandle">Sent from 13:14PM</div>
         </div>
-        <div class="me-quote">亲爱的，我甚至不知道如何不想你</div>
+        <div class="me-quote" id="meQuote" style="cursor: pointer;" title="点击修改心情">亲爱的，我甚至不知道如何不想你</div>
       </div>
 
       <ul class="menu">
@@ -2504,6 +2505,13 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
           </div>
         </div>
 
+        <!-- 危险操作卡片 -->
+        <div class="details-section-card" style="border: 1px solid #ffd0d0;">
+          <div class="details-section-title" style="color: #df3b3b;">危险操作</div>
+          <div style="font-size: 13px; color: #999; margin-bottom: 12px;">清除后无法恢复，请谨慎操作。</div>
+          <button id="clearChatHistoryBtn" style="appearance: none; border: 1px solid #df3b3b; background: transparent; color: #df3b3b; width: 100%; height: 44px; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer;">清除全部聊天记录</button>
+        </div>
+
         <!-- 更换气泡样式卡片 -->
         <div class="details-section-card">
           <div class="details-section-title">气泡样式</div>
@@ -2859,6 +2867,46 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         </div>
       </div>
     </div>
+    <!-- ====== 清除聊天记录二步确认弹窗 ====== -->
+    <div class="custom-dialog-mask" id="clearChatStep1Mask" style="z-index: 400;">
+      <div class="custom-dialog">
+        <div style="font-size: 36px; text-align: center; margin-bottom: 10px;">⚠️</div>
+        <div class="custom-dialog-title" style="color: #df3b3b;">危险操作警告</div>
+        <div style="font-size: 14px; color: #555; text-align: center; line-height: 1.7; margin-bottom: 20px;">
+          你即将清除与该角色的<strong>全部聊天记录</strong>。<br/>此操作<strong style="color:#df3b3b;">不可撤销</strong>，数据将被彻底删除。
+        </div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="clearChatStep1CancelBtn">我再想想</button>
+          <button class="custom-dialog-btn-danger" id="clearChatStep1ConfirmBtn">我已了解，继续</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="custom-dialog-mask" id="clearChatStep2Mask" style="z-index: 401;">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title">最后确认</div>
+        <div style="font-size: 14px; color: #555; text-align: center; line-height: 1.7; margin-bottom: 20px;">
+          确定要删除与<strong id="clearChatContactName">TA</strong>的所有对话吗？
+        </div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="clearChatStep2CancelBtn">取消</button>
+          <button class="custom-dialog-btn-danger" id="clearChatStep2ConfirmBtn">彻底清除</button>
+        </div>
+      </div>
+    </div>
+    <!-- ====== 我页面：文字修改弹窗 ====== -->
+    <div class="custom-dialog-mask" id="meEditDialogMask">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title" id="meEditDialogTitle">修改</div>
+        <input class="custom-dialog-input" id="meEditDialogInput" placeholder="" maxlength="60" />
+        <div class="custom-dialog-hint" id="meEditDialogHint"></div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="meEditDialogCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="meEditDialogConfirmBtn">保存</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <script>
@@ -2883,6 +2931,9 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       replyingToText: "",
       replyingToSender: "",
       userAvatar: "",
+      userName: "{{user}}",
+      userHandle: "Sent from 13:14PM",
+      userQuote: "亲爱的，我甚至不知道如何不想你",
       apiSettings: {
         url: "",
         key: "",
@@ -5318,9 +5369,104 @@ TimeChecklist:
       }
     });
 
-    // 点击“我”界面头像更换（唯一入口）
+    // 点击"我"界面头像更换（唯一入口）
     meAvatar.addEventListener("click", () => {
       avatarInput.click();
+    });
+
+    // ================== 我页面文字同步函数 ==================
+    function syncMePageText() {
+      const name = state.userName || "{{user}}";
+      const handle = state.userHandle || "Sent from 13:14PM";
+      const quote = state.userQuote || "亲爱的，我甚至不知道如何不想你";
+      const meDisplayName = document.getElementById("meDisplayName");
+      const meHandle = document.getElementById("meHandle");
+      const meQuote = document.getElementById("meQuote");
+      const momentsDisplayName = document.getElementById("momentsDisplayName");
+      if (meDisplayName) meDisplayName.textContent = name;
+      if (meHandle) meHandle.textContent = handle;
+      if (meQuote) meQuote.textContent = quote;
+      if (momentsDisplayName) momentsDisplayName.textContent = name;
+    }
+    syncMePageText();
+
+    // ================== 我页面修改弹窗逻辑 ==================
+    const meEditDialogMask = document.getElementById("meEditDialogMask");
+    const meEditDialogTitle = document.getElementById("meEditDialogTitle");
+    const meEditDialogInput = document.getElementById("meEditDialogInput");
+    const meEditDialogHint = document.getElementById("meEditDialogHint");
+    const meEditDialogCancelBtn = document.getElementById("meEditDialogCancelBtn");
+    const meEditDialogConfirmBtn = document.getElementById("meEditDialogConfirmBtn");
+    let meEditMode = ""; // "name" | "handle" | "quote"
+
+    function openMeEditDialog(mode) {
+      meEditMode = mode;
+      if (mode === "name") {
+        meEditDialogTitle.textContent = "修改名字";
+        meEditDialogInput.placeholder = "输入你的名字";
+        meEditDialogInput.value = state.userName || "";
+                meEditDialogHint.textContent = "";
+      } else if (mode === "handle") {
+        meEditDialogTitle.textContent = "修改签名";
+        meEditDialogInput.placeholder = "Sent from...";
+        meEditDialogInput.value = state.userHandle || "";
+        meEditDialogHint.textContent = "";
+      } else if (mode === "quote") {
+        meEditDialogTitle.textContent = "修改心情";
+        meEditDialogInput.placeholder = "输入一句话心情";
+        meEditDialogInput.value = state.userQuote || "";
+        meEditDialogHint.textContent = "";
+      }
+      meEditDialogMask.classList.add("show");
+      setTimeout(() => meEditDialogInput.focus(), 80);
+    }
+
+    meEditDialogCancelBtn.addEventListener("click", () => {
+      meEditDialogMask.classList.remove("show");
+    });
+
+    meEditDialogConfirmBtn.addEventListener("click", () => {
+      const val = meEditDialogInput.value.trim();
+      if (meEditMode === "name" && val) {
+        state.userName = val;
+      } else if (meEditMode === "handle") {
+        state.userHandle = val;
+      } else if (meEditMode === "quote") {
+        state.userQuote = val;
+      }
+      syncMePageText();
+      meEditDialogMask.classList.remove("show");
+    });
+
+    // 点击名字
+    document.getElementById("meDisplayName").addEventListener("click", () => openMeEditDialog("name"));
+    // 点击签名行
+    document.getElementById("meHandleRow").addEventListener("click", () => openMeEditDialog("handle"));
+    // 点击心情
+    document.getElementById("meQuote").addEventListener("click", () => openMeEditDialog("quote"));
+
+    // ================== 朋友圈背景图更换逻辑 ==================
+    const momentsCover = document.getElementById("momentsCover");
+    const momentsCoverInput = document.getElementById("momentsCoverInput");
+
+    momentsCover.addEventListener("click", (e) => {
+      // 避免点击发布按钮时触发
+      if (e.target === document.getElementById("openPublishMomentBtn")) return;
+      momentsCoverInput.click();
+    });
+
+    momentsCoverInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const url = ev.target.result;
+        momentsCover.style.backgroundImage = `url(${url})`;
+        momentsCover.style.backgroundSize = "cover";
+        momentsCover.style.backgroundPosition = "center";
+      };
+      reader.readAsDataURL(file);
+      momentsCoverInput.value = "";
     });
 
     // ================== 聊天详情 & 头像框交互逻辑 ==================
@@ -5866,6 +6012,40 @@ TimeChecklist:
         contact.customBubbleCss = "";
         applyBubbleStyleToChat(contact);
       }
+    });
+    // ================== 清除聊天记录逻辑 ==================
+    const clearChatHistoryBtn = document.getElementById("clearChatHistoryBtn");
+    const clearChatStep1Mask = document.getElementById("clearChatStep1Mask");
+    const clearChatStep2Mask = document.getElementById("clearChatStep2Mask");
+
+    clearChatHistoryBtn.addEventListener("click", () => {
+      clearChatStep1Mask.classList.add("show");
+    });
+
+    document.getElementById("clearChatStep1CancelBtn").addEventListener("click", () => {
+      clearChatStep1Mask.classList.remove("show");
+    });
+
+    document.getElementById("clearChatStep1ConfirmBtn").addEventListener("click", () => {
+      clearChatStep1Mask.classList.remove("show");
+      const contact = getContact(state.activeContactId);
+      document.getElementById("clearChatContactName").textContent = contact ? (contact.remark || contact.realName || "TA") : "TA";
+      clearChatStep2Mask.classList.add("show");
+    });
+
+    document.getElementById("clearChatStep2CancelBtn").addEventListener("click", () => {
+      clearChatStep2Mask.classList.remove("show");
+    });
+
+    document.getElementById("clearChatStep2ConfirmBtn").addEventListener("click", () => {
+      const contact = getContact(state.activeContactId);
+      if (contact) {
+        contact.messages = [];
+        contact.lastTime = "";
+        renderChat();
+        renderContacts();
+      }
+      clearChatStep2Mask.classList.remove("show");
     });
 
     // 背景图更换
@@ -6678,7 +6858,7 @@ TimeChecklist:
             card.innerHTML = `
                 <div class="moment-avatar" style="${myAvatarStyle}"></div>
                 <div class="moment-main">
-                    <div class="moment-name">我</div>
+                    <div class="moment-name">${state.userName || "我"}</div>
                     ${m.text ? `<div class="moment-text">${m.text}</div>` : ''}
                     ${imgHtml}
                     <div class="moment-time-row">
@@ -6692,7 +6872,7 @@ TimeChecklist:
                         <div class="moment-popout" id="popout-${m.id}">
                             <div class="moment-popout-btn like-pop-btn" data-id="${m.id}">
                                 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-                                ${m.likes.includes("我") ? "取消" : "赞"}
+                                                                ${m.likes.includes(state.userName || "我") ? "取消" : "赞"}
                             </div>
                             <div class="moment-popout-divider"></div>
                             <div class="moment-popout-btn comment-pop-btn" data-id="${m.id}">
@@ -6741,9 +6921,10 @@ TimeChecklist:
                 const mid = e.currentTarget.dataset.id;
                 const moment = state.moments.find(x => x.id === mid);
                 if(moment) {
-                    const myIdx = moment.likes.indexOf("我");
+                    const myName = state.userName || "我";
+                    const myIdx = moment.likes.indexOf(myName);
                     if(myIdx !== -1) moment.likes.splice(myIdx, 1);
-                    else moment.likes.push("我");
+                    else moment.likes.push(myName);
                     renderMoments(); // 重新渲染会自动关掉弹窗
                 }
             });

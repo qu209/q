@@ -2088,6 +2088,42 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .voice-transcript.show { display: block; }
     .message-row.ai .voice-transcript { background: #e8eaef; color: #111; }
     .message-row.me .voice-transcript { background: #222; color: rgba(255,255,255,0.9); }
+    /* 朋友圈AI配图描述弹窗 */
+    .moment-img-desc-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 9000;
+      background: rgba(0,0,0,0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .moment-img-desc-mask.show { display: flex; }
+    .moment-img-desc-img {
+      max-width: 90vw;
+      max-height: 50vh;
+      border-radius: 12px;
+      object-fit: contain;
+    }
+    .moment-img-desc-text {
+      background: rgba(255,255,255,0.95);
+      border-radius: 16px;
+      padding: 16px 20px;
+      max-width: 90vw;
+      font-size: 14px;
+      color: #333;
+      line-height: 1.6;
+      text-align: center;
+      word-break: break-word;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    }
+    .moment-img-desc-hint {
+      font-size: 12px;
+      color: rgba(255,255,255,0.5);
+    }
 
   </style>
   
@@ -2965,6 +3001,12 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
           <button class="custom-dialog-btn-confirm" id="lorebookSaveBtn">保存</button>
         </div>
       </div>
+    </div>
+    <!-- 朋友圈AI配图描述弹窗 -->
+    <div class="moment-img-desc-mask" id="momentImgDescMask">
+      <img class="moment-img-desc-img" id="momentImgDescImg" src="" />
+      <div class="moment-img-desc-text" id="momentImgDescText"></div>
+      <div class="moment-img-desc-hint">点击任意处关闭</div>
     </div>
 
     <nav class="tabbar" id="tabbar">
@@ -4327,6 +4369,9 @@ TimeChecklist:
           combinedPersona += `\n【专属表情包库（极其重要）】\n你拥有以下表情包。在聊天中，如果你觉得当前情绪和语境合适，你可以发送对应的表情包！\n发送规则：必须单独占一行输出指令：[EMOJI_STICKER|图片链接|意思]。\n例如：[EMOJI_STICKER|https://xxx.jpg|开心]。\n当前你可用的表情包列表如下：\n${emojiListStr}\n`;
         }
       }
+
+      // 语音消息功能注入
+      combinedPersona += `\n【语音消息功能】\n你可以发送语音消息！当你觉得文字不够表达情感时（比如撒娇、哄人、讲悄悄话、表白、生气吼人、唱歌、叹气等场景），可以选择发语音代替文字。\n发送规则：必须单独占一行输出指令：[VOICE_MSG|时长秒数|语音内容文字]\n例如：[VOICE_MSG|3|宝贝你在干嘛呀]\n例如：[VOICE_MSG|5|哼你都不理我 我生气了知道吗]\n注意事项：\n1. 时长请根据文字长度合理估算（大约每10个字约3秒）\n2. 语音内容要非常口语化、自然，像真的在说话一样，可以有语气词、停顿\n3. 不要每条都发语音，偶尔穿插1-2条即可，大部分时候还是用普通文字\n4. 用户给你发的语音消息你能看到内容，请正常回应\n`;
 
       // 检查是否开启了翻译模式，并注入超强逻辑覆写
       if (api.enableTranslation) {
@@ -7267,7 +7312,14 @@ TimeChecklist:
             const card = document.createElement("div");
             card.className = "moment-card";
             
-            let imgHtml = m.image ? `<img src="${m.image}" class="moment-img" />` : '';
+            let imgHtml = '';
+            if (m.image) {
+                if (m.imageDescription) {
+                    imgHtml = `<img src="${m.image}" class="moment-img moment-ai-img" data-mid="${m.id}" style="cursor:pointer;" title="点击查看AI绘图描述" />`;
+                } else {
+                    imgHtml = `<img src="${m.image}" class="moment-img" />`;
+                }
+            }
             
             // 使用精致的心形 SVG 代替 emoji
             let likesHtml = m.likes.length > 0 ? 
@@ -7407,7 +7459,26 @@ TimeChecklist:
                 setTimeout(() => momentCommentInput.focus(), 100);
             });
         });
+
+        // 绑定AI配图点击弹窗事件
+        document.querySelectorAll(".moment-ai-img").forEach(img => {
+            img.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const mid = e.currentTarget.dataset.mid;
+                const moment = state.moments.find(x => x.id === mid);
+                if (moment && moment.imageDescription) {
+                    document.getElementById("momentImgDescImg").src = moment.image;
+                    document.getElementById("momentImgDescText").textContent = "🎨 AI 绘图描述：" + moment.imageDescription;
+                    document.getElementById("momentImgDescMask").classList.add("show");
+                }
+            });
+        });
     }
+
+    // 朋友圈AI配图描述弹窗关闭逻辑
+    document.getElementById("momentImgDescMask").addEventListener("click", () => {
+        document.getElementById("momentImgDescMask").classList.remove("show");
+    });
 
     // 绑定发送评论按钮
     momentCommentSendBtn.addEventListener("click", () => {
@@ -7760,6 +7831,7 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                 timestamp: Date.now(),
                 text: momentText,
                 image: imageUrl, // 可能为空
+                imageDescription: (imagePrompt !== "NONE" && imageUrl) ? imagePrompt : "", // AI配图描述
                 likes: [],
                 comments: [],
                 calledAIs: [contact.id], // 标记是该AI发的

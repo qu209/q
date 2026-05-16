@@ -5075,17 +5075,23 @@ TimeChecklist:
       state.userAvatar = url;
       const bgVal = `url(${url})`;
       
-      meAvatar.style.backgroundImage = bgVal;
-      meAvatar.style.backgroundSize = "cover";
-      meAvatar.style.backgroundPosition = "center";
+      if (meAvatar) {
+        meAvatar.style.backgroundImage = bgVal;
+        meAvatar.style.backgroundSize = "cover";
+        meAvatar.style.backgroundPosition = "center";
+      }
       
-      momentsAvatar.style.backgroundImage = bgVal;
-      momentsAvatar.style.backgroundSize = "cover";
-      momentsAvatar.style.backgroundPosition = "center";
+      if (momentsAvatar) {
+        momentsAvatar.style.backgroundImage = bgVal;
+        momentsAvatar.style.backgroundSize = "cover";
+        momentsAvatar.style.backgroundPosition = "center";
+      }
       
-      drawerAvatar.style.backgroundImage = bgVal;
-      drawerAvatar.style.backgroundSize = "cover";
-      drawerAvatar.style.backgroundPosition = "center";
+      if (drawerAvatar) {
+        drawerAvatar.style.backgroundImage = bgVal;
+        drawerAvatar.style.backgroundSize = "cover";
+        drawerAvatar.style.backgroundPosition = "center";
+      }
 
       // 如果在聊天界面，重新渲染以更新右侧气泡的头像
       if (screens.chat.classList.contains("active")) {

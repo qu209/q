@@ -659,7 +659,7 @@
     }
 
     .btn-dark {
-      background: #1c1c1e;
+      background: #C1D0DC;
       color: #fff;
       flex: 1.6;
     }
@@ -1238,7 +1238,7 @@
       right: 12px;
       width: 250px;
       background: #fff;
-      border: 2px solid #111;
+      border: 2px solid #C1D0DC;
       border-radius: 20px;
       padding: 16px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.15);
@@ -1257,8 +1257,8 @@
       width: 16px;
       height: 16px;
       background: #fff;
-      border-left: 2px solid #111;
-      border-top: 2px solid #111;
+      border-left: 2px solid #C1D0DC;
+      border-top: 2px solid #C1D0DC;
       transform: rotate(45deg);
     }
     .inner-voice-popup.show {
@@ -1758,7 +1758,7 @@
       height: 44px;
       border-radius: 12px;
       border: 0;
-      background: #111;
+      background: #C1D0DC;
       color: #fff;
       font-size: 15px;
       font-weight: 600;
@@ -1982,7 +1982,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .moment-comment-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #f7f7f7; border-top: 1px solid #ececec; padding: 10px 16px; display: none; align-items: center; gap: 10px; z-index: 50; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.25s; }
     .moment-comment-bar.show { display: flex; transform: translateY(0); }
     .moment-comment-input { flex: 1; border: none; background: #fff; border-radius: 4px; padding: 10px 12px; font-size: 15px; outline: none; }
-    .moment-comment-send { background: #111; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: bold; cursor: pointer; }
+    .moment-comment-send { background: #C1D0DC; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: bold; cursor: pointer; }
 
     /* 发布界面 */
     .moment-publish-screen { position: fixed; inset: 0; background: #fff; z-index: 100; display: none; flex-direction: column; overflow-y: auto; }
@@ -2038,7 +2038,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     <section class="moment-publish-screen" id="screen-publish-moment">
       <div style="display: flex; justify-content: space-between; padding: calc(10px + var(--safe-top)) 16px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; position: sticky; top: 0; background: #fff; z-index: 10;">
         <button id="cancelPublishBtn" style="appearance: none; border: none; background: none; font-size: 16px; color: #333; padding: 4px; cursor: pointer;">取消</button>
-        <button id="doPublishBtn" style="appearance: none; border: none; background: #111; color: white; padding: 6px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer;">发表</button>
+        <button id="doPublishBtn" style="appearance: none; border: none; background: #C1D0DC; color: white; padding: 6px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer;">发表</button>
       </div>
       <div style="padding: 16px;">
         <textarea id="publishMomentText" placeholder="这一刻的想法..." style="width: 100%; border: none; outline: none; min-height: 100px; font-size: 16px; resize: none; background: transparent;"></textarea>
@@ -2141,7 +2141,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">模型设置</div>
         <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
           <div class="field" style="display: flex; margin-bottom: 16px;">
-            <button class="btn" id="fetchModelsBtn" style="flex: 1; background: #111; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">拉取可用模型</button>
+            <button class="btn" id="fetchModelsBtn" style="flex: 1; background: #C1D0DC; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">拉取可用模型</button>
           </div>
           <div class="field" style="margin-bottom: 20px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label for="modelSelect" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">选择模型</label>
@@ -2154,7 +2154,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
               <span>温度 (Temperature)</span>
               <span id="tempValueDisplay" style="color: #8e8e93; font-weight: normal;">1.0</span>
             </label>
-            <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; accent-color: #d1d1d6; height: 4px; outline: none; margin: 4px 0 8px 0;" />
+            <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; accent-color: #C1D0DC; height: 4px; outline: none; margin: 4px 0 8px 0;" />
           </div>
           
           <div class="toggle-row" style="margin-top: 16px; margin-bottom: 4px;">
@@ -2208,7 +2208,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
               <span>气泡文本大小</span>
               <span id="fontSizeDisplay" style="color: #8e8e93; font-weight: normal;">15px</span>
             </label>
-            <input type="range" id="fontSizeInput" min="12" max="25" step="1" value="15" style="width: 100%; accent-color: #d1d1d6; height: 4px; outline: none; margin: 4px 0 8px 0;" />
+            <input type="range" id="fontSizeInput" min="12" max="25" step="1" value="15" style="width: 100%; accent-color: #C1D0DC; height: 4px; outline: none; margin: 4px 0 8px 0;" />
           </div>
 
         </div>
@@ -2461,7 +2461,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
               <input type="number" id="manualSummaryEnd" class="input" style="width:60px; height:32px; text-align:center; padding:0;" value="10">
               <span>条</span>
             </div>
-            <button class="btn btn-dark" id="manualSummaryBtn" style="width:100%; height:40px; border-radius:8px;">开始手动总结</button>
+            <button class="btn btn-dark" id="manualSummaryBtn" style="width:100%; height:40px; border-radius:8px; background: #C1D0DC;">开始手动总结</button>
           </div>
         </div>
 
@@ -2513,7 +2513,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             <div class="bubble-section-label">选择预设</div>
             <select class="bubble-preset-select" id="bubblePresetSelect"></select>
             <button id="deleteBubblePresetBtn" title="删除此预设" style="appearance:none;border:0;background:#f2f2f7;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#df3b3b;font-size:18px;font-weight:700;">×</button>
-            <button id="saveBubblePresetBtn" title="保存当前为预设" style="appearance:none;border:0;background:#111;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-size:16px;">✓</button>
+            <button id="saveBubblePresetBtn" title="保存当前为预设" style="appearance:none;border:0;background:#C1D0DC;border-radius:8px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:#fff;font-size:16px;">✓</button>
           </div>
 
           <!-- 第二排：颜色选择 -->
@@ -2581,7 +2581,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
              <img id="framePreviewOverlay" src="" style="position: absolute; pointer-events: none; display: none; left: 50%; top: 50%; transform: translate(-50%, -50%); object-fit: contain;" />
           </div>
 
-          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 110px; height: 36px; min-height: 36px; font-size: 14px; margin-bottom: 24px; flex-shrink: 0; flex: none; border-radius: 18px; padding: 0;">上传头像框</button>
+          <button class="btn btn-dark" id="uploadFrameBtn" style="width: 110px; height: 36px; min-height: 36px; font-size: 14px; margin-bottom: 24px; flex-shrink: 0; flex: none; border-radius: 18px; padding: 0; background: #C1D0DC;">上传头像框</button>
           <input type="file" id="frameFileInput" accept="image/*" style="display: none;" />
 
           <div style="width: 100%; margin-bottom: 16px;">
@@ -2591,7 +2591,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             </label>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 12px; color: #999;">0.8</span>
-              <input type="range" id="frameScaleSlider" min="0.8" max="2.5" step="0.01" value="1" style="flex: 1; accent-color: #111;" />
+              <input type="range" id="frameScaleSlider" min="0.8" max="2.5" step="0.01" value="1" style="flex: 1; accent-color: #C1D0DC;" />
               <span style="font-size: 12px; color: #999;">2.5</span>
             </div>
           </div>
@@ -2603,7 +2603,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             </label>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span style="font-size: 12px; color: #999;">-50</span>
-              <input type="range" id="frameXSlider" min="-50" max="50" step="1" value="0" style="flex: 1; accent-color: #111;" />
+              <input type="range" id="frameXSlider" min="-50" max="50" step="1" value="0" style="flex: 1; accent-color: #C1D0DC;" />
               <span style="font-size: 12px; color: #999;">+50</span>
             </div>
           </div>
@@ -2620,8 +2620,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             align-items: center; gap: 8px;">
               <span style="font-size: 12px;
             color: #999;">-50</span>
-              <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="flex: 1;
-            accent-color: #111;" />
+              <input type="range" id="frameYSlider" min="-50" max="50" step="1" value="0" style="flex: 1; accent-color: #C1D0DC;" />
               <span style="font-size: 12px;
             color: #999;">+50</span>
             </div>
@@ -6261,7 +6260,7 @@ TimeChecklist:
       categories.forEach(cat => {
         const isActive = cat === currentLoreCategory;
         const tab = document.createElement("div");
-        tab.style.cssText = `white-space: nowrap; padding: 6px 16px; border-radius: 999px; cursor: pointer; font-size: 14px; user-select: none; transition: all 0.2s; ${isActive ? 'background: #111; color: #fff; font-weight: 700;' : 'background: #f7f7f8; color: #666;'}`;
+        tab.style.cssText = `white-space: nowrap; padding: 6px 16px; border-radius: 999px; cursor: pointer; font-size: 14px; user-select: none; transition: all 0.2s; ${isActive ? 'background: #C1D0DC; color: #fff; font-weight: 700;' : 'background: #f7f7f8; color: #666;'}`;
         tab.textContent = cat;
         tab.onclick = () => {
           currentLoreCategory = cat;

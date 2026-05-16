@@ -24,6 +24,23 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
+      /* 下面是新增的禁止长按选中和禁止系统默认弹窗的属性 */
+      -webkit-touch-callout: none;
+      -webkit-user-select: none;
+      -khtml-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+    }
+
+    /* 重点：这一段必须加，否则你的输入框也会被禁止点击，就没法打字了 */
+    input, textarea, [contenteditable="true"] {
+      -webkit-touch-callout: default;
+      -webkit-user-select: auto;
+      -khtml-user-select: auto;
+      -moz-user-select: auto;
+      -ms-user-select: auto;
+      user-select: auto;
     }
 
     html,
@@ -7159,6 +7176,11 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 
     // 初始化预设
     renderBubblePresets();
+
+    // 下面是新增的代码：全局拦截长按事件，防止触发长按菜单弹窗
+    document.addEventListener('contextmenu', function(e) {
+        e.preventDefault();
+    });
     updateBubblePreview();
     // 初始化运行一次动态样式
     applyGlobalFontAndSize();

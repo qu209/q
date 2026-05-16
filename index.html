@@ -271,7 +271,7 @@
     .moments-avatar {
       width: 68px;
       height: 68px;
-      border-radius: 12px;
+      border-radius: 50%;
       background: #333;
       border: 2px solid #fff;
     }
@@ -1887,6 +1887,56 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .memory-action-btn.edit { color: #007aff; }
     .memory-action-btn.delete { color: #df3b3b; }
 
+    /* ================= 朋友圈额外样式 ================= */
+    .moment-card { padding: 16px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; background: #fff; text-align: left; }
+    .moment-avatar { width: 42px; height: 42px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #eee; }
+    .moment-main { flex: 1; min-width: 0; }
+    .moment-name { font-size: 16px; font-weight: 600; color: #576b95; margin-bottom: 4px; }
+    .moment-text { font-size: 15px; color: #111; line-height: 1.5; word-break: break-word; white-space: pre-wrap; margin-bottom: 8px; }
+    .moment-img { max-width: 80%; max-height: 200px; border-radius: 4px; object-fit: cover; margin-bottom: 8px; display: block; }
+    
+    /* 时间、删除、弹出按钮同行布局 */
+    .moment-time-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; height: 24px; }
+    .moment-time-left { display: flex; gap: 12px; align-items: center; font-size: 13px; color: #b2b2b2; }
+    
+    /* SVG 删除图标 */
+    .moment-delete-icon { color: #576b95; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 2px; }
+    .moment-delete-icon:active { opacity: 0.5; }
+    
+    /* 两个点的弹出按钮 (完美居中) */
+    .moment-toggle-btn { background: #f0f0f0; border-radius: 4px; padding: 0 8px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #576b95; font-weight: bold; letter-spacing: 2px; }
+    .moment-toggle-btn span { transform: translateY(-3px); pointer-events: none; font-size: 14px; }
+    
+    /* 黑色弹出菜单 */
+    .moment-popout { position: absolute; right: 40px; top: -6px; background: #4c5154; border-radius: 4px; display: flex; overflow: hidden; opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); transform: translateX(10px); }
+    .moment-popout.show { opacity: 1; pointer-events: auto; transform: translateX(0); }
+    .moment-popout-btn { color: #fff; padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500; }
+    .moment-popout-btn:active { background: #3a3f42; }
+    .moment-popout-divider { width: 1px; background: #3a3f42; margin: 8px 0; }
+    
+    /* 点赞和评论区 */
+    .moment-interact-box { background: #f7f7f7; border-radius: 4px; padding: 8px; position: relative; margin-top: 4px; }
+    .moment-interact-box::before { content: ""; position: absolute; top: -10px; left: 10px; border-width: 5px; border-style: solid; border-color: transparent transparent #f7f7f7 transparent; }
+    .moment-likes { font-size: 13px; color: #576b95; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; word-break: break-all; }
+    .moment-likes-border { border-bottom: 1px solid #eaeaec; margin-bottom: 4px; padding-bottom: 4px; }
+    .moment-comments { font-size: 13px; color: #111; display: flex; flex-direction: column; gap: 4px; }
+    .moment-comment-item { line-height: 1.4; word-break: break-word; cursor: pointer; }
+    .moment-comment-item:active { background: #ececec; }
+    .moment-comment-item span.comment-name { color: #576b95; font-weight: 600; }
+    
+    /* AI 正在打字状态 */
+    .moment-typing { font-size: 13px; color: #b2b2b2; margin-top: 8px; font-style: italic; }
+
+    /* 底部内联评论输入框 */
+    .moment-comment-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #f7f7f7; border-top: 1px solid #ececec; padding: 10px 16px; display: none; align-items: center; gap: 10px; z-index: 50; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.25s; }
+    .moment-comment-bar.show { display: flex; transform: translateY(0); }
+    .moment-comment-input { flex: 1; border: none; background: #fff; border-radius: 4px; padding: 10px 12px; font-size: 15px; outline: none; }
+    .moment-comment-send { background: #111; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+    /* 发布界面 */
+    .moment-publish-screen { position: fixed; inset: 0; background: #fff; z-index: 100; display: none; flex-direction: column; overflow-y: auto; }
+    .moment-publish-screen.show { display: flex; }
+    
   </style>
   
 </head>
@@ -1918,13 +1968,42 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
 
     <section class="screen top-screen" id="screen-moments">
       <div class="moments-cover">
-        <img class="moments-cam" src="https://i.postimg.cc/XvxCSB82/IMG-3174.png" alt="相机" />
+        <img class="moments-cam" id="openPublishMomentBtn" src="https://i.postimg.cc/9Mm1yQ3M/IMG-5017.png" alt="发布动态" style="cursor: pointer; width: 30px; height: 30px;" />
         <div class="moments-profile">
           <div class="moments-name">{{user}}</div>
           <div class="moments-avatar"></div>
         </div>
       </div>
-      <div class="moments-body">暂时没有动态</div>
+      <div class="moments-body" id="momentsListContainer" style="padding-top: 0; text-align: left; background: #fff; padding-bottom: 80px;">
+        <div style="text-align: center; color: #b7bcc5; padding-top: 110px;" id="momentsEmptyHint">暂时没有动态</div>
+      </div>
+      
+      <div class="moment-comment-bar" id="momentCommentBar">
+        <input type="text" id="momentCommentInput" class="moment-comment-input" placeholder="评论" autocomplete="off" />
+        <button id="momentCommentSendBtn" class="moment-comment-send">发送</button>
+      </div>
+    </section>
+
+    <section class="moment-publish-screen" id="screen-publish-moment">
+      <div style="display: flex; justify-content: space-between; padding: calc(10px + var(--safe-top)) 16px 10px; border-bottom: 1px solid #f0f0f0; align-items: center; position: sticky; top: 0; background: #fff; z-index: 10;">
+        <button id="cancelPublishBtn" style="appearance: none; border: none; background: none; font-size: 16px; color: #333; padding: 4px; cursor: pointer;">取消</button>
+        <button id="doPublishBtn" style="appearance: none; border: none; background: #111; color: white; padding: 6px 16px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer;">发表</button>
+      </div>
+      <div style="padding: 16px;">
+        <textarea id="publishMomentText" placeholder="这一刻的想法..." style="width: 100%; border: none; outline: none; min-height: 100px; font-size: 16px; resize: none; background: transparent;"></textarea>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
+          <div id="publishImgPreviewWrap" style="display: none; position: relative;">
+            <img id="publishImgPreview" src="" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;" />
+            <button id="removePublishImgBtn" style="position: absolute; top: -6px; right: -6px; background: rgba(0,0,0,0.6); color: #fff; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 12px; display: flex; align-items: center; justify-content: center; padding: 0; cursor: pointer;">✕</button>
+          </div>
+          <button id="addPublishImgBtn" style="appearance: none; width: 100px; height: 100px; background: #f2f2f7; border: none; font-size: 40px; color: #ccc; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;">+</button>
+          <input type="file" id="publishImgInput" accept="image/*" style="display: none;" />
+        </div>
+      </div>
+      <div style="padding: 16px; border-top: 1px solid #f5f5f5;">
+        <div style="font-size: 14px; font-weight: bold; margin-bottom: 12px; color: #555;">@邀请 AI 角色看并评论</div>
+        <div id="publishContactList" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      </div>
     </section>
 
     <section class="screen top-screen" id="screen-me">
@@ -2754,6 +2833,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         transactions: []
       },
       lorebooks: [], // 全局存储世界书
+      moments: [], // 新增：全局存储朋友圈动态数据
      
       contacts: [
         {
@@ -4990,7 +5070,7 @@ TimeChecklist:
     const meAvatar = document.querySelector(".me-avatar");
     const momentsAvatar = document.querySelector(".moments-avatar");
     const drawerAvatar = document.querySelector(".drawer-avatar");
-    
+
     function updateUserAvatar(url) {
       state.userAvatar = url;
       const bgVal = `url(${url})`;
@@ -5011,6 +5091,11 @@ TimeChecklist:
       if (screens.chat.classList.contains("active")) {
         renderChat();
       }
+      
+      // 同步刷新朋友圈里的所有动态小头像
+      if (typeof renderMoments === "function") {
+        renderMoments();
+      }
     }
 
     // 创建一个隐藏的 input file 用于上传头像
@@ -5028,12 +5113,8 @@ TimeChecklist:
       }
     });
 
-    // 点击“我”界面头像更换
+    // 点击“我”界面头像更换（唯一入口）
     meAvatar.addEventListener("click", () => {
-      avatarInput.click();
-    });
-    // 点击“朋友圈”界面头像更换
-    momentsAvatar.addEventListener("click", () => {
       avatarInput.click();
     });
 
@@ -6179,12 +6260,449 @@ TimeChecklist:
     }
     // =======================================================
 
+    // ================= 朋友圈功能全套逻辑 =================
+    const openPublishMomentBtn = document.getElementById("openPublishMomentBtn");
+    const screenPublishMoment = document.getElementById("screen-publish-moment");
+    const cancelPublishBtn = document.getElementById("cancelPublishBtn");
+    const doPublishBtn = document.getElementById("doPublishBtn");
+    const publishMomentText = document.getElementById("publishMomentText");
+    const publishImgPreviewWrap = document.getElementById("publishImgPreviewWrap");
+    const publishImgPreview = document.getElementById("publishImgPreview");
+    const addPublishImgBtn = document.getElementById("addPublishImgBtn");
+    const publishImgInput = document.getElementById("publishImgInput");
+    const removePublishImgBtn = document.getElementById("removePublishImgBtn");
+    const publishContactList = document.getElementById("publishContactList");
+    const momentsListContainer = document.getElementById("momentsListContainer");
+    const momentsEmptyHint = document.getElementById("momentsEmptyHint");
+    
+    let tempPublishImgBase64 = "";
+
+    // 1. 打开发布界面
+    openPublishMomentBtn.addEventListener("click", () => {
+        publishMomentText.value = "";
+        tempPublishImgBase64 = "";
+        publishImgPreviewWrap.style.display = "none";
+        addPublishImgBtn.style.display = "flex";
+        
+        // 动态渲染所有可以勾选的 AI 联系人
+        publishContactList.innerHTML = "";
+        if(state.contacts.length === 0) {
+            publishContactList.innerHTML = "<div style='color:#999; font-size:13px;'>暂无角色，请先去通讯录添加角色</div>";
+        } else {
+            state.contacts.forEach(c => {
+                const label = document.createElement("label");
+                label.style.cssText = "display: flex; align-items: center; gap: 10px; font-size: 15px; cursor: pointer;";
+                label.innerHTML = `
+                    <input type="checkbox" class="moment-contact-cb" value="${c.id}" style="width: 18px; height: 18px; cursor: pointer;" />
+                    <div style="width: 32px; height: 32px; border-radius: 4px; background: url(${c.avatar || ''}) center/cover no-repeat #eee;"></div>
+                    <span>${getDisplayName(c)}</span>
+                `;
+                publishContactList.appendChild(label);
+            });
+        }
+        
+        screenPublishMoment.classList.add("show");
+    });
+
+    // 2. 取消发布
+    cancelPublishBtn.addEventListener("click", () => {
+        screenPublishMoment.classList.remove("show");
+    });
+
+    // 3. 上传图片预览逻辑
+    addPublishImgBtn.addEventListener("click", () => publishImgInput.click());
+    publishImgInput.addEventListener("change", (e) => {
+        const file = e.target.files[0];
+        if(file) {
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                tempPublishImgBase64 = ev.target.result;
+                publishImgPreview.src = tempPublishImgBase64;
+                publishImgPreviewWrap.style.display = "block";
+                addPublishImgBtn.style.display = "none";
+            };
+            reader.readAsDataURL(file);
+        }
+        e.target.value = "";
+    });
+    removePublishImgBtn.addEventListener("click", () => {
+        tempPublishImgBase64 = "";
+        publishImgPreviewWrap.style.display = "none";
+        addPublishImgBtn.style.display = "flex";
+    });
+
+    // 新增：朋友圈专门的时间格式化引擎
+    function formatMomentTime(timestamp) {
+        if (!timestamp) return "刚刚";
+        const now = new Date();
+        const date = new Date(timestamp);
+        const diff = now.getTime() - date.getTime();
+        const oneDay = 24 * 60 * 60 * 1000;
+        const oneYear = 365 * oneDay;
+
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+
+        if (diff > oneYear) {
+            return `${y}年${m}月${d}日`;
+        } else if (diff > oneDay || now.getDate() !== date.getDate()) {
+            return `${m}月${d}日 ${h}:${min}`; // 超过24小时或跨天
+        } else {
+            return `${h}:${min}`; // 24小时内
+        }
+    }
+
+    // 4. 正式发布逻辑
+    doPublishBtn.addEventListener("click", () => {
+        const text = publishMomentText.value.trim();
+        if(!text && !tempPublishImgBase64) {
+            alert("总得发点图片或者文字吧~");
+            return;
+        }
+        
+        // 收集勾选的AI角色对象，并提取名字
+        const checkedContacts = Array.from(document.querySelectorAll(".moment-contact-cb"))
+                                .filter(cb => cb.checked)
+                                .map(cb => getContact(cb.value))
+                                .filter(c => c);
+
+        const newMoment = {
+            id: "mom_" + Date.now(),
+            timestamp: Date.now(), // 存储精准时间戳
+            text: text,
+            image: tempPublishImgBase64,
+            likes: [],
+            comments: [],
+            calledAIs: checkedContacts.map(c => c.id),
+            typingAIs: checkedContacts.map(c => getDisplayName(c)) // 记录谁正在打字
+        };
+        
+        state.moments.unshift(newMoment); // 插到最前面
+        screenPublishMoment.classList.remove("show");
+        renderMoments(); // 立刻刷新
+        
+        // 分别触发被勾选 AI 的请求
+        checkedContacts.forEach(c => {
+            fetchAICommentForMoment(newMoment.id, c.id);
+        });
+    });
+
+    // 底部评论框变量
+    const momentCommentBar = document.getElementById("momentCommentBar");
+    const momentCommentInput = document.getElementById("momentCommentInput");
+    const momentCommentSendBtn = document.getElementById("momentCommentSendBtn");
+    let activeMomentIdForComment = null;
+    let activeReplyTargetName = null;
+
+    // 全局点击监听：用于点击空白处收起菜单和输入框
+    document.addEventListener("click", (e) => {
+        // 隐藏所有弹出菜单
+        document.querySelectorAll(".moment-popout").forEach(pop => {
+            pop.classList.remove("show");
+        });
+        
+        // 如果点击的不是输入框区域，也不是评论按钮，收起输入框
+        if (!momentCommentBar.contains(e.target) && !e.target.classList.contains("comment-pop-btn") && !e.target.closest(".moment-comment-item")) {
+            momentCommentBar.classList.remove("show");
+            momentCommentInput.blur();
+        }
+    });
+
+    // 5. 渲染朋友圈引擎
+    function renderMoments() {
+        if(!state.moments || state.moments.length === 0) {
+            momentsEmptyHint.style.display = "block";
+            momentsListContainer.querySelectorAll(".moment-card").forEach(c => c.remove());
+            return;
+        }
+        momentsEmptyHint.style.display = "none";
+        momentsListContainer.innerHTML = "";
+        
+        state.moments.forEach(m => {
+            const card = document.createElement("div");
+            card.className = "moment-card";
+            
+            let imgHtml = m.image ? `<img src="${m.image}" class="moment-img" />` : '';
+            
+            // 使用精致的心形 SVG 代替 emoji
+            let likesHtml = m.likes.length > 0 ? 
+                `<div class="moment-likes ${m.comments.length > 0 ? 'moment-likes-border' : ''}">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:2px; margin-top:-1px;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg> 
+                    ${m.likes.join(", ")}
+                </div>` : '';
+            
+            let commentsHtml = '';
+            if(m.comments.length > 0) {
+                commentsHtml = `<div class="moment-comments">`;
+                m.comments.forEach((c) => {
+                    let textPrefix = c.replyTo ? `<span class="comment-name">${c.name}</span> 回复 <span class="comment-name">${c.replyTo}</span>: ` : `<span class="comment-name">${c.name}</span>: `;
+                    commentsHtml += `<div class="moment-comment-item" data-mid="${m.id}" data-cname="${c.name}">${textPrefix}${c.text}</div>`;
+                });
+                commentsHtml += `</div>`;
+            }
+            
+            let interactHtml = '';
+            if(likesHtml || commentsHtml) {
+                interactHtml = `<div class="moment-interact-box">${likesHtml}${commentsHtml}</div>`;
+            }
+
+            // AI 正在打字的文本提示
+            let typingHtml = '';
+            if (m.typingAIs && m.typingAIs.length > 0) {
+                typingHtml = `<div class="moment-typing">${m.typingAIs.join(" ")} 正在打字...</div>`;
+            }
+
+            const myAvatarStyle = state.userAvatar ? `background-image: url(${state.userAvatar});` : `background-image: linear-gradient(135deg, #e0e0e0, #c4c4c4);`;
+            const displayTime = formatMomentTime(m.timestamp);
+
+            card.innerHTML = `
+                <div class="moment-avatar" style="${myAvatarStyle}"></div>
+                <div class="moment-main">
+                    <div class="moment-name">我</div>
+                    ${m.text ? `<div class="moment-text">${m.text}</div>` : ''}
+                    ${imgHtml}
+                    <div class="moment-time-row">
+                        <div class="moment-time-left">
+                            <span>${displayTime}</span>
+                            <span class="moment-delete-icon" data-id="${m.id}" title="删除">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </span>
+                        </div>
+                        <div class="moment-toggle-btn" data-id="${m.id}"><span>..</span></div>
+                        <div class="moment-popout" id="popout-${m.id}">
+                            <div class="moment-popout-btn like-pop-btn" data-id="${m.id}">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+                                ${m.likes.includes("我") ? "取消" : "赞"}
+                            </div>
+                            <div class="moment-popout-divider"></div>
+                            <div class="moment-popout-btn comment-pop-btn" data-id="${m.id}">
+                                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
+                                评论
+                            </div>
+                        </div>
+                    </div>
+                    ${interactHtml}
+                    ${typingHtml}
+                </div>
+            `;
+            momentsListContainer.appendChild(card);
+        });
+
+        // 绑定"删除"事件 (基于SVG外层)
+        document.querySelectorAll(".moment-delete-icon").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if(confirm("确定删除这条朋友圈吗？")) {
+                    const mid = e.currentTarget.dataset.id;
+                    state.moments = state.moments.filter(x => x.id !== mid);
+                    renderMoments();
+                }
+            });
+        });
+
+        // 绑定".."点击事件 (唤出黑框)
+        document.querySelectorAll(".moment-toggle-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const mid = e.currentTarget.dataset.id;
+                // 先关掉其他的
+                document.querySelectorAll(".moment-popout").forEach(pop => {
+                    if (pop.id !== `popout-${mid}`) pop.classList.remove("show");
+                });
+                const popout = document.getElementById(`popout-${mid}`);
+                popout.classList.toggle("show");
+            });
+        });
+
+        // 绑定点赞事件
+        document.querySelectorAll(".like-pop-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const mid = e.currentTarget.dataset.id;
+                const moment = state.moments.find(x => x.id === mid);
+                if(moment) {
+                    const myIdx = moment.likes.indexOf("我");
+                    if(myIdx !== -1) moment.likes.splice(myIdx, 1);
+                    else moment.likes.push("我");
+                    renderMoments(); // 重新渲染会自动关掉弹窗
+                }
+            });
+        });
+        
+        // 绑定直接评论动态事件
+        document.querySelectorAll(".comment-pop-btn").forEach(btn => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const mid = e.currentTarget.dataset.id;
+                document.getElementById(`popout-${mid}`).classList.remove("show"); // 收起黑框
+                
+                activeMomentIdForComment = mid;
+                activeReplyTargetName = null; // 评论整条动态
+                momentCommentInput.placeholder = "评论";
+                momentCommentBar.classList.add("show");
+                setTimeout(() => momentCommentInput.focus(), 100);
+            });
+        });
+
+        // 绑定点击已有评论互相回复的事件
+        document.querySelectorAll(".moment-comment-item").forEach(item => {
+            item.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const mid = e.currentTarget.dataset.mid;
+                const targetName = e.currentTarget.dataset.cname;
+                
+                // 如果点的是自己发的评论，不作处理
+                if (targetName === "我") return; 
+
+                activeMomentIdForComment = mid;
+                activeReplyTargetName = targetName;
+                momentCommentInput.placeholder = `回复 ${targetName}`;
+                momentCommentBar.classList.add("show");
+                setTimeout(() => momentCommentInput.focus(), 100);
+            });
+        });
+    }
+
+    // 绑定发送评论按钮
+    momentCommentSendBtn.addEventListener("click", () => {
+        const text = momentCommentInput.value.trim();
+        if(!text || !activeMomentIdForComment) return;
+        
+        const moment = state.moments.find(x => x.id === activeMomentIdForComment);
+        if(moment) {
+            moment.comments.push({ 
+                id: "me_" + Date.now(), 
+                name: "我", 
+                text: text,
+                replyTo: activeReplyTargetName // 记录是谁回复的谁
+            });
+            renderMoments();
+        }
+        
+        momentCommentInput.value = "";
+        momentCommentBar.classList.remove("show");
+        activeMomentIdForComment = null;
+        activeReplyTargetName = null;
+    });
+
+    // 键盘回车也能发送
+    momentCommentInput.addEventListener("keydown", (e) => {
+        if(e.key === "Enter") {
+            e.preventDefault();
+            momentCommentSendBtn.click();
+        }
+    });
+
+    // 6. 核心：AI 基于设定、记忆、图片生成朋友圈评论
+    async function fetchAICommentForMoment(momentId, contactId) {
+        const moment = state.moments.find(m => m.id === momentId);
+        const contact = getContact(contactId);
+        const api = state.apiSettings;
+        
+        if (!moment || !contact) return;
+
+        // 如果没有配置 API，直接在评论区报错，并移除打字状态
+        if(!api.url || !api.key) {
+            moment.comments.push({
+                contactId: contact.id,
+                name: getDisplayName(contact),
+                text: "【系统提示：API未配置，无法生成评论】"
+            });
+            moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
+            renderMoments();
+            return;
+        }
+
+        // 加载世界书和记忆
+        let loreText = "";
+        if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
+            loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\\n");
+        }
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\\n") : "无";
+
+        let sysPrompt = `你现在是${getDisplayName(contact)}，正在刷朋友圈。
+你的设定：${contact.persona}
+${contact.myPersona ? '发朋友圈的人(我)的设定：' + contact.myPersona : ''}
+
+【世界书设定参考】：${loreText || '无'}
+【你们的共同记忆】：${memText}
+
+你看到对方发了一条朋友圈。
+请结合以上所有信息，决定是否给这条朋友圈点赞，并给出一条符合你人设、有灵性的自然评论。
+必须严格按照以下格式回复（绝对不要输出任何别的废话或前缀）：
+第一行必须是 [点赞] 或 [不点赞]
+第二行开始写你的评论内容`;
+
+        // 视力模块 (Vision)
+        let msgContent = [];
+        if (moment.text) msgContent.push({ type: "text", text: "朋友圈配文：" + moment.text });
+        if (moment.image) msgContent.push({ type: "image_url", image_url: { url: moment.image } });
+        if (msgContent.length === 0) msgContent = "（这是一条没有配图也没有文字的空白动态）";
+
+        try {
+            const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+                body: JSON.stringify({ 
+                    model: api.model || "gpt-3.5-turbo", 
+                    messages: [
+                        { role: "system", content: sysPrompt },
+                        { role: "user", content: msgContent }
+                    ], 
+                    temperature: api.temperature 
+                })
+            });
+            
+            if(!res.ok) throw new Error(`HTTP 错误 ${res.status}`);
+            const data = await res.json();
+            let aiText = data.choices[0].message.content.trim().split('\n');
+            
+            // 解析指令
+            let isLike = aiText[0].includes('[点赞]') && !aiText[0].includes('[不点赞]');
+            let commentText = aiText.slice(1).join(' ').trim();
+            // 防止 AI 不听话没按格式换行
+            if(!commentText && !aiText[0].includes('[')) { 
+                commentText = aiText.join(' '); 
+            }
+
+            // 数据写入
+            if(isLike && !moment.likes.includes(getDisplayName(contact))) {
+                moment.likes.push(getDisplayName(contact));
+            }
+            if(commentText && commentText.trim() !== "") {
+                moment.comments.push({
+                    contactId: contact.id,
+                    name: getDisplayName(contact),
+                    text: commentText
+                });
+            }
+        } catch(e) {
+            console.error("AI 朋友圈评论失败:", e);
+            // 接口报错时，作为评论显示出来
+            moment.comments.push({
+                contactId: contact.id,
+                name: getDisplayName(contact),
+                text: `【API请求失败: ${e.message}】`
+            });
+        } finally {
+            // 不管成功失败，最后一定把该角色从打字列表中移除
+            if (moment && moment.typingAIs) {
+                moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
+            }
+            renderMoments();
+        }
+    }
+    
     // 初始化预设
     renderBubblePresets();
     updateBubblePreview();
 
     // 初始化运行一次动态样式
-    applyGlobalFontAndSize();
+applyGlobalFontAndSize();
     renderContacts();
     switchTab("friends");
   </script>

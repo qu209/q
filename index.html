@@ -24,23 +24,6 @@
     * {
       box-sizing: border-box;
       -webkit-tap-highlight-color: transparent;
-      /* 下面是新增的禁止长按选中和禁止系统默认弹窗的属性 */
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -khtml-user-select: none;
-      -moz-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-    }
-
-    /* 重点：这一段必须加，否则你的输入框也会被禁止点击，就没法打字了 */
-    input, textarea, [contenteditable="true"] {
-      -webkit-touch-callout: default;
-      -webkit-user-select: auto;
-      -khtml-user-select: auto;
-      -moz-user-select: auto;
-      -ms-user-select: auto;
-      user-select: auto;
     }
 
     html,
@@ -548,11 +531,13 @@
       position: fixed;
       inset: 0;
       z-index: 40;
-      background: rgba(0, 0, 0, 0.34);
+      background: rgba(0, 0, 0, 0.55);
       display: none;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
-      padding: 24px;
+      padding: 0;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
 
     .modal-mask.show {
@@ -560,87 +545,121 @@
     }
 
     .modal {
-      width: min(620px, calc(100vw - 48px));
-      background: #fff;
-      border-radius: 28px;
-      box-shadow: 0 28px 60px rgba(0, 0, 0, 0.18);
-      padding: 26px 26px 24px;
+      width: 100%;
+      max-width: 100vw;
+      background: #f2f2f7;
+      border-radius: 24px 24px 0 0;
+      box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.12);
+      padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+      overflow: hidden;
+    }
+
+    .modal-drag-bar {
+      width: 40px;
+      height: 5px;
+      background: #c7c7cc;
+      border-radius: 3px;
+      margin: 12px auto 0;
+    }
+
+    .modal-title-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 14px 20px 10px;
+      position: relative;
+    }
+
+    .modal-title-bar span {
+      font-size: 16px;
+      font-weight: 700;
+      color: #111;
+      letter-spacing: 0.2px;
+    }
+
+    .modal-body {
+      padding: 8px 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     .field {
-      margin-bottom: 20px;
+      margin-bottom: 0;
     }
 
     .field label {
       display: block;
-      font-size: 15px; 
-      font-weight: 600;
-      margin-bottom: 8px; 
-      color: #222;
+      font-size: 13px;
+      font-weight: 500;
+      margin-bottom: 6px;
+      color: #6c6c70;
+      padding-left: 4px;
     }
 
     .input,
     .textarea {
       width: 100%;
-      border: 1px solid #d0d5dd; 
-      border-radius: 999px;
+      border: none;
+      border-radius: 14px;
       outline: none;
-      background: #fff;
+      background: #ffffff;
       color: #111;
       padding: 0 16px;
-      font-size: 15px;
+      font-size: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
 
     .input {
-      height: 48px; 
+      height: 50px;
     }
 
     .textarea {
-      border-radius: 24px;
-      min-height: 120px;
+      border-radius: 14px;
+      min-height: 100px;
       resize: none;
       padding: 14px 16px;
-      line-height: 1.5;
+      line-height: 1.55;
     }
 
     .input::placeholder,
     .textarea::placeholder {
-      color: #b8bec9;
+      color: #c4c4c8;
     }
 
     .modal-error {
-      min-height: 20px;
-      margin: -6px 0 8px;
-      font-size: 13px;
+      min-height: 18px;
+      margin: 0 4px;
+      font-size: 12px;
       color: #df3b3b;
     }
 
     .modal-actions {
       display: flex;
-      gap: 16px;
-      margin-top: 4px;
+      gap: 10px;
+      margin: 16px 16px 0;
     }
 
     .btn {
       appearance: none;
       border: 0;
-      height: 48px; 
-      border-radius: 999px;
-      font-size: 15px; 
+      height: 52px;
+      border-radius: 14px;
+      font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       flex: 1;
     }
 
     .btn-light {
-      background: #fff;
-      color: #111;
-      border: 1px solid #d8dde6;
-      max-width: 160px;
+      background: #e5e5ea;
+      color: #3c3c43;
+      border: none;
+      max-width: none;
     }
 
     .btn-dark {
-      background: #000;
+      background: #1c1c1e;
       color: #fff;
       flex: 1.6;
     }
@@ -2808,26 +2827,32 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
 
     <div class="modal-mask" id="modalMask">
       <div class="modal" role="dialog" aria-modal="true" aria-label="添加角色">
-        <div class="field">
-          <label for="remarkInput">备注</label>
-          <input class="input" id="remarkInput" type="text" placeholder="给TA的备注" />
+        <div class="modal-drag-bar"></div>
+        <div class="modal-title-bar">
+          <span>添加角色</span>
         </div>
+        <div class="modal-body">
+          <div class="field">
+            <label for="remarkInput">备注</label>
+            <input class="input" id="remarkInput" type="text" placeholder="给TA起个备注名" />
+          </div>
 
-        <div class="field">
-          <label for="realNameInput">真名</label>
-          <input class="input" id="realNameInput" type="text" placeholder="TA知道自己叫什么" />
+          <div class="field">
+            <label for="realNameInput">真名</label>
+            <input class="input" id="realNameInput" type="text" placeholder="TA自己知道叫什么" />
+          </div>
+
+          <div class="field">
+            <label for="personaInput">人设（AI Persona）</label>
+            <textarea
+              class="textarea"
+              id="personaInput"
+              placeholder="输入TA的人物设定，TA会严格遵守"
+            ></textarea>
+          </div>
+
+          <div class="modal-error" id="modalError"></div>
         </div>
-
-        <div class="field">
-          <label for="personaInput">人设(AI Persona)</label>
-          <textarea
-            class="textarea"
-            id="personaInput"
-            placeholder="输入TA的人物设定，TA会严格遵守"
-          ></textarea>
-        </div>
-
-        <div class="modal-error" id="modalError"></div>
 
         <div class="modal-actions">
           <button class="btn btn-light" id="cancelModalBtn">取消</button>
@@ -7176,11 +7201,6 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 
     // 初始化预设
     renderBubblePresets();
-
-    // 下面是新增的代码：全局拦截长按事件，防止触发长按菜单弹窗
-    document.addEventListener('contextmenu', function(e) {
-        e.preventDefault();
-    });
     updateBubblePreview();
     // 初始化运行一次动态样式
     applyGlobalFontAndSize();

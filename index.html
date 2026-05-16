@@ -1988,6 +1988,107 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .moment-publish-screen { position: fixed; inset: 0; background: #fff; z-index: 100; display: none; flex-direction: column; overflow-y: auto; }
     .moment-publish-screen.show { display: flex; }
     
+    /*====== 语音录入与语音消息样式 ====== */
+    .voice-hold-btn {
+      width: 100%;
+      min-height: 22px;
+      border: none;
+      background: transparent;
+      font-size: 15px;
+      color: #999;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      padding: 0;
+      margin: 0;
+      transition: color 0.15s, background 0.15s;border-radius: 12px;
+    }
+    .voice-hold-btn:active, .voice-hold-btn.recording {
+      color: #df3b3b;
+      background: rgba(223, 59, 59, 0.06);
+    }
+    .voice-recording-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 500;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 16px;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    .voice-recording-overlay.show { display: flex; }
+    @keyframes voicePulse {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.18); opacity: 0.75; }
+    }
+    .voice-rec-circle {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: rgba(223, 59, 59, 0.18);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: voicePulse 1.2s ease-in-out infinite;
+    }
+    .voice-rec-circle svg { width: 44px; height: 44px; color: #df3b3b; }
+    .voice-rec-timer { font-size: 30px; font-weight: 700; color: #fff; letter-spacing: 1px; }
+    .voice-rec-hint { font-size: 15px; color: rgba(255,255,255,0.65); }
+    .voice-preview-mask {
+      position: fixed; inset: 0; z-index: 501;
+      background: rgba(0,0,0,0.42);
+      display: none; align-items: center; justify-content: center; padding: 24px;
+    }
+    .voice-preview-mask.show { display: flex; }
+    .voice-preview-card {
+      width: min(340px, calc(100vw - 48px));
+      background: #fff; border-radius: 24px;
+      padding: 24px 22px 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.18);
+    }
+    .voice-preview-title { font-size: 17px; font-weight: 700; color: #111; margin-bottom: 6px; text-align: center; }
+    .voice-preview-duration { font-size: 13px; color: #888; text-align: center; margin-bottom: 16px; }
+    .voice-preview-textarea {
+      width: 100%; min-height: 100px;
+      border: 1px solid #d0d5dd; border-radius: 12px; outline: none;
+      background: #f7f7f8; color: #111; padding: 12px 14px;
+      font-size: 15px; line-height: 1.55; resize: none; margin-bottom: 16px; box-sizing: border-box;
+    }
+    .voice-preview-actions { display: flex; gap: 12px; }/* 语音消息气泡内部 */
+    .voice-bar-inner {
+      display: flex; align-items: center; gap: 10px;
+      min-width: 110px; cursor: pointer;
+      user-select: none; -webkit-user-select: none;
+    }
+    .voice-waveform-icon {
+      display: flex; align-items: center; gap: 2.5px; height: 20px;
+    }
+    .voice-waveform-icon span {
+      display: inline-block; width: 3px;
+      background: currentColor; border-radius: 2px; opacity: 0.6;
+    }
+    .voice-duration-text {
+      font-size: 14px; font-weight: 500; margin-left: auto; opacity: 0.85;
+    }
+    .voice-transcript {
+      display: none;
+      padding: 10px 14px; font-size: 14px; line-height: 1.6;
+      word-break: break-word; white-space: pre-wrap;
+      margin-top: 4px; border-radius: 14px; max-width: 100%;
+    }
+    .voice-transcript.show { display: block; }
+    .message-row.ai .voice-transcript { background: #e8eaef; color: #111; }
+    .message-row.me .voice-transcript { background: #222; color: rgba(255,255,255,0.9); }
+
   </style>
   
 </head>
@@ -2264,12 +2365,38 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       </div>
       <div class="inventory-popup" id="inventoryPopup">
         <div class="inventory-item" id="photoUploadItem">照片</div>
-        <div class="inventory-item">描述图片</div>
         <div class="inventory-item" id="transferItemBtn">转账</div>
-        <div class="inventory-item">语音</div>
+        <div class="inventory-item" id="voiceRecordItem">语音</div>
         <div class="inventory-item">语音通话</div>
         <div class="inventory-item" id="regenerateBtn">重回</div>
       </div>
+            <!-- 语音录制浮层 -->
+      <div class="voice-recording-overlay" id="voiceRecordingOverlay">
+        <div class="voice-rec-circle">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+            <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+          </svg>
+        </div>
+        <div class="voice-rec-timer" id="voiceRecTimer">0"</div>
+        <div class="voice-rec-hint">松开结束录音</div>
+      </div>
+
+      <!-- 语音识别结果预览编辑弹窗 -->
+      <div class="voice-preview-mask" id="voicePreviewMask">
+        <div class="voice-preview-card">
+          <div class="voice-preview-title">语音识别结果</div>
+          <div class="voice-preview-duration" id="voicePreviewDuration">时长：0"</div>
+          <textarea class="voice-preview-textarea" id="voicePreviewText" placeholder="识别到的文字将显示在这里，你可以修改后发送"></textarea>
+          <div class="voice-preview-actions">
+            <button class="custom-dialog-btn-cancel" id="voiceCancelBtn">取消</button>
+            <button class="custom-dialog-btn-confirm" id="voiceSendBtn">发送语音</button>
+          </div>
+        </div>
+      </div>
+
       <input type="file" id="chatImageInput" accept="image/*" style="display: none;" />
 
       <div class="drawer-mask" id="transferMask" style="z-index: 120;">
@@ -2354,6 +2481,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
         </div>
 
         <div class="chatbar-inner">
+        <div class="chatbar-inner">
           <button class="icon-img-btn" id="chatExtraBtn" aria-label="物品栏">
             <img src="https://i.postimg.cc/D0M5jXfC/IMG-4863.png" alt="物品栏" />
           </button>
@@ -2368,6 +2496,20 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             ></textarea>
             <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情">
               <img src="https://i.postimg.cc/y8pZRN6H/IMG-3205.png" alt="" />
+            </button>
+            <button class="voice-hold-btn hidden" id="voiceHoldBtn">按住 说话</button>
+            <button class="icon-img-btn inner-icon hidden" id="voiceKeyboardBtn" aria-label="切回键盘">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="4" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="6" y1="8" x2="6.01" y2="8"></line>
+                <line x1="10" y1="8" x2="10.01" y2="8"></line>
+                <line x1="14" y1="8" x2="14.01" y2="8"></line>
+                <line x1="18" y1="8" x2="18.01" y2="8"></line>
+                <line x1="8" y1="12" x2="8.01" y2="12"></line>
+                <line x1="12" y1="12" x2="12.01" y2="12"></line>
+                <line x1="16" y1="12" x2="16.01" y2="12"></line>
+                <line x1="7" y1="16" x2="17" y2="16"></line>
+              </svg>
             </button>
           </div>
 
@@ -3227,6 +3369,8 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             previewText = "[表情包]";
           } else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) {
             previewText = "[转账]";
+          } else if (lastMsg.text.startsWith("[VOICE_MSG|")) {
+            previewText = "[语音]";
           } else {
             previewText = lastMsg.text.replace(/<[^>]*>?/gm, '');
           }
@@ -3666,6 +3810,35 @@ if (msg.isTyping) {
               stickerImg.title = stickerLabel;
               bubble.appendChild(stickerImg);
               textSpan.remove && textSpan.remove();
+            } else if (msg.text.startsWith("[VOICE_MSG|")) {
+              // 渲染语音消息气泡
+              const voiceParts = msg.text.slice(1, -1).split("|");
+              const voiceDuration = voiceParts[1] || "0";
+              const voiceText = voiceParts.slice(2).join("|") || "";
+              bubble.innerHTML = '';
+              const voiceBarInner = document.createElement("div");
+              voiceBarInner.className = "voice-bar-inner";
+              voiceBarInner.innerHTML = `
+                <div class="voice-waveform-icon">
+                  <span style="height:6px"></span><span style="height:12px"></span><span style="height:8px"></span>
+                  <span style="height:16px"></span><span style="height:10px"></span><span style="height:14px"></span><span style="height:6px"></span>
+                </div>
+                <span class="voice-duration-text">${voiceDuration}"</span>
+              `;
+              bubble.appendChild(voiceBarInner);
+              // 创建可展开的语音文字区域（挂在bubble上稍后追加到contentWrap）
+              const vTranscript = document.createElement("div");
+              vTranscript.className = "voice-transcript";
+              vTranscript.id = "voice-transcript-" + index;
+              vTranscript.textContent = voiceText;
+              bubble._voiceTranscript = vTranscript;
+              bubble.style.cursor = "pointer";
+              bubble.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (state.isMultiSelecting) return;
+                const vt = document.getElementById("voice-transcript-" + index);
+                if (vt) vt.classList.toggle("show");
+              });
             } else {
               textSpan.innerHTML = msg.text;
             }
@@ -3712,7 +3885,12 @@ if (msg.isTyping) {
             msg.hasAnimated = true; 
           }
 
-          contentWrap.appendChild(bubble);
+                    contentWrap.appendChild(bubble);
+
+          // 如果是语音消息，追加可展开的语音文字区域
+          if (bubble._voiceTranscript) {
+            contentWrap.appendChild(bubble._voiceTranscript);
+          }
 
           if ((positionClass === "single" || positionClass === "last") && !msg.isTyping) {
             const time = document.createElement("div");
@@ -3767,7 +3945,7 @@ if (msg.isTyping) {
     });
 
 // 指令1：引用
-    document.getElementById("menuQuote").addEventListener("click", () => {
+        document.getElementById("menuQuote").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       const msg = contact.messages[targetMsgIndex];
       let quoteText = "";
@@ -3777,7 +3955,8 @@ if (msg.isTyping) {
         quoteText = "[表情包]";
       } else if (msg.text.startsWith("[TRANSFER|") || msg.text.startsWith("[TRANSFER_REPLY|")) {
         quoteText = "[转账]";
-     
+      } else if (msg.text.startsWith("[VOICE_MSG|")) {
+        quoteText = "[语音]";
       } else {
         quoteText = msg.text.replace(/<[^>]*>?/gm, ''); 
       }
@@ -3794,7 +3973,7 @@ if (msg.isTyping) {
       document.getElementById("replyPreview").classList.remove("show");
     });
     // 指令2：复制
-    document.getElementById("menuCopy").addEventListener("click", () => {
+        document.getElementById("menuCopy").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       const msg = contact.messages[targetMsgIndex];
       let copyText = "";
@@ -3804,6 +3983,9 @@ if (msg.isTyping) {
         copyText = "[表情包]";
       } else if (msg.text.startsWith("[TRANSFER|") || msg.text.startsWith("[TRANSFER_REPLY|")) {
         copyText = "[转账]";
+      } else if (msg.text.startsWith("[VOICE_MSG|")) {
+        const _vp = msg.text.slice(1, -1).split("|");
+        copyText = _vp.slice(2).join("|") || "[语音]";
       } else {
         copyText = msg.text.replace(/<[^>]*>?/gm, '');
       }
@@ -4189,6 +4371,12 @@ TimeChecklist:
            }
         }
         
+        // 语音消息转译为可读文本给AI看
+        const voiceMsgMatch = messageContent && typeof messageContent ==='string' && messageContent.match(/\[VOICE_MSG\|(\d+)\|(.+)\]/);
+        if (voiceMsgMatch) {
+          messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
+        }
+
         // 新增：如果消息里包含图片，转为 Vision 模型支持的 Array 格式
         if (msg.image) {
           messageContent = [];
@@ -5142,7 +5330,167 @@ TimeChecklist:
     // ========== AI也可以发表情包 ==========
     // 在AI系统prompt里告知，以及解析AI回复中的表情包指令
     // 在 renderChat 的 textSpan 渲染处已自动处理 [EMOJI_STICKER|...|...] 格式
-   document.getElementById("voiceBtn").addEventListener("click", () => {
+   
+    // ========== 语音录入功能完整逻辑 ==========
+    let isVoiceMode = false;
+    let isVoiceRecording = false;
+    let voiceRecordDuration = 0;
+    let voiceRecordTimerInterval = null;
+    let voiceRecognizedText = "";
+    let speechRecognitionInstance = null;
+
+    const voiceRecordItem = document.getElementById("voiceRecordItem");
+    const voiceHoldBtn = document.getElementById("voiceHoldBtn");
+    const voiceKeyboardBtn = document.getElementById("voiceKeyboardBtn");
+    const voiceRecordingOverlay = document.getElementById("voiceRecordingOverlay");
+    const voiceRecTimer = document.getElementById("voiceRecTimer");
+    const voicePreviewMask = document.getElementById("voicePreviewMask");
+    const voicePreviewText = document.getElementById("voicePreviewText");
+    const voicePreviewDuration = document.getElementById("voicePreviewDuration");
+    const voiceCancelBtn = document.getElementById("voiceCancelBtn");
+    const voiceSendBtn = document.getElementById("voiceSendBtn");
+
+    // 初始化语音识别API
+    const SpeechRecognitionAPI = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognitionAPI) {
+      speechRecognitionInstance = new SpeechRecognitionAPI();
+      speechRecognitionInstance.continuous = true;
+      speechRecognitionInstance.interimResults = true;
+      speechRecognitionInstance.lang = 'zh-CN';
+      speechRecognitionInstance.onresult = (event) => {
+        let transcript = '';
+        for (let i = 0; i < event.results.length; i++) {
+          transcript += event.results[i][0].transcript;
+        }
+        voiceRecognizedText = transcript;
+      };
+      speechRecognitionInstance.onerror = (event) => {
+        console.log("语音识别错误:", event.error);
+      };
+    }
+
+    // 切换语音/文字模式（核心：只切换 chat-input-wrap 内部元素，外部布局零改动）
+    function setVoiceMode(on) {
+      isVoiceMode = on;
+      const _chatInput = document.getElementById("chatInput");
+      const _emojiBtn = document.getElementById("emojiBtn");
+      if (on) {
+        _chatInput.classList.add("hidden");
+        _emojiBtn.classList.add("hidden");
+        voiceHoldBtn.classList.remove("hidden");
+        voiceKeyboardBtn.classList.remove("hidden");
+      } else {
+        _chatInput.classList.remove("hidden");
+        _emojiBtn.classList.remove("hidden");
+        voiceHoldBtn.classList.add("hidden");
+        voiceKeyboardBtn.classList.add("hidden");
+      }
+    }
+
+    // 点击物品栏"语音"→切换到语音模式
+    if (voiceRecordItem) {
+      voiceRecordItem.addEventListener("click", () => {
+        setVoiceMode(true);
+      });
+    }
+
+    // 点击键盘图标→切回文字模式
+    if (voiceKeyboardBtn) {
+      voiceKeyboardBtn.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setVoiceMode(false);setTimeout(() => chatInput.focus(), 30);
+      });
+    }
+
+    // 按住说话核心逻辑
+    if (voiceHoldBtn) {
+      let voiceTouchActive = false;
+
+      const startVoiceRecord = () => {
+        if (isVoiceRecording) return;
+        isVoiceRecording = true;
+        voiceRecordDuration = 0;
+        voiceRecognizedText = "";
+        voiceHoldBtn.classList.add("recording");
+        voiceHoldBtn.textContent = "松开 结束";
+        voiceRecordingOverlay.classList.add("show");
+        voiceRecTimer.textContent = '0"';
+        voiceRecordTimerInterval = setInterval(() => {
+          voiceRecordDuration++;
+          voiceRecTimer.textContent = voiceRecordDuration + '"';}, 1000);
+        if (speechRecognitionInstance) {
+          try { speechRecognitionInstance.start(); } catch(e) {}
+        }
+      };
+
+      const stopVoiceRecord = () => {
+        if (!isVoiceRecording) return;
+        isVoiceRecording = false;
+        voiceHoldBtn.classList.remove("recording");
+        voiceHoldBtn.textContent = "按住 说话";
+        voiceRecordingOverlay.classList.remove("show");
+        clearInterval(voiceRecordTimerInterval);
+        if (speechRecognitionInstance) {
+          try { speechRecognitionInstance.stop(); } catch(e) {}
+        }if (voiceRecordDuration > 0) {
+          setTimeout(() => {
+            voicePreviewText.value = voiceRecognizedText || "";
+            voicePreviewText.placeholder = voiceRecognizedText ? "你可以修改识别结果后发送" : "未识别到语音，请手动输入文字";
+            voicePreviewDuration.textContent = "时长：" + voiceRecordDuration + '"';
+            voicePreviewMask.classList.add("show");setTimeout(() => voicePreviewText.focus(), 100);
+          }, 350);
+        }
+      };
+
+      // 触屏长按
+      voiceHoldBtn.addEventListener("touchstart", (e) => {
+        e.preventDefault();
+        voiceTouchActive = true;
+        startVoiceRecord();
+      });
+      voiceHoldBtn.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        if (voiceTouchActive) { voiceTouchActive = false; stopVoiceRecord(); }
+      });
+      voiceHoldBtn.addEventListener("touchcancel", () => {
+        voiceTouchActive = false; stopVoiceRecord();
+      });
+
+      // PC鼠标长按
+      voiceHoldBtn.addEventListener("mousedown", (e) => {
+        e.preventDefault(); startVoiceRecord();
+      });
+      voiceHoldBtn.addEventListener("mouseup", (e) => {
+        e.preventDefault(); stopVoiceRecord();
+      });
+      voiceHoldBtn.addEventListener("mouseleave", () => {
+        if (isVoiceRecording) stopVoiceRecord();
+      });
+    }
+
+    // 语音预览取消
+    voiceCancelBtn.addEventListener("click", () => {
+      voicePreviewMask.classList.remove("show");
+    });
+
+    // 语音预览发送
+    voiceSendBtn.addEventListener("click", () => {
+      const text = voicePreviewText.value.trim();
+      if (!text) { voicePreviewText.placeholder = "内容不能为空，请输入文字"; return; }
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+      const voiceMsg = "[VOICE_MSG|" + voiceRecordDuration + "|" + text + "]";
+      contact.messages.push({
+        from: "me",
+        text: voiceMsg,
+        time: getCurrentTime(),
+        hasAnimated: false
+      });
+      contact.lastTime = getCurrentTime();
+      voicePreviewMask.classList.remove("show");
+      renderChat();
+    });//========== 语音录入功能结束 ==========
+ document.getElementById("voiceBtn").addEventListener("click", () => {
       triggerAIReply();
     });
 

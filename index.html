@@ -4155,12 +4155,12 @@ if (msg.isTyping) {
       const shouldTriggerMoment = triggerWords.some(word => text.includes(word));
       
       if (shouldTriggerMoment) {
-          // 确保已经加载了上一步的后台核心代码
           if (typeof executeAutoMoment === "function") {
               // 稍微延迟 2 秒执行，模拟 AI 看到消息后去想文案的真实感
               setTimeout(() => {
                   executeAutoMoment(contact);
-             
+                  // 手动触发后也重置自动发动态计时器，避免刚手动让TA发完又立刻自动触发
+                  contact.lastAutoMomentTimeMs = Date.now();
               }, 2000);
           }
       }
@@ -6084,11 +6084,25 @@ TimeChecklist:
         if(!contact.linkedLorebooks) contact.linkedLorebooks = [];
       }
 
-      // 保存后台活动设置并重置计时器基准点
+      // 保存后台活动设置
+      const _oldMsgInterval = contact.autoMsgInterval || 0;
+      const _oldMomentInterval = contact.autoMomentInterval || 0;
       contact.autoMsgInterval = parseInt(document.getElementById("detailsAutoMsgInput").value) || 0;
       contact.autoMomentInterval = parseInt(document.getElementById("detailsAutoMomentInput").value) || 0;
-      contact.lastInteractTimeMs = Date.now(); // 重置消息计时基准点
-      if(!contact.lastAutoMomentTimeMs) contact.lastAutoMomentTimeMs = Date.now(); // 动态计时基准点
+      // 只在"从无到有"刚开启时初始化基准时间，不反复重置，避免打开详情页就中断计时
+      if (contact.autoMsgInterval > 0 && !_oldMsgInterval) {
+          contact.lastInteractTimeMs = Date.now();
+      }
+      if (contact.autoMomentInterval > 0 && !_oldMomentInterval) {
+          contact.lastAutoMomentTimeMs = Date.now();
+      }
+      // 如果关闭了，清除基准时间，下次重新开启才重新计时
+      if (contact.autoMsgInterval === 0) {
+          contact.lastInteractTimeMs = null;
+      }
+      if (contact.autoMomentInterval === 0) {
+          contact.lastAutoMomentTimeMs = null;
+      }
 
       if (detailsAvatarPreview.dataset.tempAvatar) {
         contact.avatar = detailsAvatarPreview.dataset.tempAvatar;
@@ -7839,6 +7853,8 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
             };
             
             state.moments.unshift(newMoment);
+            // 发完动态后重置计时基准，让下一次从现在开始重新等待
+            contact.lastAutoMomentTimeMs = Date.now();
             // 只有在朋友圈界面才即时刷新，防止干扰
             if(screens.moments.classList.contains("active")) {
                 renderMoments();
@@ -7853,32 +7869,28 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
     setInterval(() => {
         const now = Date.now();
         state.contacts.forEach(c => {
-            // 确保有个基准时间
-            if(!c.lastInteractTimeMs) c.lastInteractTimeMs = now;
-            if(!c.lastAutoMomentTimeMs) c.lastAutoMomentTimeMs = now;
-
             // 1. 检查主动发消息
-            if (c.autoMsgInterval && c.autoMsgInterval > 0) {
-                // 计算当前时间距离上一次交互过了多少分钟
+            // lastInteractTimeMs 必须已被初始化（在保存详情时赋值）才开始计时
+            if (c.autoMsgInterval && c.autoMsgInterval > 0 && c.lastInteractTimeMs) {
                 const diffMinutes = (now - c.lastInteractTimeMs) / 60000;
                 if (diffMinutes >= c.autoMsgInterval) {
-                    c.lastInteractTimeMs = now; // 重置，防止一分钟内疯狂触发
+                    c.lastInteractTimeMs = now; // 重置为当前时间，角色发完消息后再从现在开始算
                     executeAutoMessage(c);
                 }
             }
 
             // 2. 检查主动发朋友圈
-            if (c.autoMomentInterval && c.autoMomentInterval > 0) {
+            if (c.autoMomentInterval && c.autoMomentInterval > 0 && c.lastAutoMomentTimeMs) {
                 const diffMinutes = (now - c.lastAutoMomentTimeMs) / 60000;
                 if (diffMinutes >= c.autoMomentInterval) {
-                    c.lastAutoMomentTimeMs = now; // 重置
+                    c.lastAutoMomentTimeMs = now;
                     executeAutoMoment(c);
                 }
             }
         });
     }, 30000);
 
-    // 为了让用户发言后重置"发消息"的时间基数，拦截全局原生 send 事件
+    // 用户自己发消息 或 AI回复 时，都重置"上次交互时间"，让计时从头开始
     const origSendMessage = sendMessage;
     sendMessage = function() {
         const contact = getContact(state.activeContactId);

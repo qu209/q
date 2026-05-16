@@ -286,6 +286,12 @@
     }
 
     /* 我 - 页面重构 */
+    #screen-me {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none; /* 彻底禁用系统长按菜单 */
+    }
+
     .me-profile {
       padding: calc(40px + var(--safe-top)) 24px 38px;
       background: #fff;
@@ -931,10 +937,10 @@
     .chatbar.hidden { display: none !important; }
 
     .chatbar-inner {
-      height: 68px;
+      min-height: 68px; /* 改为最小高度，允许拉伸 */
       padding: 8px 12px 18px;
       display: flex;
-      align-items: center;
+      align-items: flex-end; /* 让右侧图标在输入框变高时保持在底部 */
     }
 
     /* ======== 新增：长按菜单、引用与多选样式 ======== */
@@ -1053,19 +1059,21 @@
 
     .chat-input-wrap {
       flex: 1;
-      /* 占据剩余全部空间，实现输入框向右拉伸 */
-      margin: 0 -6px; /* 间距加大到18px，对齐画线区域 */
+      margin: 0 -6px;
       position: relative;
-      height: 33px;
-      border-radius: 999px;
+      min-height: 36px;
+      border-radius: 18px; /* 取消纯胶囊，用圆角矩形适应多行更美观 */
       background: #f7f7f8;
-      overflow: hidden;
+      padding: 7px 40px 7px 15px; /* 右侧留给表情按钮空间 */
+      box-sizing: border-box;
+      display: flex;
+      align-items: center;
     }
 
     /* 新增：物品栏弹窗样式 */
     .inventory-popup {
       position: absolute;
-      bottom: 76px; /* 位于底部聊天栏上方 */
+      bottom: 76px;
       left: 12px;
       background: #fff;
       border-radius: 12px;
@@ -1096,13 +1104,19 @@
 
     .chat-input {
       width: 100%;
-      height: 100%;
+      min-height: 22px;
+      max-height: 90px; /* 控制最高拉伸到90px后内部开始滑动 */
       border: 0;
       outline: none;
       background: transparent;
-      padding: 0 0px 0 15px;
-      font-size: 16px; /* 关键修改：字体必须大于等于16px，手机端才不会自动放大导致页面乱飞 */
+      padding: 0;
+      margin: 0;
+      font-size: 16px; 
+      line-height: 22px; /* 固定行高辅助计算 */
       color: #111;
+      resize: none; /* 禁用系统拖拽 */
+      overflow-y: auto; /* 允许纵向滑动 */
+      word-break: break-all;
     }
 
     .chat-input::placeholder {
@@ -1112,10 +1126,11 @@
     .inner-icon {
       position: absolute;
       right: 6px;
-      top: 50%;
-      transform: translateY(-50%);
+      bottom: 2px; /* 文字多时，表情按钮固定在右下角 */
       width: 32px;
       height: 32px;
+      display: grid;
+      place-items: center;
     }
 
     .hidden {
@@ -2307,13 +2322,13 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           </button>
 
           <div class="chat-input-wrap">
-            <input
+            <textarea
               class="chat-input"
               id="chatInput"
-              type="text"
+              rows="1"
               placeholder="恨天地生万物而非仅你我"
               autocomplete="off"
-            />
+            ></textarea>
             <button class="icon-img-btn inner-icon" id="emojiBtn" aria-label="表情">
               <img src="https://i.postimg.cc/y8pZRN6H/IMG-3205.png" alt="" />
             </button>
@@ -2958,17 +2973,27 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
 
     function renderContacts() {
       friendList.innerHTML = "";
-
       if (!state.contacts.length) {
         emptyList.classList.remove("hidden");
         return;
       }
 
       emptyList.classList.add("hidden");
+      
+      // 置顶好友排序逻辑：置顶的排在前面
+      const sortedContacts = [...state.contacts].sort((a, b) => {
+          if (a.isPinned && !b.isPinned) return -1;
+          if (!a.isPinned && b.isPinned) return 1;
+          return 0;
+      });
 
-      state.contacts.forEach(contact => {
+      sortedContacts.forEach(contact => {
         const item = document.createElement("button");
         item.className = "friend-item";
+        // 置顶好友可增加一个极浅的背景色区分（可选）
+        if (contact.isPinned) {
+            item.style.backgroundColor = "#fafafa";
+        }
         item.dataset.id = contact.id;
 
         const avatar = document.createElement("div");
@@ -3024,9 +3049,88 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         item.appendChild(avatar);
         item.appendChild(main);
 
+        // 普通点击进入聊天
         item.addEventListener("click", () => openChat(contact.id));
+        
+        // 新增：长按触发置顶与删除事件
+        let pressTimer = null;
+        const startPress = (e) => {
+            pressTimer = setTimeout(() => {
+                pressTimer = null;
+                showFriendMenu(contact.id);
+            }, 500);
+        };
+        const cancelPress = () => {
+            if (pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        };
+
+        // 触屏端支持
+        item.addEventListener("touchstart", startPress, {passive: true});
+        item.addEventListener("touchmove", cancelPress, {passive: true});
+        item.addEventListener("touchend", cancelPress);
+        item.addEventListener("touchcancel", cancelPress);
+
+        // PC 鼠标端支持
+        item.addEventListener("mousedown", startPress);
+        item.addEventListener("mousemove", cancelPress);
+        item.addEventListener("mouseup", cancelPress);
+        item.addEventListener("mouseleave", cancelPress);
+
         friendList.appendChild(item);
       });
+    }
+
+    // 新增：长按弹出的好友管理菜单函数 (置顶与删除)
+    function showFriendMenu(contactId) {
+        const contact = getContact(contactId);
+        if (!contact) return;
+
+        const mask = document.createElement("div");
+        mask.className = "msg-menu-mask show";
+        mask.style.zIndex = "9999";
+        
+        const menu = document.createElement("div");
+        menu.className = "msg-menu";
+        
+        // 置顶 / 取消置顶按钮
+        const pinBtn = document.createElement("div");
+        pinBtn.className = "msg-menu-item";
+        pinBtn.textContent = contact.isPinned ? "取消置顶" : "置顶好友";
+        pinBtn.onclick = () => {
+            contact.isPinned = !contact.isPinned;
+            renderContacts();
+            document.body.removeChild(mask);
+        };
+        
+        // 彻底删除好友按钮
+        const delBtn = document.createElement("div");
+        delBtn.className = "msg-menu-item";
+        delBtn.style.color = "#df3b3b";
+        delBtn.textContent = "删除好友";
+        delBtn.onclick = () => {
+            if (confirm(`确定要彻底删除与 ${getDisplayName(contact)} 的所有数据吗？删除后将无法恢复。`)) {
+                // 在数组中彻底过滤掉该好友
+                state.contacts = state.contacts.filter(c => c.id !== contactId);
+                // 如果恰好正在和这个好友聊天，顺便清空激活状态
+                if (state.activeContactId === contactId) {
+                    state.activeContactId = null;
+                }
+                renderContacts(); // 重新渲染列表
+            }
+            document.body.removeChild(mask);
+        };
+        
+        mask.onclick = (e) => {
+            if (e.target === mask) document.body.removeChild(mask);
+        };
+        
+        menu.appendChild(pinBtn);
+        menu.appendChild(delBtn);
+        mask.appendChild(menu);
+        document.body.appendChild(mask);
     }
 
     function openAddModal() {
@@ -3622,7 +3726,14 @@ if (msg.isTyping) {
 
       contact.messages.push(newMsg);
       contact.lastTime = getCurrentTime();
+      
+      // 清空输入框内容
       chatInput.value = "";
+      
+      // 【新增】发送完毕后让输入框瞬间收缩回1行大小，同时恢复聊天列表的底部间距防遮挡
+      chatInput.style.height = "22px";
+      document.getElementById("chatBody").style.bottom = "68px";
+
       renderChat();
       checkAndTriggerAutoSummary(contact); // 检查是否需要自动总结
 
@@ -3636,6 +3747,7 @@ if (msg.isTyping) {
               // 稍微延迟 2 秒执行，模拟 AI 看到消息后去想文案的真实感
               setTimeout(() => {
                   executeAutoMoment(contact);
+             
               }, 2000);
           }
       }
@@ -4061,11 +4173,26 @@ TimeChecklist:
     chatBackBtn.addEventListener("click", backToFriends);
 
     sendBtn.addEventListener("click", sendMessage);
+    
+    // 监听键盘按键
     chatInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
+      // 移动端或电脑端按下回车发送（按住 Shift 加回车则是换行）
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
       }
+    });
+
+    // 监听输入，实现输入框的高度自动拉伸！
+    chatInput.addEventListener("input", function() {
+      this.style.height = "22px"; // 每次输入先重置回单行最小高度
+      this.style.height = this.scrollHeight + "px"; // 然后读取文本排版真实高度，实现撑开
+      
+      // 让聊天气泡列表同步上移，避免键盘框变高后遮挡了最后一条消息
+      const chatBody = document.getElementById("chatBody");
+      const currentBarHeight = document.getElementById("chatbar").offsetHeight;
+      chatBody.style.bottom = currentBarHeight + "px";
+      chatBody.scrollTop = chatBody.scrollHeight;
     });
 
         const inventoryPopup = document.getElementById("inventoryPopup");

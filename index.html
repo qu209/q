@@ -4150,21 +4150,6 @@ if (msg.isTyping) {
       renderChat();
       checkAndTriggerAutoSummary(contact); // 检查是否需要自动总结
 
-      // ================= 新增：关键词触发自动发朋友圈 =================
-      const triggerWords = ["发动态", "发朋友圈", "发个动态", "发个朋友圈", "发条动态", "发条朋友圈", "更新动态", "更新朋友圈"];
-      const shouldTriggerMoment = triggerWords.some(word => text.includes(word));
-      
-      if (shouldTriggerMoment) {
-          if (typeof executeAutoMoment === "function") {
-              // 稍微延迟 2 秒执行，模拟 AI 看到消息后去想文案的真实感
-              setTimeout(() => {
-                  executeAutoMoment(contact);
-                  // 手动触发后也重置自动发动态计时器，避免刚手动让TA发完又立刻自动触发
-                  contact.lastAutoMomentTimeMs = Date.now();
-              }, 2000);
-          }
-      }
-      // =========================================================
     }
 
     async function triggerAIReply() {
@@ -7363,13 +7348,28 @@ TimeChecklist:
                 typingHtml = `<div class="moment-typing">${m.typingAIs.join(" ")} 正在打字...</div>`;
             }
 
-            const myAvatarStyle = state.userAvatar ? `background-image: url(${state.userAvatar});` : `background-image: linear-gradient(135deg, #e0e0e0, #c4c4c4);`;
+            // 判断这条动态是谁发的：有calledAIs且只有一个AI且没有用户文字/图片外发布 → AI发的
+            // 通过 postedByAI 字段区分（角色自动发的动态会带此字段）
+            let posterAvatarStyle, posterName;
+            if (m.postedByAI) {
+                const poster = getContact(m.postedByAI);
+                if (poster) {
+                    posterAvatarStyle = poster.avatar ? `background-image: url(${poster.avatar}); background-size: cover; background-position: center;` : `background-image: linear-gradient(135deg, #e0e0e0, #c4c4c4);`;
+                    posterName = getDisplayName(poster);
+                } else {
+                    posterAvatarStyle = `background-image: linear-gradient(135deg, #e0e0e0, #c4c4c4);`;
+                    posterName = "角色";
+                }
+            } else {
+                posterAvatarStyle = state.userAvatar ? `background-image: url(${state.userAvatar}); background-size: cover; background-position: center;` : `background-image: linear-gradient(135deg, #e0e0e0, #c4c4c4);`;
+                posterName = state.userName || "我";
+            }
             const displayTime = formatMomentTime(m.timestamp);
 
             card.innerHTML = `
-                <div class="moment-avatar" style="${myAvatarStyle}"></div>
+                <div class="moment-avatar" style="${posterAvatarStyle}"></div>
                 <div class="moment-main">
-                    <div class="moment-name">${state.userName || "我"}</div>
+                    <div class="moment-name">${posterName}</div>
                     ${m.text ? `<div class="moment-text">${m.text}</div>` : ''}
                     ${imgHtml}
                     <div class="moment-time-row">
@@ -7725,17 +7725,18 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 注意：
 1. 必须要符合你的人设。
 2. 保持自然，不要像机器人。
-3. 纯文本回复，直接输出要发的话，绝对不要夹杂思考过程！`;
+3. 【重要】你的回复必须用换行符拆分成多条独立的消息，每行会变成一个独立气泡。不要把所有话挤在同一行！
+4. 直接输出要发的话，绝对不要夹杂思考过程、序号、行号！`;
 
         // 构建包含历史聊天记录的消息数组
         const msgPayload = [{ role: "system", content: sysPrompt }];
-        const history = contact.messages.slice(-20); // 最近20条作为上下文
+        const history = contact.messages.slice(-20);
         history.forEach(msg => {
             if (msg.isTyping) return;
-            let text = msg.text ? msg.text.replace(/<[^>]*>?/gm, '') : '';
+            let txt = msg.text ? msg.text.replace(/<[^>]*>?/gm, '') : '';
             msgPayload.push({
                 role: msg.from === "me" ? "user" : "assistant",
-                content: text || '[图片或特殊消息]'
+                content: txt || '[图片或特殊消息]'
             });
         });
 
@@ -7752,19 +7753,27 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
             });
             if(res.ok) {
                 const data = await res.json();
-                let text = data.choices[0].message.content.trim();
-                if(text) {
-                    contact.messages.push({
-                        from: "ai",
-                        text: text,
-                        time: getCurrentTime(),
-                        hasAnimated: false 
-                    });
-                    contact.lastTime = getCurrentTime();
-                    if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
-                        renderChat();
-                    } else {
-                        renderContacts();
+                let rawText = data.choices[0].message.content.trim();
+                if(rawText) {
+                    // 按换行拆成多条气泡，过滤空行
+                    const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== "");
+                    const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+                    for (let i = 0; i < lines.length; i++) {
+                        contact.messages.push({
+                            from: "ai",
+                            text: lines[i],
+                            time: getCurrentTime(),
+                            hasAnimated: false
+                        });
+                        contact.lastTime = getCurrentTime();
+                        if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+                            renderChat();
+                        } else {
+                            renderContacts();
+                        }
+                        if (i < lines.length - 1) {
+                            await delay(Math.min(400 + lines[i].length * 50, 1500));
+                        }
                     }
                 }
             }
@@ -7871,21 +7880,20 @@ ${chatContext}
                 id: "mom_" + Date.now(),
                 timestamp: Date.now(),
                 text: momentText,
-                image: imageUrl, // 可能为空
-                imageDescription: (imagePrompt !== "NONE" && imageUrl) ? imagePrompt : "", // AI配图描述
+                image: imageUrl,
+                imageDescription: (imagePrompt !== "NONE" && imageUrl) ? imagePrompt : "",
                 likes: [],
                 comments: [],
-                calledAIs: [contact.id], // 标记是该AI发的
-                typingAIs: [] 
+                calledAIs: [contact.id],
+                postedByAI: contact.id, // 标记是该AI角色发布的，用于渲染正确头像和名字
+                typingAIs: []
             };
             
             state.moments.unshift(newMoment);
-            // 发完动态后重置计时基准，让下一次从现在开始重新等待
+            // 发完动态后重置计时基准
             contact.lastAutoMomentTimeMs = Date.now();
-            // 只有在朋友圈界面才即时刷新，防止干扰
-            if(screens.moments.classList.contains("active")) {
-                renderMoments();
-            }
+            // 无论在哪个界面都刷新朋友圈数据，确保下次进入朋友圈时能看到
+            renderMoments();
 
         } catch(e) {
             console.error("后台主动发动态报错", e);

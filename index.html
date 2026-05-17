@@ -73,10 +73,57 @@
       display: block;
     }
 
-    .top-screen {
-      padding-bottom: 60px;
+    /* ====== 三个主页面的滚动布局修复 ====== */
+
+    /* 好友页：顶栏固定不动，仅好友列表区域可滚动 */
+    #screen-friends.active {
+      display: flex !important;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #screen-friends .header {
+      flex-shrink: 0;
+      position: relative;
+    }
+    #screen-friends .friend-list {
+      flex: 1;
       overflow-y: auto;
-      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 70px;
+    }
+    #screen-friends .empty-list {
+      flex: 1;
+      overflow-y: auto;
+    }
+    #screen-friends {
+      -webkit-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+
+    /* 朋友圈页：封面背景图固定不动，仅白色动态区域可滚动 */
+    #screen-moments.active {
+      display: flex !important;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    #screen-moments .moments-cover {
+      flex-shrink: 0;
+    }
+    #screen-moments .moments-body {
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      min-height: 0;
+      padding-bottom: 70px;
+    }
+
+    /* 我页面：整体可滚动 */
+    #screen-me.active {
+      display: block;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 70px;
     }
 
     /* 顶栏调整 */
@@ -1367,6 +1414,7 @@
       background-position: center !important;
       background-repeat: no-repeat !important;
     }
+    
     /* 气泡颜色预设选择器 */
     .bubble-preset-select {
       flex: 1;
@@ -2462,7 +2510,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
 
       <ul class="menu">
         <li id="openWalletBtn" style="cursor: pointer;">钱包</li>
-        <li>个人资料</li>
+        <li>健康</li>
         <li id="openLorebookManagerBtn" style="cursor: pointer;">世界书</li>
         <li id="openEmojiManagerBtn" style="cursor: pointer;">表情包</li>
         <li id="openSettingsBtn" style="cursor: pointer;">设置</li>
@@ -3676,14 +3724,15 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         item.appendChild(avatar);
         item.appendChild(main);
 
-        // 普通点击进入聊天
-        item.addEventListener("click", () => openChat(contact.id));
-        
-        // 新增：长按触发置顶与删除事件
+        // 长按触发置顶与删除事件（修复长按后松手误触进入聊天）
         let pressTimer = null;
+        let longPressTriggered = false;
+
         const startPress = (e) => {
+            longPressTriggered = false;
             pressTimer = setTimeout(() => {
                 pressTimer = null;
+                longPressTriggered = true;
                 showFriendMenu(contact.id);
             }, 500);
         };
@@ -3693,6 +3742,17 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
                 pressTimer = null;
             }
         };
+
+        // 普通点击进入聊天（长按弹出菜单后不触发）
+        item.addEventListener("click", (e) => {
+            if (longPressTriggered) {
+                e.preventDefault();
+                e.stopPropagation();
+                longPressTriggered = false;
+                return;
+            }
+            openChat(contact.id);
+        });
 
         // 触屏端支持
         item.addEventListener("touchstart", startPress, {passive: true});
@@ -3705,7 +3765,6 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         item.addEventListener("mousemove", cancelPress);
         item.addEventListener("mouseup", cancelPress);
         item.addEventListener("mouseleave", cancelPress);
-
         friendList.appendChild(item);
       });
     }
@@ -3738,6 +3797,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         delBtn.style.color = "#df3b3b";
         delBtn.textContent = "删除好友";
         delBtn.onclick = async () => {
+            document.body.removeChild(mask);
             const ok = await sysConfirm(`确定要彻底删除与 ${getDisplayName(contact)} 的所有数据吗？删除后将无法恢复。`, "删除好友", true);
             if (ok) {
                 state.contacts = state.contacts.filter(c => c.id !== contactId);
@@ -3746,7 +3806,6 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
                 }
                 renderContacts();
             }
-            document.body.removeChild(mask);
         };
         
         mask.onclick = (e) => {
@@ -5869,7 +5928,7 @@ TimeChecklist:
       fontPresetSelect.value = state.fontSettings.currentPresetId;
     }
 
-        openSettingsBtn.addEventListener("click", () => {
+                openSettingsBtn.addEventListener("click", () => {
       // 载入 API 设置
       apiUrlInput.value = state.apiSettings.url;
       apiKeyInput.value = state.apiSettings.key;
@@ -5885,12 +5944,10 @@ TimeChecklist:
       fontUrlInput.value = state.fontSettings.url;
       fontSizeInput.value = state.fontSettings.size;
       fontSizeDisplay.textContent = state.fontSettings.size + "px";
-
       screens.me.classList.remove("active");
       screens.settings.classList.add("active");
       tabbar.classList.add("hidden");
     });
-
     settingsBackBtn.addEventListener("click", () => {
       screens.settings.classList.remove("active");
       screens.me.classList.add("active");
@@ -6043,6 +6100,7 @@ TimeChecklist:
       screens.me.classList.add("active");
       tabbar.classList.remove("hidden");
     });
+
     // ================== 头像同步与更换逻辑 ==================
     const meAvatar = document.querySelector(".me-avatar");
     const momentsAvatar = document.querySelector(".moments-avatar");

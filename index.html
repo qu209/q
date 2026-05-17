@@ -234,51 +234,93 @@
       font-size: 15px;
     }
 
-    /* 朋友圈页 */
+    /* 朋友圈页 - 高级重设计版 */
     .moments-cover {
       position: relative;
-      height: calc(290px + var(--safe-top));
+      height: calc(220px + var(--safe-top));
       padding-top: var(--safe-top);
-      background: #b2b2b2;
+      background: #111111;
+      overflow: hidden;
+    }
+
+    /* 背景纹理：极细噪点感 */
+    .moments-cover::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse 80% 60% at 50% 0%, rgba(255,255,255,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* 右侧装饰线条 */
+    .moments-cover::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 1px;
+      height: 100%;
+      background: linear-gradient(to bottom, transparent, rgba(255,255,255,0.08), transparent);
+      pointer-events: none;
+      z-index: 0;
     }
 
     .moments-cam {
       position: absolute;
-      top: calc(16px + var(--safe-top));
-      right: 16px;
-      width: 26px;
-      height: 26px;
+      top: calc(18px + var(--safe-top));
+      right: 18px;
+      width: 22px;
+      height: 22px;
       object-fit: contain;
+      filter: brightness(0) invert(1);
+      opacity: 0.5;
+      z-index: 2;
+      transition: opacity 0.2s;
     }
+    .moments-cam:active { opacity: 0.9; }
 
     .moments-profile {
       position: absolute;
-      right: 16px;
-      bottom: -22px;
+      left: 20px;
+      bottom: 24px;
       display: flex;
-      align-items: flex-end;
-      gap: 16px;
-    }
-
-    .moments-name {
-      color: #fff;
-      font-size: 19px;
-      font-weight: 700;
-      padding-bottom: 24px;
-      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.15);
+      align-items: center;
+      gap: 14px;
+      z-index: 2;
     }
 
     .moments-avatar {
-      width: 68px;
-      height: 68px;
-      border-radius: 50%;
-      background: #333;
-      border: 2px solid #fff;
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      background: #2a2a2a;
+      border: 1px solid rgba(255,255,255,0.12);
+      flex-shrink: 0;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+    }
+
+    .moments-name {
+      color: rgba(255,255,255,0.92);
+      font-size: 17px;
+      font-weight: 600;
+      letter-spacing: 0.1px;
+      line-height: 1.2;
+    }
+
+    .moments-name-sub {
+      font-size: 11px;
+      color: rgba(255,255,255,0.32);
+      font-weight: 400;
+      margin-top: 4px;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
     }
 
     .moments-body {
-      min-height: calc(100dvh - 290px - var(--tab-h) - var(--safe-bottom));
-      padding-top: 110px;
+      min-height: calc(100dvh - 220px - var(--tab-h) - var(--safe-bottom));
+      padding-top: 0;
       text-align: center;
       color: #b7bcc5;
       font-size: 15px;
@@ -1938,51 +1980,258 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .memory-action-btn.edit { color: #007aff; }
     .memory-action-btn.delete { color: #df3b3b; }
 
-    /* ================= 朋友圈额外样式 ================= */
-    .moment-card { padding: 16px; border-bottom: 1px solid #f0f0f0; display: flex; gap: 12px; background: #fff; text-align: left; }
-    .moment-avatar { width: 42px; height: 42px; border-radius: 50%; background-size: cover; background-position: center; flex-shrink: 0; background-color: #eee; }
-    .moment-main { flex: 1; min-width: 0; }
-    .moment-name { font-size: 16px; font-weight: 600; color: #576b95; margin-bottom: 4px; }
-    .moment-text { font-size: 15px; color: #111; line-height: 1.5; word-break: break-word; white-space: pre-wrap; margin-bottom: 8px; }
-    .moment-img { max-width: 80%; max-height: 200px; border-radius: 4px; object-fit: cover; margin-bottom: 8px; display: block; }
-    
-    /* 时间、删除、弹出按钮同行布局 */
-    .moment-time-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; position: relative; height: 24px; }
-    .moment-time-left { display: flex; gap: 12px; align-items: center; font-size: 13px; color: #b2b2b2; }
-    
-    /* SVG 删除图标 */
-    .moment-delete-icon { color: #576b95; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 2px; }
-    .moment-delete-icon:active { opacity: 0.5; }
-    
-    /* 两个点的弹出按钮 (完美居中) */
-    .moment-toggle-btn { background: #f0f0f0; border-radius: 4px; padding: 0 8px; height: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #576b95; font-weight: bold; letter-spacing: 2px; }
-    .moment-toggle-btn span { transform: translateY(-3px); pointer-events: none; font-size: 14px; }
-    
-    /* 黑色弹出菜单 */
-    .moment-popout { position: absolute; right: 40px; top: -6px; background: #4c5154; border-radius: 4px; display: flex; overflow: hidden; opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); transform: translateX(10px); }
-    .moment-popout.show { opacity: 1; pointer-events: auto; transform: translateX(0); }
-    .moment-popout-btn { color: #fff; padding: 10px 16px; font-size: 13px; display: flex; align-items: center; gap: 6px; cursor: pointer; font-weight: 500; }
-    .moment-popout-btn:active { background: #3a3f42; }
-    .moment-popout-divider { width: 1px; background: #3a3f42; margin: 8px 0; }
-    
-    /* 点赞和评论区 */
-    .moment-interact-box { background: #f7f7f7; border-radius: 4px; padding: 8px; position: relative; margin-top: 4px; }
-    .moment-interact-box::before { content: ""; position: absolute; top: -10px; left: 10px; border-width: 5px; border-style: solid; border-color: transparent transparent #f7f7f7 transparent; }
-    .moment-likes { font-size: 13px; color: #576b95; font-weight: 600; margin-bottom: 4px; display: flex; align-items: center; gap: 4px; word-break: break-all; }
-    .moment-likes-border { border-bottom: 1px solid #eaeaec; margin-bottom: 4px; padding-bottom: 4px; }
-    .moment-comments { font-size: 13px; color: #111; display: flex; flex-direction: column; gap: 4px; }
-    .moment-comment-item { line-height: 1.4; word-break: break-word; cursor: pointer; }
-    .moment-comment-item:active { background: #ececec; }
-    .moment-comment-item span.comment-name { color: #576b95; font-weight: 600; }
-    
-    /* AI 正在打字状态 */
-    .moment-typing { font-size: 13px; color: #b2b2b2; margin-top: 8px; font-style: italic; }
+    /* ================= 朋友圈额外样式 - 高级版 ================= */
 
-    /* 底部内联评论输入框 */
-    .moment-comment-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #f7f7f7; border-top: 1px solid #ececec; padding: 10px 16px; display: none; align-items: center; gap: 10px; z-index: 50; padding-bottom: calc(10px + env(safe-area-inset-bottom)); transform: translateY(100%); transition: transform 0.25s; }
+    /* 每条动态：无卡片感，用左侧色块+间距区分，干净留白 */
+    .moment-card {
+      padding: 20px 18px 0 18px;
+      border-bottom: none;
+      display: flex;
+      gap: 13px;
+      background: transparent;
+      text-align: left;
+      position: relative;
+    }
+
+    /* 左侧连续线（时间轴感） */
+    .moment-card::after {
+      content: "";
+      position: absolute;
+      left: 44px;
+      top: 64px;
+      bottom: 0;
+      width: 1px;
+      background: linear-gradient(to bottom, #e5e3de, transparent);
+      pointer-events: none;
+    }
+
+    .moment-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+      background-color: #e0ddd6;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      position: relative;
+      z-index: 1;
+    }
+
+    .moment-main { flex: 1; min-width: 0; padding-bottom: 20px; border-bottom: 1px solid #eceae5; }
+    .moment-card:last-child .moment-main { border-bottom: none; }
+
+    .moment-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #1a1a1a;
+      margin-bottom: 6px;
+      letter-spacing: 0.1px;
+    }
+
+    .moment-text {
+      font-size: 15px;
+      color: #2c2c2c;
+      line-height: 1.65;
+      word-break: break-word;
+      white-space: pre-wrap;
+      margin-bottom: 10px;
+      letter-spacing: 0.05px;
+    }
+
+    .moment-img {
+      width: 100%;
+      max-height: 240px;
+      border-radius: 10px;
+      object-fit: cover;
+      margin-bottom: 12px;
+      display: block;
+      border: 1px solid rgba(0,0,0,0.06);
+    }
+
+    /* 时间行 */
+    .moment-time-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      position: relative;
+      height: 22px;
+    }
+
+    .moment-time-left {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      font-size: 11.5px;
+      color: #bbb8b1;
+      letter-spacing: 0.2px;
+    }
+
+    /* 删除图标 */
+    .moment-delete-icon {
+      color: #c5c2bb;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2px;
+      transition: color 0.15s;
+    }
+    .moment-delete-icon:active { color: #888; }
+
+    /* 弹出按钮：更克制 */
+    .moment-toggle-btn {
+      background: transparent;
+      border-radius: 4px;
+      padding: 0 6px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #c0bdb6;
+      font-weight: bold;
+      letter-spacing: 1.5px;
+      transition: color 0.15s;
+    }
+    .moment-toggle-btn:active { color: #666; }
+    .moment-toggle-btn span { transform: translateY(-3px); pointer-events: none; font-size: 13px; }
+
+    /* 弹出菜单 - 精致浮层 */
+    .moment-popout {
+      position: absolute;
+      right: 40px;
+      top: -8px;
+      background: #1c1c1c;
+      border-radius: 10px;
+      display: flex;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.18s ease, transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+      transform: translateY(4px) scale(0.97);
+      box-shadow: 0 8px 30px rgba(0,0,0,0.22);
+    }
+    .moment-popout.show {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0) scale(1);
+    }
+    .moment-popout-btn {
+      color: rgba(255,255,255,0.88);
+      padding: 11px 18px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      letter-spacing: 0.1px;
+    }
+    .moment-popout-btn:active { background: rgba(255,255,255,0.06); }
+    .moment-popout-divider { width: 1px; background: rgba(255,255,255,0.08); margin: 8px 0; }
+
+    /* 点赞和评论区 - 极简风 */
+    .moment-interact-box {
+      background: #f0ede7;
+      border-radius: 8px;
+      padding: 9px 12px;
+      position: relative;
+      margin-top: 0;
+      margin-bottom: 4px;
+    }
+    .moment-interact-box::before { display: none; }
+
+    .moment-likes {
+      font-size: 12.5px;
+      color: #888;
+      font-weight: 500;
+      margin-bottom: 5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      word-break: break-all;
+    }
+
+    .moment-likes-border {
+      border-bottom: 1px solid #e5e2db;
+      margin-bottom: 6px;
+      padding-bottom: 6px;
+    }
+
+    .moment-comments {
+      font-size: 13px;
+      color: #444;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .moment-comment-item {
+      line-height: 1.5;
+      word-break: break-word;
+      cursor: pointer;
+      border-radius: 4px;
+      padding: 1px 2px;
+    }
+    .moment-comment-item:active { background: #e8e5df; }
+    .moment-comment-item span.comment-name { color: #444; font-weight: 600; }
+
+    /* AI 正在打字 */
+    .moment-typing {
+      font-size: 11.5px;
+      color: #c5c2bb;
+      margin-top: 6px;
+      font-style: italic;
+      letter-spacing: 0.2px;
+    }
+
+    /* 评论输入框 - 高级感 */
+    .moment-comment-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      background: rgba(247,246,243,0.96);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(0,0,0,0.07);
+      padding: 10px 16px;
+      display: none;
+      align-items: center;
+      gap: 10px;
+      z-index: 50;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      transform: translateY(100%);
+      transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    }
     .moment-comment-bar.show { display: flex; transform: translateY(0); }
-    .moment-comment-input { flex: 1; border: none; background: #fff; border-radius: 4px; padding: 10px 12px; font-size: 15px; outline: none; }
-    .moment-comment-send { background: #C1D0DC; color: #fff; border: none; border-radius: 4px; padding: 8px 16px; font-size: 14px; font-weight: bold; cursor: pointer; }
+
+    .moment-comment-input {
+      flex: 1;
+      border: 1px solid #e5e2db;
+      background: #fff;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
+      outline: none;
+      color: #111;
+      transition: border-color 0.15s;
+    }
+    .moment-comment-input:focus { border-color: #aaa9a5; }
+
+    .moment-comment-send {
+      background: #1a1a1a;
+      color: rgba(255,255,255,0.9);
+      border: none;
+      border-radius: 10px;
+      padding: 10px 18px;
+      font-size: 13.5px;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 0.2px;
+      transition: opacity 0.15s;
+    }
+    .moment-comment-send:active { opacity: 0.75; }
 
     /* 发布界面 */
     .moment-publish-screen { position: fixed; inset: 0; background: #fff; z-index: 100; display: none; flex-direction: column; overflow-y: auto; }
@@ -2157,18 +2406,21 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     <section class="screen top-screen" id="screen-moments">
       <div class="moments-cover" id="momentsCover" style="cursor: pointer;" title="点击更换背景图">
         <input type="file" id="momentsCoverInput" accept="image/*" style="display: none;" />
-        <img class="moments-cam" id="openPublishMomentBtn" src="https://i.postimg.cc/9Mm1yQ3M/IMG-5017.png" alt="发布动态" style="cursor: pointer; width: 30px; height: 30px;" />
+        <img class="moments-cam" id="openPublishMomentBtn" src="https://i.postimg.cc/9Mm1yQ3M/IMG-5017.png" alt="发布动态" style="cursor: pointer;" />
         <div class="moments-profile">
-          <div class="moments-name" id="momentsDisplayName">{{user}}</div>
           <div class="moments-avatar"></div>
+          <div>
+            <div class="moments-name" id="momentsDisplayName">{{user}}</div>
+            <div class="moments-name-sub" id="momentsSubTitle" style="cursor: pointer;" title="点击修改">moments</div>
+          </div>
         </div>
       </div>
-      <div class="moments-body" id="momentsListContainer" style="padding-top: 0; text-align: left; background: #fff; padding-bottom: 80px;">
-        <div style="text-align: center; color: #b7bcc5; padding-top: 110px;" id="momentsEmptyHint">暂时没有动态</div>
+      <div class="moments-body" id="momentsListContainer" style="padding-top: 8px; text-align: left; background: #fff; padding-bottom: 80px;">
+        <div style="text-align: center; color: #c8c5be; padding-top: 80px; font-size: 14px; letter-spacing: 0.3px;" id="momentsEmptyHint">暂时没有动态</div>
       </div>
       
       <div class="moment-comment-bar" id="momentCommentBar">
-        <input type="text" id="momentCommentInput" class="moment-comment-input" placeholder="评论" autocomplete="off" />
+        <input type="text" id="momentCommentInput" class="moment-comment-input" placeholder="添加评论…" autocomplete="off" />
         <button id="momentCommentSendBtn" class="moment-comment-send">发送</button>
       </div>
     </section>
@@ -7952,6 +8204,18 @@ ${chatContext}
     applyGlobalFontAndSize();
     renderContacts();
     switchTab("friends");
+    // moments 副标题点击修改
+    const momentsSubEl = document.getElementById('momentsSubTitle');
+    if (momentsSubEl) {
+      momentsSubEl.addEventListener('click', async function(e) {
+        e.stopPropagation();
+        e.preventDefault();
+        const newVal = await sysPrompt("修改副标题文字：", momentsSubEl.textContent.trim());
+        if (newVal !== null && newVal.trim() !== "") {
+          momentsSubEl.textContent = newVal.trim();
+        }
+      });
+    }
   </script>
 </body>
 </html>

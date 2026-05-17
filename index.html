@@ -5900,7 +5900,7 @@ TimeChecklist:
       meEditDialogMask.classList.remove("show");
     });
 
-    meEditDialogConfirmBtn.addEventListener("click", () => {
+        meEditDialogConfirmBtn.addEventListener("click", () => {
       const val = meEditDialogInput.value.trim();
       if (meEditMode === "name" && val) {
         state.userName = val;
@@ -5910,6 +5910,7 @@ TimeChecklist:
         state.userQuote = val;
       }
       syncMePageText();
+      if (typeof renderMoments === "function") renderMoments();
       meEditDialogMask.classList.remove("show");
     });
 
@@ -6098,11 +6099,12 @@ TimeChecklist:
   
       applyBubbleStyleToContact(contact);
 
-      screenChatDetails.classList.remove("active");
+            screenChatDetails.classList.remove("active");
       screens.chat.classList.add("active");
       chatTitle.textContent = getDisplayName(contact);
       renderChat();
       renderContacts();
+      if (typeof renderMoments === "function") renderMoments();
     });
 
 // 5. 打开头像框弹窗

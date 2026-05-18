@@ -2421,6 +2421,108 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       font-size: 12px;
       color: rgba(255,255,255,0.5);
     }
+    /* ====== 全局消息横幅通知样式 ====== */
+    .notif-banner {
+      position: fixed;
+      top: calc(var(--safe-top) + 8px);
+      left: 12px;
+      right: 12px;
+      z-index: 99999;
+      background: rgba(30, 30, 30, 0.92);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 16px;
+      padding: 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.28);
+      cursor: pointer;
+      transform: translateY(calc(-100% - 20px));
+      opacity: 0;
+      transition: transform 0.42s cubic-bezier(0.25, 1, 0.3, 1), opacity 0.42s ease;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    .notif-banner.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .notif-banner-avatar {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      flex-shrink: 0;
+      background-size: cover;
+      background-position: center;
+      background-color: #444;
+      position: relative;
+    }
+    .notif-banner-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .notif-banner-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: rgba(255,255,255,0.95);
+      margin-bottom: 2px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .notif-banner-text {
+      font-size: 13px;
+      color: rgba(255,255,255,0.65);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .notif-banner-app {
+      font-size: 11px;
+      color: rgba(255,255,255,0.35);
+      flex-shrink: 0;
+    }
+
+    /* ====== 好友列表未读角标样式 ====== */
+    .friend-unread-badge {
+      min-width: 20px;
+      height: 20px;
+      border-radius: 10px;
+      background: #df3b3b;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 5px;
+      flex-shrink: 0;
+      margin-left: 6px;
+    }
+    /* 头像上方的角标小红点 */
+    .friend-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .friend-avatar-badge {
+      position: absolute;
+      top: -3px;
+      right: -3px;
+      min-width: 18px;
+      height: 18px;
+      border-radius: 9px;
+      background: #df3b3b;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 4px;
+      border: 2px solid #fff;
+      z-index: 2;
+    }
 
   </style>
   
@@ -3308,6 +3410,15 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       <div class="moment-img-desc-text" id="momentImgDescText"></div>
       <div class="moment-img-desc-hint">点击任意处关闭</div>
     </div>
+    <!-- ====== 全局消息横幅通知DOM ====== -->
+    <div class="notif-banner" id="notifBanner">
+      <div class="notif-banner-avatar" id="notifBannerAvatar"></div>
+      <div class="notif-banner-body">
+        <div class="notif-banner-name" id="notifBannerName"></div>
+        <div class="notif-banner-text" id="notifBannerText"></div>
+      </div>
+      <div class="notif-banner-app">小手机</div>
+    </div>
 
     <nav class="tabbar" id="tabbar">
       <button class="tab-item active" data-tab="friends">好友</button>
@@ -3663,11 +3774,14 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       sortedContacts.forEach(contact => {
         const item = document.createElement("button");
         item.className = "friend-item";
-        // 置顶好友可增加一个极浅的背景色区分（可选）
         if (contact.isPinned) {
             item.style.backgroundColor = "#fafafa";
         }
         item.dataset.id = contact.id;
+
+        // 头像包裹层（用于叠加角标）
+        const avatarWrap = document.createElement("div");
+        avatarWrap.className = "friend-avatar-wrap";
 
         const avatar = document.createElement("div");
         avatar.className = "friend-avatar";
@@ -3681,10 +3795,21 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
           avatar.classList.remove("has-custom-avatar");
         }
 
+        // 未读角标
+        const unreadCount = contact.unreadCount || 0;
+        if (unreadCount > 0) {
+          const badge = document.createElement("div");
+          badge.className = "friend-avatar-badge";
+          badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+          avatarWrap.appendChild(avatar);
+          avatarWrap.appendChild(badge);
+        } else {
+          avatarWrap.appendChild(avatar);
+        }
+
         const main = document.createElement("div");
         main.className = "friend-main";
 
-        // 构建同行显示的名字和时间
         const titleRow = document.createElement("div");
         titleRow.className = "friend-title-row";
 
@@ -3694,7 +3819,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
 
         const time = document.createElement("div");
         time.className = "friend-time";
-        time.textContent = contact.lastTime || ""; // 显示最后时间
+        time.textContent = contact.lastTime || "";
 
         titleRow.appendChild(name);
         titleRow.appendChild(time);
@@ -3721,10 +3846,9 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         main.appendChild(titleRow);
         main.appendChild(sub);
         
-        item.appendChild(avatar);
+        item.appendChild(avatarWrap);
         item.appendChild(main);
 
-        // 长按触发置顶与删除事件（修复长按后松手误触进入聊天）
         let pressTimer = null;
         let longPressTriggered = false;
 
@@ -3743,7 +3867,6 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             }
         };
 
-        // 普通点击进入聊天（长按弹出菜单后不触发）
         item.addEventListener("click", (e) => {
             if (longPressTriggered) {
                 e.preventDefault();
@@ -3751,16 +3874,16 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
                 longPressTriggered = false;
                 return;
             }
+            // 点进去清除未读
+            contact.unreadCount = 0;
             openChat(contact.id);
         });
 
-        // 触屏端支持
         item.addEventListener("touchstart", startPress, {passive: true});
         item.addEventListener("touchmove", cancelPress, {passive: true});
         item.addEventListener("touchend", cancelPress);
         item.addEventListener("touchcancel", cancelPress);
 
-        // PC 鼠标端支持
         item.addEventListener("mousedown", startPress);
         item.addEventListener("mousemove", cancelPress);
         item.addEventListener("mouseup", cancelPress);
@@ -4834,32 +4957,49 @@ TimeChecklist:
         // 异步延迟工具（灵魂所在，恢复一条一条发的真实感）
         const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
         
-        if (lines.length > 0) {
+          if (lines.length > 0) {
           for (let i = 0; i < lines.length; i++) {
             contact.messages.push({
               from: "ai",
               text: lines[i],
               time: getCurrentTime(),
-              hasAnimated: false // 确保每条新弹出的气泡都带有动画标记
+              hasAnimated: false
             });
             contact.lastTime = getCurrentTime();
             
             // 发送一条就立刻刷新一次界面
             if (state.activeContactId === contact.id) renderChat();
             else renderContacts();
+
+            // 不在该聊天界面时：显示横幅通知 + 累加未读
+            if (shouldShowNotif(contact.id)) {
+              contact.unreadCount = (contact.unreadCount || 0) + 1;
+              // 提取预览文字
+              let previewMsg = lines[i];
+              if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
+              else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
+              else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
+              else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
+              
+              showNotifBanner(
+                contact.avatar || "",
+                getDisplayName(contact),
+                previewMsg,
+                () => { openChat(contact.id); }
+              );
+              renderContacts(); // 刷新角标
+            }
             
-            // 如果不是最后一条，就停顿一下再发下一条 (真实打字感)
+            // 如果不是最后一条，就停顿一下再发下一条
             if (i < lines.length - 1) {
               const typingTime = 400 + lines[i].length * 50;
               await delay(Math.min(typingTime, 1500)); 
             }
           }
         } else {
-          // 如果没返回内容，也刷新一下消掉那个思考气泡
           if (state.activeContactId === contact.id) renderChat();
           else renderContacts();
-        }
-        
+        }        
         checkAndTriggerAutoSummary(contact); // AI回复完后检查是否需要总结
         
       } catch (error) {
@@ -7948,11 +8088,20 @@ ${contact.myPersona ? '发朋友圈的人(我)的设定：' + contact.myPersona 
                 text: `【API请求失败: ${e.message}】`
             });
         } finally {
-            // 不管成功失败，最后一定把该角色从打字列表中移除
             if (moment && moment.typingAIs) {
                 moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
             }
             renderMoments();
+            // 朋友圈评论通知横幅（不在朋友圈界面时显示）
+            if (!(state.currentTab === "moments" && !screens.chat.classList.contains("active"))) {
+                const contactName = getDisplayName(contact);
+                showNotifBanner(
+                    contact.avatar || "",
+                    contactName,
+                    "叮 " + contactName + " 给你的动态评论了，快去看看吧",
+                    () => { switchTab("moments"); }
+                );
+            }
         }
     }
     
@@ -8013,6 +8162,16 @@ ${contact.myPersona ? '与你对话的用户的设定：' + contact.myPersona : 
         } finally {
             moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
             renderMoments();
+            // 回复评论通知横幅
+            if (!(state.currentTab === "moments" && !screens.chat.classList.contains("active"))) {
+                const contactName = getDisplayName(contact);
+                showNotifBanner(
+                    contact.avatar || "",
+                    contactName,
+                    "叮 " + contactName + " 回复了你的评论，快去看看吧",
+                    () => { switchTab("moments"); }
+                );
+            }
         }
     }
 
@@ -8081,6 +8240,22 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                         if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
                             renderChat();
                         } else {
+                            renderContacts();
+                        }
+                        // 后台主动发消息时显示横幅
+                        if (shouldShowNotif(contact.id)) {
+                            contact.unreadCount = (contact.unreadCount || 0) + 1;
+                            let previewMsg = lines[i];
+                            if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
+                            else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
+                            else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
+                            else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
+                            showNotifBanner(
+                                contact.avatar || "",
+                                getDisplayName(contact),
+                                previewMsg,
+                                () => { openChat(contact.id); }
+                            );
                             renderContacts();
                         }
                         if (i < lines.length - 1) {
@@ -8254,7 +8429,83 @@ ${chatContext}
         }
         await origTriggerAIReply();
     }
+    // ====== 全局横幅通知系统 ======
+    let notifBannerTimer = null;
+    let notifBannerQueue = [];
+    let notifBannerShowing = false;
 
+    function showNotifBanner(avatarUrl, name, text, onClick) {
+      notifBannerQueue.push({ avatarUrl, name, text, onClick });
+      if (!notifBannerShowing) {
+        processNotifBannerQueue();
+      }
+    }
+
+    function processNotifBannerQueue() {
+      if (notifBannerQueue.length === 0) {
+        notifBannerShowing = false;
+        return;
+      }
+      notifBannerShowing = true;
+      const { avatarUrl, name, text, onClick } = notifBannerQueue.shift();
+
+      const banner = document.getElementById("notifBanner");
+      const bannerAvatar = document.getElementById("notifBannerAvatar");
+      const bannerName = document.getElementById("notifBannerName");
+      const bannerText = document.getElementById("notifBannerText");
+
+      // 设置内容
+      if (avatarUrl) {
+        bannerAvatar.style.backgroundImage = `url(${avatarUrl})`;
+        bannerAvatar.style.backgroundSize = "cover";
+        bannerAvatar.style.backgroundPosition = "center";
+      } else {
+        bannerAvatar.style.backgroundImage = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='bg' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0%25' stop-color='%23d7d7d7'/%3E%3Cstop offset='100%25' stop-color='%23c9c9c9'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='100' height='100' fill='url(%23bg)'/%3E%3Ccircle cx='50' cy='34' r='18' fill='%23ededed'/%3E%3Cpath d='M20 100 Q20 65 50 65 Q80 65 80 100' fill='%23efefef'/%3E%3C/svg%3E")`;
+        bannerAvatar.style.backgroundSize = "cover";
+      }
+      bannerName.textContent = name;
+      bannerText.textContent = text;
+
+      // 绑定点击
+      banner.onclick = () => {
+        hideBannerNow();
+        if (onClick) onClick();
+      };
+
+      // 显示
+      banner.classList.add("show");
+
+      // 4秒后自动消失
+      if (notifBannerTimer) clearTimeout(notifBannerTimer);
+      notifBannerTimer = setTimeout(() => {
+        hideBannerNow();
+      }, 4000);
+    }
+
+    function hideBannerNow() {
+      const banner = document.getElementById("notifBanner");
+      banner.classList.remove("show");
+      if (notifBannerTimer) {
+        clearTimeout(notifBannerTimer);
+        notifBannerTimer = null;
+      }
+      // 等动画结束后处理下一条
+      setTimeout(() => {
+        processNotifBannerQueue();
+      }, 450);
+    }
+
+    // 判断是否应该显示通知（不在目标聊天界面时才显示）
+    function shouldShowNotif(contactId) {
+      // 如果当前在该联系人的聊天界面，不显示横幅
+      if (
+        screens.chat.classList.contains("active") &&
+        state.activeContactId === contactId
+      ) {
+        return false;
+      }
+      return true;
+    }
     // 初始化预设
     renderBubblePresets();
     updateBubblePreview();

@@ -2634,11 +2634,130 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
 
       <ul class="menu">
         <li id="openWalletBtn" style="cursor: pointer;">钱包</li>
-        <li>健康</li>
+        <li id="openHealthBtn" style="cursor: pointer;">健康</li>
         <li id="openLorebookManagerBtn" style="cursor: pointer;">世界书</li>
         <li id="openEmojiManagerBtn" style="cursor: pointer;">表情包</li>
         <li id="openSettingsBtn" style="cursor: pointer;">设置</li>
       </ul>
+    </section>
+    <!-- ====== 健康 · 经期记录页面 ====== -->
+    <section class="screen wallet-screen" id="screen-health" style="display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px;">
+      <!-- 顶栏 -->
+      <div style="position: sticky; top: 0; z-index: 8; height: calc(54px + var(--safe-top)); padding-top: var(--safe-top); background: #fff; border-bottom: 1px solid #f0f0f0;">
+        <div style="height: 54px; display: grid; grid-template-columns: 50px 1fr 50px; align-items: center;">
+          <button class="header-btn" id="healthBackBtn" aria-label="返回">
+            <span class="back-char">‹</span>
+          </button>
+          <div style="text-align: center; font-size: 17px; font-weight: 600; color: #111;">健康</div>
+          <div></div>
+        </div>
+      </div>
+
+      <!-- 初始化引导弹窗（首次进入） -->
+      <div id="healthSetupOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:20px; padding:28px 22px 22px; width:min(340px, calc(100vw - 40px)); box-shadow:0 8px 40px rgba(0,0,0,0.15);">
+          <div style="font-size:20px; font-weight:700; color:#111; margin-bottom:6px; text-align:center;">记录经期</div>
+          <div style="font-size:13px; color:#999; text-align:center; margin-bottom:20px;">填写后即可查看日历与预测</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:13px; color:#6c6c70; font-weight:500; display:block; margin-bottom:4px; padding-left:2px;">最近一次经期开始日期 <span style="color:#e05c6a;">*</span></label>
+              <input type="date" id="hSetupStart" style="width:100%; border:none; border-radius:12px; background:#f7f7f8; padding:0 14px; height:46px; font-size:16px; outline:none; color:#111;" />
+            </div>
+            <div>
+              <label style="font-size:13px; color:#6c6c70; font-weight:500; display:block; margin-bottom:4px; padding-left:2px;">最近一次经期结束日期 <span style="color:#e05c6a;">*</span></label>
+              <input type="date" id="hSetupEnd" style="width:100%; border:none; border-radius:12px; background:#f7f7f8; padding:0 14px; height:46px; font-size:16px; outline:none; color:#111;" />
+            </div>
+            <div>
+              <label style="font-size:13px; color:#6c6c70; font-weight:500; display:block; margin-bottom:4px; padding-left:2px;">平均周期（天）<span style="color:#bbb; font-weight:400;">可选，默认28</span></label>
+              <input type="number" id="hSetupCycle" placeholder="28" min="20" max="45" style="width:100%; border:none; border-radius:12px; background:#f7f7f8; padding:0 14px; height:46px; font-size:16px; outline:none; color:#111;" />
+            </div>
+            <div>
+              <label style="font-size:13px; color:#6c6c70; font-weight:500; display:block; margin-bottom:4px; padding-left:2px;">平均经期时长（天）<span style="color:#bbb; font-weight:400;">可选，默认5</span></label>
+              <input type="number" id="hSetupDuration" placeholder="5" min="2" max="10" style="width:100%; border:none; border-radius:12px; background:#f7f7f8; padding:0 14px; height:46px; font-size:16px; outline:none; color:#111;" />
+            </div>
+          </div>
+          <div id="hSetupError" style="color:#e05c6a; font-size:12px; min-height:16px; margin:8px 0 0; text-align:center;"></div>
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <button id="hSetupCancelBtn" style="flex:1; height:48px; border:none; border-radius:14px; background:#e5e5ea; color:#3c3c43; font-size:16px; font-weight:600; cursor:pointer;">取消</button>
+            <button id="hSetupSaveBtn" style="flex:1.6; height:48px; border:none; border-radius:14px; background:#e05c6a; color:#fff; font-size:16px; font-weight:600; cursor:pointer;">保存</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 日历主体 -->
+      <div style="padding: 16px 16px 0;">
+        <!-- 月份导航 -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+          <button id="hCalPrev" style="appearance:none; border:none; background:#f2f2f7; width:36px; height:36px; border-radius:50%; font-size:20px; color:#555; cursor:pointer; display:grid; place-items:center; line-height:1;">‹</button>
+          <div id="hCalTitle" style="font-size:18px; font-weight:700; color:#111;"></div>
+          <button id="hCalNext" style="appearance:none; border:none; background:#f2f2f7; width:36px; height:36px; border-radius:50%; font-size:20px; color:#555; cursor:pointer; display:grid; place-items:center; line-height:1;">›</button>
+        </div>
+        <!-- 星期标题行 -->
+        <div style="display:grid; grid-template-columns:repeat(7,1fr); margin-bottom:6px;">
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">日</div>
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">一</div>
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">二</div>
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">三</div>
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">四</div>
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">五</div>
+          <div style="text-align:center; font-size:12px; color:#bbb; font-weight:500;">六</div>
+        </div>
+        <!-- 日历格子 -->
+        <div id="hCalGrid" style="display:grid; grid-template-columns:repeat(7,1fr); gap:4px 2px;"></div>
+      </div>
+
+      <!-- 图例 -->
+      <div style="display:flex; gap:16px; padding:16px 20px 4px; flex-wrap:wrap;">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="width:14px; height:14px; border-radius:50%; background:#e05c6a;"></div>
+          <span style="font-size:12px; color:#666;">当前经期</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="width:14px; height:14px; border-radius:50%; background:#c97a84;"></div>
+          <span style="font-size:12px; color:#666;">已过去的经期</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="width:14px; height:14px; border-radius:50%; background:#f7b8c2;"></div>
+          <span style="font-size:12px; color:#666;">预测经期</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:6px;">
+          <div style="width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid #e05c6a;"></div>
+          <span style="font-size:12px; color:#666;">今天</span>
+        </div>
+      </div>
+
+      <!-- 信息卡片 -->
+      <div style="margin:16px; background:#fff4f5; border-radius:16px; padding:16px 18px;">
+        <div id="hInfoText" style="font-size:14px; color:#c0485a; line-height:1.8;"></div>
+      </div>
+
+      <!-- 底部操作 -->
+      <div style="margin:0 16px; display:flex; gap:10px;">
+        <button id="hAddPeriodBtn" style="flex:1; height:46px; border:none; border-radius:14px; background:#e05c6a; color:#fff; font-size:15px; font-weight:600; cursor:pointer;">记录本次经期</button>
+        <button id="hEditSettingsBtn" style="flex:1; height:46px; border:none; border-radius:14px; background:#f2f2f7; color:#555; font-size:15px; font-weight:600; cursor:pointer;">修改设置</button>
+      </div>
+
+      <!-- 记录弹窗 -->
+      <div id="hAddPeriodOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:200; align-items:center; justify-content:center;">
+        <div style="background:#fff; border-radius:20px; padding:28px 22px 22px; width:min(340px, calc(100vw - 40px)); box-shadow:0 8px 40px rgba(0,0,0,0.15);">
+          <div style="font-size:18px; font-weight:700; color:#111; margin-bottom:18px; text-align:center;">记录本次经期</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div>
+              <label style="font-size:13px; color:#6c6c70; font-weight:500; display:block; margin-bottom:4px; padding-left:2px;">开始日期 <span style="color:#e05c6a;">*</span></label>
+              <input type="date" id="hAddStart" style="width:100%; border:none; border-radius:12px; background:#f7f7f8; padding:0 14px; height:46px; font-size:16px; outline:none; color:#111;" />
+            </div>
+            <div>
+              <label style="font-size:13px; color:#6c6c70; font-weight:500; display:block; margin-bottom:4px; padding-left:2px;">结束日期 <span style="color:#e05c6a;">*</span></label>
+              <input type="date" id="hAddEnd" style="width:100%; border:none; border-radius:12px; background:#f7f7f8; padding:0 14px; height:46px; font-size:16px; outline:none; color:#111;" />
+            </div>
+          </div>
+          <div id="hAddError" style="color:#e05c6a; font-size:12px; min-height:16px; margin:8px 0 0; text-align:center;"></div>
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <button id="hAddCancelBtn" style="flex:1; height:48px; border:none; border-radius:14px; background:#e5e5ea; color:#3c3c43; font-size:16px; font-weight:600; cursor:pointer;">取消</button>
+            <button id="hAddSaveBtn" style="flex:1.6; height:48px; border:none; border-radius:14px; background:#e05c6a; color:#fff; font-size:16px; font-weight:600; cursor:pointer;">保存</button>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="screen wallet-screen" id="screen-wallet" style="display: none;">
@@ -8548,6 +8667,287 @@ ${chatContext}
       }
       return true;
     }
+        // ====== 健康 · 经期记录功能 ======
+    (function() {
+      // 数据结构
+      // healthData = { cycle: 28, duration: 5, periods: [{start:"2025-01-01", end:"2025-01-05"},...] }
+      function loadHealthData() {
+        try { return JSON.parse(localStorage.getItem('healthPeriodData') || 'null'); } catch(e) { return null; }
+      }
+      function saveHealthData(d) {
+        localStorage.setItem('healthPeriodData', JSON.stringify(d));
+      }
+
+      // 日期工具
+      function dateStr(d) { // Date -> "YYYY-MM-DD"
+        return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+      }
+      function parseDate(s) { // "YYYY-MM-DD" -> Date (本地时间)
+        const p = s.split('-');
+        return new Date(+p[0], +p[1]-1, +p[2]);
+      }
+      function addDays(d, n) {
+        const r = new Date(d); r.setDate(r.getDate()+n); return r;
+      }
+      function isBetween(dateS, startS, endS) {
+        return dateS >= startS && dateS <= endS;
+      }
+
+      // 生成预测经期列表（未来3个周期）
+      function getPredicted(data) {
+        if (!data || !data.periods || data.periods.length === 0) return [];
+        const sorted = [...data.periods].sort((a,b) => a.start < b.start ? -1 : 1);
+        const last = sorted[sorted.length - 1];
+        const lastStart = parseDate(last.start);
+        const cycle = data.cycle || 28;
+        const duration = data.duration || 5;
+        const today = new Date(); today.setHours(0,0,0,0);
+        const result = [];
+        for (let i = 1; i <= 4; i++) {
+          const pStart = addDays(lastStart, cycle * i);
+          const pEnd = addDays(pStart, duration - 1);
+          if (pStart > addDays(today, 120)) break;
+          result.push({ start: dateStr(pStart), end: dateStr(pEnd), predicted: true });
+        }
+        return result;
+      }
+
+      // 判断某天的类型
+      function getDayType(dateS, data) {
+        if (!data) return 'none';
+        const todayS = dateStr(new Date());
+        // 已记录的经期
+        for (const p of (data.periods || [])) {
+          if (isBetween(dateS, p.start, p.end)) {
+            return dateS <= todayS ? 'past' : 'current';
+          }
+        }
+        // 预测
+        for (const p of getPredicted(data)) {
+          if (isBetween(dateS, p.start, p.end)) return 'predicted';
+        }
+        return 'none';
+      }
+
+      let hCalYear, hCalMonth;
+
+      function renderHealthCalendar() {
+        const data = loadHealthData();
+        const todayS = dateStr(new Date());
+        const title = document.getElementById('hCalTitle');
+        const grid = document.getElementById('hCalGrid');
+        const infoText = document.getElementById('hInfoText');
+        if (!title || !grid) return;
+
+        title.textContent = `${hCalYear}年 ${hCalMonth+1}月`;
+
+        // 当月天数
+        const firstDay = new Date(hCalYear, hCalMonth, 1);
+        const lastDay = new Date(hCalYear, hCalMonth+1, 0);
+        const startWeekday = firstDay.getDay(); // 0=周日
+
+        grid.innerHTML = '';
+
+        // 空格
+        for (let i = 0; i < startWeekday; i++) {
+          const empty = document.createElement('div');
+          empty.style.height = '42px';
+          grid.appendChild(empty);
+        }
+
+        for (let day = 1; day <= lastDay.getDate(); day++) {
+          const ds = `${hCalYear}-${String(hCalMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+          const type = getDayType(ds, data);
+          const isToday = ds === todayS;
+
+          const cell = document.createElement('div');
+          cell.style.cssText = 'height:42px; display:flex; align-items:center; justify-content:center; position:relative;';
+
+          const dot = document.createElement('div');
+          dot.style.cssText = `
+            width: 34px; height: 34px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 14px; font-weight: 500;
+            position: relative;
+            transition: background 0.2s;
+          `;
+
+          if (type === 'past') {
+            dot.style.background = '#c97a84';
+            dot.style.color = '#fff';
+          } else if (type === 'current') {
+            dot.style.background = '#e05c6a';
+            dot.style.color = '#fff';
+          } else if (type === 'predicted') {
+            dot.style.background = '#f7b8c2';
+            dot.style.color = '#c0485a';
+          } else {
+            dot.style.color = '#111';
+          }
+
+          if (isToday) {
+            dot.style.outline = '2.5px solid #e05c6a';
+            dot.style.outlineOffset = '1px';
+            if (type === 'none') dot.style.fontWeight = '700';
+          }
+
+          dot.textContent = day;
+          cell.appendChild(dot);
+          grid.appendChild(cell);
+        }
+
+        // 更新信息卡片
+        if (!data || !data.periods || data.periods.length === 0) {
+          infoText.innerHTML = '暂无记录，请点击下方"记录本次经期"开始使用。';
+          return;
+        }
+        const sorted = [...data.periods].sort((a,b) => b.start > a.start ? 1 : -1);
+        const last = sorted[0];
+        const cycle = data.cycle || 28;
+        const duration = data.duration || 5;
+        const lastStart = parseDate(last.start);
+        const nextStart = addDays(lastStart, cycle);
+        const today = new Date(); today.setHours(0,0,0,0);
+        const diffDays = Math.round((nextStart - today) / 86400000);
+        let info = `📅 上次开始：${last.start}　结束：${last.end}\n`;
+        info += `🔄 平均周期 ${cycle} 天　经期 ${duration} 天\n`;
+        if (diffDays > 0) {
+          info += `⏳ 距下次经期还有 <strong>${diffDays}</strong> 天（预计 ${dateStr(nextStart)}）`;
+        } else if (diffDays === 0) {
+          info += `🌸 今天是预测的经期开始日`;
+        } else {
+          info += `🌸 预测经期已开始 <strong>${-diffDays}</strong> 天`;
+        }
+        infoText.innerHTML = info.replace(/\n/g, '<br>');
+      }
+
+      function openHealthScreen() {
+        const data = loadHealthData();
+        const healthScreen = document.getElementById('screen-health');
+        healthScreen.style.display = 'block';
+        healthScreen.classList.add('active');
+        document.getElementById('screen-me').classList.remove('active');
+        document.getElementById('tabbar').classList.add('hidden');
+
+        const now = new Date();
+        hCalYear = now.getFullYear();
+        hCalMonth = now.getMonth();
+
+        if (!data || !data.periods || data.periods.length === 0) {
+          showHealthSetup();
+        } else {
+          renderHealthCalendar();
+        }
+      }
+
+      function closeHealthScreen() {
+        document.getElementById('screen-health').style.display = 'none';
+        document.getElementById('screen-health').classList.remove('active');
+        document.getElementById('tabbar').classList.remove('hidden');
+        // 回到"我"tab
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById('screen-me').classList.add('active');
+        document.querySelectorAll('.tab-item').forEach(t => {
+          t.classList.toggle('active', t.dataset.tab === 'me');
+        });
+      }
+
+      function showHealthSetup(prefill) {
+        const overlay = document.getElementById('healthSetupOverlay');
+        overlay.style.display = 'flex';
+        if (prefill) {
+          const data = loadHealthData();
+          if (data) {
+            const last = [...(data.periods||[])].sort((a,b) => b.start > a.start ? 1 : -1)[0];
+            if (last) {
+              document.getElementById('hSetupStart').value = last.start;
+              document.getElementById('hSetupEnd').value = last.end;
+            }
+            document.getElementById('hSetupCycle').value = data.cycle || 28;
+            document.getElementById('hSetupDuration').value = data.duration || 5;
+          }
+        }
+      }
+      function hideHealthSetup() {
+        document.getElementById('healthSetupOverlay').style.display = 'none';
+      }
+
+      // 事件绑定
+      document.getElementById('openHealthBtn').addEventListener('click', openHealthScreen);
+      document.getElementById('healthBackBtn').addEventListener('click', closeHealthScreen);
+
+      document.getElementById('hCalPrev').addEventListener('click', () => {
+        hCalMonth--;
+        if (hCalMonth < 0) { hCalMonth = 11; hCalYear--; }
+        renderHealthCalendar();
+      });
+      document.getElementById('hCalNext').addEventListener('click', () => {
+        hCalMonth++;
+        if (hCalMonth > 11) { hCalMonth = 0; hCalYear++; }
+        renderHealthCalendar();
+      });
+
+      // 初始化设置保存
+      document.getElementById('hSetupSaveBtn').addEventListener('click', () => {
+        const startV = document.getElementById('hSetupStart').value;
+        const endV = document.getElementById('hSetupEnd').value;
+        const cycleV = parseInt(document.getElementById('hSetupCycle').value) || 28;
+        const durV = parseInt(document.getElementById('hSetupDuration').value) || 5;
+        const err = document.getElementById('hSetupError');
+        if (!startV) { err.textContent = '请填写开始日期'; return; }
+        if (!endV) { err.textContent = '请填写结束日期'; return; }
+        if (endV < startV) { err.textContent = '结束日期不能早于开始日期'; return; }
+        err.textContent = '';
+        const existing = loadHealthData() || { periods: [] };
+        // 去重：移除同开始日期的旧记录
+        existing.periods = (existing.periods || []).filter(p => p.start !== startV);
+        existing.periods.push({ start: startV, end: endV });
+        existing.cycle = cycleV;
+        existing.duration = durV;
+        saveHealthData(existing);
+        hideHealthSetup();
+        renderHealthCalendar();
+      });
+      document.getElementById('hSetupCancelBtn').addEventListener('click', () => {
+        hideHealthSetup();
+        const data = loadHealthData();
+        if (!data || !data.periods || data.periods.length === 0) closeHealthScreen();
+      });
+
+      // 记录本次经期弹窗
+      document.getElementById('hAddPeriodBtn').addEventListener('click', () => {
+        document.getElementById('hAddPeriodOverlay').style.display = 'flex';
+        document.getElementById('hAddStart').value = dateStr(new Date());
+        document.getElementById('hAddEnd').value = '';
+        document.getElementById('hAddError').textContent = '';
+      });
+      document.getElementById('hAddCancelBtn').addEventListener('click', () => {
+        document.getElementById('hAddPeriodOverlay').style.display = 'none';
+      });
+      document.getElementById('hAddSaveBtn').addEventListener('click', () => {
+        const startV = document.getElementById('hAddStart').value;
+        const endV = document.getElementById('hAddEnd').value;
+        const err = document.getElementById('hAddError');
+        if (!startV) { err.textContent = '请填写开始日期'; return; }
+        if (!endV) { err.textContent = '请填写结束日期'; return; }
+        if (endV < startV) { err.textContent = '结束日期不能早于开始日期'; return; }
+        err.textContent = '';
+        const data = loadHealthData() || { periods: [], cycle: 28, duration: 5 };
+        data.periods = (data.periods || []).filter(p => p.start !== startV);
+        data.periods.push({ start: startV, end: endV });
+        saveHealthData(data);
+        document.getElementById('hAddPeriodOverlay').style.display = 'none';
+        renderHealthCalendar();
+      });
+
+      // 修改设置按钮
+      document.getElementById('hEditSettingsBtn').addEventListener('click', () => {
+        showHealthSetup(true);
+      });
+
+    })();
+
     // 初始化预设
     renderBubblePresets();
     updateBubblePreview();

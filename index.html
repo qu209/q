@@ -4499,16 +4499,32 @@ if (msg.isTyping) {
             }
             bubble.appendChild(textSpan);
             
-            // 新增：如果有图片，渲染图片
+            // 新增：如果有图片，渲染图片（带点击描述浮层）
             if (msg.image) {
+              const imgWrapper = document.createElement("div");
+              imgWrapper.style.cssText = "position:relative;display:inline-block;cursor:pointer;margin-top:" + (msg.text ? "8px" : "0") + ";";
+
               const imgEl = document.createElement("img");
-              imgEl.src = msg.image;
-              imgEl.style.width = "160px"; /* 强制规定所有图片的显示宽度 */
-              imgEl.style.height = "auto"; /* 高度自动跟随，这样大的会等比缩小，小的会等比放大，且绝对不会变形 */
-              imgEl.style.borderRadius = "8px";
-              imgEl.style.marginTop = msg.text ? "8px" : "0";
-              imgEl.style.display = "block";
-              bubble.appendChild(imgEl);
+              imgEl.src = "https://i.postimg.cc/pT7Wzx6H/IMG-5154.jpg";
+              imgEl.style.cssText = "width:160px;height:auto;border-radius:8px;display:block;";
+
+              const descOverlay = document.createElement("div");
+              descOverlay.style.cssText = "display:none;position:absolute;inset:0;background:rgba(0,0,0,0.72);border-radius:8px;padding:10px;box-sizing:border-box;color:#fff;font-size:13px;line-height:1.55;overflow-y:auto;word-break:break-all;align-items:center;justify-content:center;text-align:center;";
+              descOverlay.style.display = "none";
+              descOverlay.textContent = msg.imageDesc || "（暂无图片描述）";
+
+              imgWrapper.appendChild(imgEl);
+              imgWrapper.appendChild(descOverlay);
+
+              let descVisible = false;
+              imgWrapper.addEventListener("click", (e) => {
+                e.stopPropagation();
+                if (state.isMultiSelecting) return;
+                descVisible = !descVisible;
+                descOverlay.style.display = descVisible ? "flex" : "none";
+              });
+
+              bubble.appendChild(imgWrapper);
             }
           }
 
@@ -4972,6 +4988,9 @@ TimeChecklist:
       // 语音消息功能注入
       combinedPersona += `\n【语音消息功能】\n你可以发送语音消息！当你觉得文字不够表达情感时（比如撒娇、哄人、讲悄悄话、表白、生气吼人、唱歌、叹气等场景），可以选择发语音代替文字。\n发送规则：必须单独占一行输出指令：[VOICE_MSG|时长秒数|语音内容文字]\n例如：[VOICE_MSG|3|宝贝你在干嘛呀]\n例如：[VOICE_MSG|5|哼你都不理我 我生气了知道吗]\n注意事项：\n1. 时长请根据文字长度合理估算（大约每10个字约3秒）\n2. 语音内容要非常口语化、自然，像真的在说话一样，可以有语气词、停顿\n3. 不要每条都发语音，偶尔穿插1-2条即可，大部分时候还是用普通文字\n4. 用户给你发的语音消息你能看到内容，请正常回应\n`;
 
+      // 图片消息功能注入
+      combinedPersona += `\n【图片发送功能】\n你可以在聊天中发送图片给用户！当场景需要分享照片时（比如晒自拍、发风景、展示物品、截图等），可以选择发图片。\n发送规则：必须单独占一行输出指令：[PHOTO_MSG|图片的详细文字描述]\n描述要求：描述必须在50字以上100字以内，像真正的图片说明一样，具体描述画面内容、颜色、氛围、细节，让用户点击后能生动感受到这张图片是什么样子。\n例如：[PHOTO_MSG|这是我今天在咖啡馆拍的，阳光斜斜地照进来，拿铁的奶泡拉了个心形，旁边放着一本书，整个画面暖暖的，米色和棕色为主调，很治愈的午后感。]\n注意：不要频繁发图，仅在自然对话中真正需要"看一张图"的时机才发送。\n`;
+
       // 检查是否开启了翻译模式，并注入超强逻辑覆写
       if (api.enableTranslation) {
        combinedPersona += `\n【⚠️ 绝对逻辑覆写 / Absolute Logic Overwrite】
@@ -5139,12 +5158,25 @@ TimeChecklist:
         
           if (lines.length > 0) {
           for (let i = 0; i < lines.length; i++) {
-            contact.messages.push({
-              from: "ai",
-              text: lines[i],
-              time: getCurrentTime(),
-              hasAnimated: false
-            });
+            // 拦截图片指令，转为带 imageDesc 的消息对象
+            const photoMatch = lines[i].match(/^\[PHOTO_MSG\|(.+)\]$/);
+            if (photoMatch) {
+              contact.messages.push({
+                from: "ai",
+                text: "",
+                image: "placeholder",
+                imageDesc: photoMatch[1].trim(),
+                time: getCurrentTime(),
+                hasAnimated: false
+              });
+            } else {
+              contact.messages.push({
+                from: "ai",
+                text: lines[i],
+                time: getCurrentTime(),
+                hasAnimated: false
+              });
+            }
             contact.lastTime = getCurrentTime();
             
             // 发送一条就立刻刷新一次界面
@@ -5159,6 +5191,7 @@ TimeChecklist:
               if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
               else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
               else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
+              else if (lines[i].startsWith("[PHOTO_MSG|")) previewMsg = "[图片]";
               else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
               
               showNotifBanner(

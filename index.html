@@ -2884,6 +2884,27 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           </div>
         </div>
 
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">生图设置 (朋友圈动态配图)</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
+            开启后，AI 角色发布朋友圈动态时将自动配图。<br>
+            默认使用 <strong>Pollinations.ai</strong> 免费公共服务生成图片，无需任何配置即可使用。<br>
+            填写 Pollinations Key 后画质更好更稳定（可选）。<br>
+            此功能与聊天 API 完全独立，不受聊天模型限制。
+          </div>
+          <div class="toggle-row" style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222;">启用朋友圈自动配图</label>
+            <label class="switch">
+              <input type="checkbox" id="imgGenToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div class="field" style="margin: 0;">
+            <label for="pollinationsKeyInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">Pollinations Key <span style="color:#bbb; font-weight:400;">(可选，填了质量更好)</span></label>
+            <input class="input" id="pollinationsKeyInput" type="text" placeholder="留空则使用免费公共服务" style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
+          </div>
+        </div>
+
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">个性化 (全局字体与排版)</div>
         <div style="background: #fff; border-radius: 16px; padding: 16px;">
           
@@ -3830,6 +3851,10 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       },
       lorebooks: [], // 全局存储世界书
       moments: [], // 新增：全局存储朋友圈动态数据
+      imgGenSettings: {
+        enabled: false,
+        pollinationsKey: ""
+      },
      
       contacts: [
         {
@@ -6281,7 +6306,7 @@ TimeChecklist:
       fontPresetSelect.value = state.fontSettings.currentPresetId;
     }
 
-                openSettingsBtn.addEventListener("click", () => {
+                    openSettingsBtn.addEventListener("click", () => {
       // 载入 API 设置
       apiUrlInput.value = state.apiSettings.url;
       apiKeyInput.value = state.apiSettings.key;
@@ -6292,6 +6317,10 @@ TimeChecklist:
         modelSelect.innerHTML = `<option value="${state.apiSettings.model}">${state.apiSettings.model}</option>`;
       }
       
+      // 载入生图设置
+      document.getElementById("imgGenToggle").checked = state.imgGenSettings ? state.imgGenSettings.enabled : false;
+      document.getElementById("pollinationsKeyInput").value = state.imgGenSettings ? (state.imgGenSettings.pollinationsKey || "") : "";
+
       // 载入个性化设置
       renderFontPresets();
       fontUrlInput.value = state.fontSettings.url;
@@ -6441,12 +6470,17 @@ TimeChecklist:
     });
 
     // 总体保存
-        saveSettingsBtn.addEventListener("click", async () => {
+            saveSettingsBtn.addEventListener("click", async () => {
       state.apiSettings.url = apiUrlInput.value.trim();
       state.apiSettings.key = apiKeyInput.value.trim();
       state.apiSettings.model = modelSelect.value;
       state.apiSettings.temperature = parseFloat(tempInput.value);
       state.apiSettings.enableTranslation = translationToggle.checked;
+      // 保存生图设置
+      if (!state.imgGenSettings) state.imgGenSettings = {};
+      state.imgGenSettings.enabled = document.getElementById("imgGenToggle").checked;
+      state.imgGenSettings.pollinationsKey = document.getElementById("pollinationsKeyInput").value.trim();
+
       await sysAlert("设置已保存");
       
       screens.settings.classList.remove("active");
@@ -8482,10 +8516,19 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
         }
     }
 
-    // 后台发朋友圈逻辑
+    // 后台发朋友圈逻辑（完全重构：独立生图系统）
     async function executeAutoMoment(contact) {
         const api = state.apiSettings;
         if(!api.url || !api.key) return;
+
+        const contactName = getDisplayName(contact);
+
+        //====== 判断是否需要生图 ======
+        const imgGen = state.imgGenSettings || {};
+        const imgGenEnabled = imgGen.enabled || false;
+        const pollinationsKey = imgGen.pollinationsKey || "";
+        //三种情况需要配图：1.开关开了 2.没开开关但填了key 3.都没有则纯文字
+        const shouldGenerateImage = imgGenEnabled || (pollinationsKey.length > 0);
 
         let loreText = "";
         if(contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
@@ -8499,14 +8542,22 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
             const recentMsgs = contact.messages.slice(-15).filter(m => !m.isTyping);
             if (recentMsgs.length > 0) {
                 chatContext = recentMsgs.map(m => {
-                    const who = m.from === "me" ? "用户" : getDisplayName(contact);
+                    const who = m.from === "me" ? "用户" : contactName;
                     const txt = m.text ? m.text.replace(/<[^>]*>?/gm, '') : '[图片]';
                     return `${who}：${txt}`;
                 }).join("\n");
             }
         }
 
-        let sysPrompt = `你现在是${getDisplayName(contact)}。
+        //根据是否需要配图，调整AI 的prompt
+        let imagePromptInstruction = "";
+        if (shouldGenerateImage) {
+            imagePromptInstruction = `第二行：[配图] 你必须在这里用英文写下用于AI绘画的精确提示词。提示词必须与你的朋友圈文案内容高度相关、贴合语境，不能生成毫不相关的图片。描述要具体，包含画面主体、颜色、氛围、风格等。（例如: A cozy cafe table with a latte art heart, warm afternoon light, soft bokeh background, realistic photography style, 4k）`;
+        } else {
+            imagePromptInstruction = `第二行：[配图] NONE`;
+        }
+
+        let momentSysPrompt = `你现在是${contactName}。
 你的设定：${contact.persona}
 ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 【世界书】：${loreText || '无'}
@@ -8514,25 +8565,36 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 【你们最近的聊天记录（请结合这些内容决定发什么朋友圈，不要与聊天内容毫无关联）】：
 ${chatContext}
 
-任务：你现在要结合以上所有信息，以符合你人设的方式主动发一条微信朋友圈动态，分享你的生活或心情。内容必须和你们的对话、人设、记忆有关联，不要胡乱发与任何背景无关的内容。你可以只发文字，也可以要求配图。
-严格按照以下格式输出你的决定：
+任务：你现在要结合以上所有信息，以符合你人设的方式主动发一条微信朋友圈动态，分享你的生活或心情。内容必须和你们的对话、人设、记忆有关联，不要胡乱发与任何背景无关的内容。
+严格按照以下格式输出你的决定（绝对不要输出其他废话）：
 第一行：[文字] 你的朋友圈动态文案内容
-第二行：[配图] 如果需要配图，请在这里用英文写下用于AI绘画(DALL-E)的精确提示词（例如: A beautiful sunset over the ocean, hyper-realistic, 4k）。如果完全不需要配图，请写大写的 NONE`;
+${imagePromptInstruction}`;
 
         try {
-            // 第一步：生成文案和决定是否配图
+            // ====== 第一步：用聊天模型生成文案（和可能的配图提示词）======
             const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
             const res = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
                 body: JSON.stringify({ 
                     model: api.model || "gpt-3.5-turbo", 
-                    messages: [{ role: "system", content: sysPrompt }], 
+                    messages: [{ role: "system", content: momentSysPrompt }], 
                     temperature: api.temperature 
                 })
             });
             
-            if(!res.ok) return;
+            if(!res.ok) {
+                const errText = await res.text().catch(() => "未知错误");
+                console.error("生成朋友圈文案失败:", res.status, errText);
+                // 横幅通知报错
+                showNotifBanner(
+                    contact.avatar || "",
+                    contactName,
+                    `⚠️ ${contactName} 发动态失败：聊天API错误 ${res.status}`,
+                    () => { switchTab("moments"); }
+                );
+                return;
+            }
             const data = await res.json();
             const resultText = data.choices[0].message.content.trim();
             
@@ -8541,62 +8603,125 @@ ${chatContext}
             
             const lines = resultText.split("\n");
             lines.forEach(line => {
-                if(line.startsWith("[文字]")) momentText = line.replace("[文字]", "").trim();
-                if(line.startsWith("[配图]")) imagePrompt = line.replace("[配图]", "").trim();
+                const trimmed = line.trim();
+                if(trimmed.startsWith("[文字]")) momentText = trimmed.replace("[文字]", "").trim();
+                if(trimmed.startsWith("[配图]")) imagePrompt = trimmed.replace("[配图]", "").trim();
             });
 
-            if(!momentText && imagePrompt === "NONE") return; // 失败保护
+            //如果AI没按格式输出，尝试兜底
+            if(!momentText) {
+                // 可能AI直接输出了文字没加标签
+                momentText = resultText.replace(/\[文字\]/g, '').replace(/\[配图\].*$/gm, '').trim();
+            }
+
+            if(!momentText && imagePrompt === "NONE") {
+                console.log("AI未生成有效朋友圈内容，跳过");
+                showNotifBanner(
+                    contact.avatar || "",
+                    contactName,
+                    `⚠️ ${contactName} 发动态失败：AI未生成有效内容`,
+                    () => { switchTab("moments"); }
+                );
+                return;
+            }
 
             let imageUrl = "";
+            let imageDescription = "";
 
-            // 第二步：如果有配图需求，调用图片生成接口 (标准 OpenAI 格式)
-            if(imagePrompt !== "NONE" && imagePrompt.length > 5) {
+            // ====== 第二步：如果需要配图，调用 Pollinations.ai 独立生图服务 ======
+            if(shouldGenerateImage && imagePrompt !== "NONE" && imagePrompt.length > 5) {
                 try {
-                    const imgEndpoint = api.url.endsWith('/') ? api.url + 'images/generations' : api.url + '/images/generations';
-                    const imgRes = await fetch(imgEndpoint, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
-                        body: JSON.stringify({
-                            prompt: imagePrompt,
-                            n: 1,
-                            size: "1024x1024" // 默认画质
-                        })
-                    });
-                    if (imgRes.ok) {
-                        const imgData = await imgRes.json();
-                        if (imgData && imgData.data && imgData.data.length > 0) {
-                            imageUrl = imgData.data[0].url; // 返回的一般是直链URL
-                        }
-                    } else {
-                        console.log("图片API不支持或调用失败，降级为纯文字朋友圈");
+                    // Pollinations.ai 生图接口（完全独立于聊天API）
+                    // 文档: https://pollinations.ai/
+                    // GET方式：https://image.pollinations.ai/prompt/{prompt}?width=1024&height=1024&seed=random&nologo=true
+                    // POST 方式（带key）：https://image.pollinations.ai/prompt/{prompt}
+
+                    const encodedPrompt = encodeURIComponent(imagePrompt);
+                    const seed = Math.floor(Math.random() * 999999);
+                    
+                    let pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`;
+                    
+                    // 如果填了 Pollinations Key，附加到请求中
+                    if (pollinationsKey) {
+                        pollinationsUrl += `&token=${encodeURIComponent(pollinationsKey)}`;
                     }
-                } catch(e) {
-                    console.log("配图生成报错，降级为文字朋友圈", e);
+
+                    // Pollinations 的 GET 接口直接返回图片，我们用 fetch 检测是否成功
+                    const imgCheckRes = await fetch(pollinationsUrl, { method: 'HEAD' }).catch(() => null);
+                    
+                    if (imgCheckRes && imgCheckRes.ok) {
+                        imageUrl = pollinationsUrl;
+                        imageDescription = imagePrompt;
+                    } else {
+                        // HEAD 请求可能不被支持，直接用URL（Pollinations 的 GET 接口本身就是图片直链）
+                        // 验证方式：尝试加载图片
+                        const testImg = new Image();
+                        const imgLoadResult = await new Promise((resolve) => {
+                            testImg.onload = () => resolve(true);
+                            testImg.onerror = () => resolve(false);
+                            testImg.src = pollinationsUrl;
+                            // 超时保护：10秒
+                            setTimeout(() => resolve(false), 10000);
+                        });
+                        
+                        if (imgLoadResult) {
+                            imageUrl = pollinationsUrl;
+                            imageDescription = imagePrompt;
+                        } else {
+                            console.log("Pollinations 生图失败，降级为纯文字朋友圈");
+                            showNotifBanner(
+                                contact.avatar || "",
+                                contactName,
+                                `⚠️ ${contactName} 的动态配图生成失败，已降级为纯文字`,
+                                () => { switchTab("moments"); }
+                            );}
+                    }
+                } catch(imgErr) {
+                    console.error("Pollinations 生图报错:", imgErr);
+                    showNotifBanner(
+                        contact.avatar || "",
+                        contactName,
+                        `⚠️ ${contactName} 的动态配图生成出错：${imgErr.message}`,
+                        () => { switchTab("moments"); }
+                    );
                 }
             }
 
-            // 第三步：创建动态并推送
+            // ====== 第三步：创建动态并推送 ======
             const newMoment = {
                 id: "mom_" + Date.now(),
                 timestamp: Date.now(),
                 text: momentText,
                 image: imageUrl,
-                imageDescription: (imagePrompt !== "NONE" && imageUrl) ? imagePrompt : "",
+                imageDescription: imageDescription,
                 likes: [],
                 comments: [],
                 calledAIs: [contact.id],
-                postedByAI: contact.id, // 标记是该AI角色发布的，用于渲染正确头像和名字
+                postedByAI: contact.id,
                 typingAIs: []
             };
             
             state.moments.unshift(newMoment);
-            // 发完动态后重置计时基准
             contact.lastAutoMomentTimeMs = Date.now();
-            // 无论在哪个界面都刷新朋友圈数据，确保下次进入朋友圈时能看到
             renderMoments();
 
+            // ====== 第四步：发布成功后弹出横幅通知 ======
+            let notifPreview = momentText || "[图片动态]";
+            if (notifPreview.length > 30) notifPreview = notifPreview.slice(0, 30) + "...";
+            showNotifBanner(
+                contact.avatar || "",
+                contactName,
+                `📸 ${contactName} 发了一条新动态：${notifPreview}`,
+                () => { switchTab("moments"); }
+            );
+
         } catch(e) {
-            console.error("后台主动发动态报错", e);
+            console.error("后台主动发动态报错", e);showNotifBanner(
+                contact.avatar || "",
+                contactName,
+                `⚠️ ${contactName} 发动态失败：${e.message}`,
+                () => { switchTab("moments"); }
+            );
         }
     }
 

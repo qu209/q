@@ -26,6 +26,26 @@
       -webkit-tap-highlight-color: transparent;
     }
 
+    /* 健康弹窗：输入框不溢出 */
+    #healthSetupOverlay input,
+    #hEndPeriodOverlay input,
+    #hAddPeriodOverlay input {
+      box-sizing: border-box;
+      max-width: 100%;
+      width: 100% !important;
+    }
+
+    /* iOS date input 强制不撑宽 */
+    #healthSetupOverlay input[type="date"],
+    #hEndPeriodOverlay input[type="date"],
+    #hAddPeriodOverlay input[type="date"] {
+      -webkit-appearance: none;
+      appearance: none;
+      display: block;
+      width: 100% !important;
+      min-width: 0;
+    }
+
     html,
     body {
       margin: 0;

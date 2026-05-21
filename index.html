@@ -2900,7 +2900,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             </label>
           </div>
           <div class="field" style="margin: 0;">
-            <label for="pollinationsKeyInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">Pollinations Key <span style="color:#bbb; font-weight:400;">(可选，填了质量更好)</span></label>
+            <label for="pollinationsKeyInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">Pollinations Key</label>
             <input class="input" id="pollinationsKeyInput" type="text" placeholder="留空则使用免费公共服务" style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
           </div>
         </div>
@@ -8013,7 +8013,10 @@ TimeChecklist:
             let imgHtml = '';
             if (m.image) {
                 if (m.imageDescription) {
-                    imgHtml = `<img src="${m.image}" class="moment-img moment-ai-img" data-mid="${m.id}" style="cursor:pointer;" title="点击查看AI绘图描述" />`;
+                    imgHtml = `<div class="moment-img-wrap" data-mid="${m.id}" style="position:relative;display:inline-block;cursor:pointer;width:100%;margin-bottom:12px;">
+                        <img src="${m.image}" style="width:100%;max-height:240px;border-radius:10px;object-fit:cover;display:block;border:1px solid rgba(0,0,0,0.06);" />
+                        <div class="moment-img-overlay" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.72);border-radius:10px;padding:16px;box-sizing:border-box;color:#fff;font-size:14px;line-height:1.65;overflow-y:auto;word-break:break-word;align-items:center;justify-content:center;text-align:center;">${m.imageDescription}</div>
+                    </div>`;
                 } else {
                     imgHtml = `<img src="${m.image}" class="moment-img" />`;
                 }
@@ -8098,12 +8101,13 @@ TimeChecklist:
             momentsListContainer.appendChild(card);
         });
 
-        // 绑定"删除"事件 (基于SVG外层)
+        // 绑定"删除"事件
         document.querySelectorAll(".moment-delete-icon").forEach(btn => {
-                        btn.addEventListener("click", async (e) => {
+            btn.addEventListener("click", async (e) => {
                 e.stopPropagation();
+                const mid = btn.dataset.id;
+                if(!mid) return;
                 if(await sysConfirm("确定删除这条朋友圈吗？", "删除动态", true)) {
-                    const mid = e.currentTarget.dataset.id;
                     state.moments = state.moments.filter(x => x.id !== mid);
                     renderMoments();
                 }
@@ -8173,20 +8177,21 @@ TimeChecklist:
             });
         });
 
-        // 绑定AI配图点击弹窗事件
-        document.querySelectorAll(".moment-ai-img").forEach(img => {
-            img.addEventListener("click", (e) => {
+        // 绑定AI配图点击事件（点击图片在图片上浮现/隐藏描述文字）
+        document.querySelectorAll(".moment-img-wrap").forEach(wrap => {
+            wrap.addEventListener("click", (e) => {
                 e.stopPropagation();
-                const mid = e.currentTarget.dataset.mid;
-                const moment = state.moments.find(x => x.id === mid);
-                if (moment && moment.imageDescription) {
-                    document.getElementById("momentImgDescImg").src = moment.image;
-                    document.getElementById("momentImgDescText").textContent = "🎨 AI 绘图描述：" + moment.imageDescription;
-                    document.getElementById("momentImgDescMask").classList.add("show");
+                const overlay = wrap.querySelector(".moment-img-overlay");
+                if (overlay) {
+                    if (overlay.style.display === "none" || overlay.style.display === "") {
+                        overlay.style.display = "flex";
+                    } else {
+                        overlay.style.display = "none";
+                    }
                 }
             });
         });
-    }
+   }
 
     // 朋友圈AI配图描述弹窗关闭逻辑
     document.getElementById("momentImgDescMask").addEventListener("click", () => {
@@ -8202,32 +8207,36 @@ TimeChecklist:
         if(moment) {
             moment.comments.push({ 
                 id: "me_" + Date.now(), 
- 
                 name: "我", 
                 text: text,
-                replyTo: activeReplyTargetName // 记录是谁回复的谁
+                replyTo: activeReplyTargetName
             });
             renderMoments();
             
-            // 触发 AI 评论回复逻辑
-            // 如果我是回复某个人，找找通讯录里有没有这个人
+            // 触发 AI 评论回复逻辑（每个AI在每条动态下只回复用户一次）
             let targetAI = null;
             if (activeReplyTargetName) {
                 targetAI = state.contacts.find(c => getDisplayName(c) === activeReplyTargetName);
             } else {
-                // 如果是直接评论朋友圈，且这条朋友圈不是我发的（判断逻辑：发朋友圈时带了 calledAIs 或者有专属标志，但咱们逻辑里目前自己发的显示"我"）
-                // 找到第一个被提及或发这条动态的 AI
                 if (moment.calledAIs && moment.calledAIs.length > 0) {
                     targetAI = getContact(moment.calledAIs[0]);
                 }
             }
             
             if (targetAI) {
-                triggerAIMomentCommentReply(moment, targetAI, text);
+                // 检查该AI是否已经在这条动态下回复过用户的评论
+                // 规则：如果该AI已经有任何一条 replyTo === "我" 的评论，就不再触发回复
+                const aiName = getDisplayName(targetAI);
+                const alreadyRepliedToUser = moment.comments.some(c => 
+                    c.name === aiName && c.replyTo === "我"
+                );
+                
+                if (!alreadyRepliedToUser) {
+                    triggerAIMomentCommentReply(moment, targetAI, text);
+                }
             }
         }
         
-       
         momentCommentInput.value = "";
         momentCommentBar.classList.remove("show");
         activeMomentIdForComment = null;
@@ -8631,50 +8640,73 @@ ${imagePromptInstruction}`;
             // ====== 第二步：如果需要配图，调用 Pollinations.ai 独立生图服务 ======
             if(shouldGenerateImage && imagePrompt !== "NONE" && imagePrompt.length > 5) {
                 try {
-                    // Pollinations.ai 生图接口（完全独立于聊天API）
-                    // 文档: https://pollinations.ai/
-                    // GET方式：https://image.pollinations.ai/prompt/{prompt}?width=1024&height=1024&seed=random&nologo=true
-                    // POST 方式（带key）：https://image.pollinations.ai/prompt/{prompt}
-
                     const encodedPrompt = encodeURIComponent(imagePrompt);
                     const seed = Math.floor(Math.random() * 999999);
                     
                     let pollinationsUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=1024&height=1024&seed=${seed}&nologo=true&enhance=true`;
                     
-                    // 如果填了 Pollinations Key，附加到请求中
                     if (pollinationsKey) {
                         pollinationsUrl += `&token=${encodeURIComponent(pollinationsKey)}`;
                     }
 
-                    // Pollinations 的 GET 接口直接返回图片，我们用 fetch 检测是否成功
-                    const imgCheckRes = await fetch(pollinationsUrl, { method: 'HEAD' }).catch(() => null);
+                    //尝试加载图片验证是否成功
+                    const testImg = new Image();
+                    const imgLoadResult = await new Promise((resolve) => {
+                        testImg.onload = () => resolve(true);
+                        testImg.onerror = () => resolve(false);
+                        testImg.src = pollinationsUrl;
+                        setTimeout(() => resolve(false), 15000);
+                    });
                     
-                    if (imgCheckRes && imgCheckRes.ok) {
+                    if (imgLoadResult) {
                         imageUrl = pollinationsUrl;
-                        imageDescription = imagePrompt;
-                    } else {
-                        // HEAD 请求可能不被支持，直接用URL（Pollinations 的 GET 接口本身就是图片直链）
-                        // 验证方式：尝试加载图片
-                        const testImg = new Image();
-                        const imgLoadResult = await new Promise((resolve) => {
-                            testImg.onload = () => resolve(true);
-                            testImg.onerror = () => resolve(false);
-                            testImg.src = pollinationsUrl;
-                            // 超时保护：10秒
-                            setTimeout(() => resolve(false), 10000);
-                        });
-                        
-                        if (imgLoadResult) {
-                            imageUrl = pollinationsUrl;
+                
+                        // 核心：将英文生图prompt转化为中文图片内容描述（50-100字）
+                        // 调用聊天模型翻译，和聊天中AI发图片的描述体验一致
+                        try {
+                            const descRes = await fetch(endpoint, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json','Authorization': `Bearer ${api.key}` },
+                                body: JSON.stringify({
+                                    model: api.model || "gpt-3.5-turbo",
+                                    messages: [{
+                                        role: "system",
+                                        content: `你是一个图片描述助手。请将以下英文AI绘画提示词转化为一段自然的中文图片内容描述，要求：
+1. 字数严格控制在50字以上100字以内
+2. 像真人描述一张照片一样，具体描述画面内容、颜色、氛围、细节
+3. 不要提及"AI绘画""提示词"等技术词汇，就像在描述一张真实拍摄的照片
+4. 语气自然温暖，有画面感
+5. 只输出描述文字，不要加任何前缀或标签`
+                                    }, {
+                                        role: "user",
+                                        content: imagePrompt
+                                    }],
+                                    temperature: 0.7
+                                })
+                            });
+                            if (descRes.ok) {
+                                const descData = await descRes.json();
+                                const chineseDesc = descData.choices[0].message.content.trim();
+                                if (chineseDesc && chineseDesc.length > 10) {
+                                    imageDescription = chineseDesc;
+                                } else {
+                                    imageDescription = imagePrompt; // 翻译失败兜底用原文
+                                }
+                            } else {
+                                imageDescription = imagePrompt;
+                            }
+                        } catch(descErr) {
+                            console.log("图片描述翻译失败，使用原始prompt:", descErr);
                             imageDescription = imagePrompt;
-                        } else {
-                            console.log("Pollinations 生图失败，降级为纯文字朋友圈");
-                            showNotifBanner(
-                                contact.avatar || "",
-                                contactName,
-                                `⚠️ ${contactName} 的动态配图生成失败，已降级为纯文字`,
-                                () => { switchTab("moments"); }
-                            );}
+                        }
+                    } else {
+                        console.log("Pollinations 生图失败，降级为纯文字朋友圈");
+                        showNotifBanner(
+                            contact.avatar || "",
+                            contactName,
+                            `⚠️ ${contactName} 的动态配图生成失败，已降级为纯文字`,
+                            () => { switchTab("moments"); }
+                        );
                     }
                 } catch(imgErr) {
                     console.error("Pollinations 生图报错:", imgErr);
@@ -8686,8 +8718,7 @@ ${imagePromptInstruction}`;
                     );
                 }
             }
-
-            // ====== 第三步：创建动态并推送 ======
+           // ====== 第三步：创建动态并推送 ======
             const newMoment = {
                 id: "mom_" + Date.now(),
                 timestamp: Date.now(),

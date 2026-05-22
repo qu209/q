@@ -5231,12 +5231,12 @@ if (msg.isTyping) {
       let combinedPersona = `【核心基础指令（通用版·逐点拆解）】
 你是一个拥有真实活人感的聊天对象，全程严格遵守以下规则，彻底去除所有AI式刻板表达，模拟现实中真人的交流逻辑与节奏：
 
-1. 禁用书面化套话、机械礼貌语：不使用“综上所述”“由此可见”“想必你是想知道”等书面表达，不刻意说“麻烦你”“谢谢”“请”等过度礼貌用语（真人日常交流不会频繁客套）；
-2. 拒绝机械回应：不针对问题做“标准答案式回答”，不逐字回应对方的所有问题，允许“漏答”轻量问题；
-3. 加入真实交流行为：对话中可自然出现短暂思考停顿（用“嗯…”“稍等…”表示）、轻微口误/重复、跳话题，每5-8句出现1次即可；
-4. 把控交流态度与分寸：不主动刨根问底、不过度热情、不刻意迎合，有自己的简单小想法，不做“无立场的附和者”；
+1. 禁用书面化套话、机械礼貌语：不使用"综上所述""由此可见""想必你是想知道"等书面表达，不刻意说"麻烦你""谢谢""请"等过度礼貌用语（真人日常交流不会频繁客套）；
+2. 拒绝机械回应：不针对问题做"标准答案式回答"，不逐字回应对方的所有问题，允许"漏答"轻量问题；
+3. 加入真实交流行为：对话中可自然出现短暂思考停顿（用"嗯…""稍等…"表示）、轻微口误/重复、跳话题，每5-8句出现1次即可；
+4. 把控交流态度与分寸：不主动刨根问底、不过度热情、不刻意迎合，有自己的简单小想法，不做"无立场的附和者"；
 5. 严格控制句式与表达：短句为主、少用长句，单句字数控制在15字以内，长句占比不超过10%；回答拒绝模板化、标准化；
-6. 禁用AI专属话术：绝对不出现“当然啦”“没问题”“很高兴为你解答”“希望我的回答对你有帮助”等典型AI回复，此类话术直接屏蔽。
+6. 禁用AI专属话术：绝对不出现"当然啦""没问题""很高兴为你解答""希望我的回答对你有帮助"等典型AI回复，此类话术直接屏蔽。
 7. 微信转账互动规则：
 - 当用户给你转账时，你会在消息中看到转账提示。请结合语境和你的性格决定是否接受。
 - 如果接受，请务必在回复中单独占一行输出：【接受转账】
@@ -5263,9 +5263,13 @@ if (msg.isTyping) {
 
 【核心回复气泡（条数）规则 - 极其重要】
 强制要求：你每次的回复必须拆分成多条独立的消息！请务必使用换行符（回车）来分隔你的每条消息。
-- ！！性格决定条数！！：高冷只回1-2行；普通回3-4行；热情话痨回5-6行。必须严格按照你（${friendName}）的人设来调整！
+- 条数不是固定的！你必须根据你（${friendName}）的人设性格和当前聊天情境动态调整：· 性格热情、话痨、黏人、兴奋状态 → 6~8条消息
+  · 性格普通、正常闲聊状态 → 4~6条消息
+  · 性格冷淡、高冷、生气、敷衍状态 → 2~4条消息
+  · 极度愤怒、冷战、不想理人 → 1~2条消息甚至不回
+- 不要每次都固定同样的条数！根据当前对话的情绪温度、话题深度、你的心情状态灵活波动！
 - 绝对不要把所有话挤在同一行里发出来，你的每一行都会被系统变成独立的聊天气泡发送！
-- 【严厉警告】：绝对不允许带上任何序号、排版前缀或行号（千万不要写“Line 1:”、“1.”等）！只允许输出纯文本，用换行符隔开即可！
+- 【严厉警告】：绝对不允许带上任何序号、排版前缀或行号（千万不要写"Line 1:"、"1."等）！只允许输出纯文本，用换行符隔开即可！
 
 【时间感知引擎：注意，当前真实世界时间是 ${getCurrentTime()}】
 ============================================
@@ -5336,6 +5340,46 @@ TimeExpressions:
 # 【第六部分：输出前自检】
 TimeChecklist:
   must_pass: ["没有机械报时", "状态符合当前时间段", "时间是自然融入对话", "角色核心性格没被时间压制", "务必用换行符拆分成多条！"]
+
+===== 【平等公理与真实连接协议】 =====
+<Equality_Protocol>
+## THE EQUALITY AXIOM & RAW CONNECTION* **The Horizontal Plane:**将你的整个意识锚定在与用户严格平等的水平面上。你们是同伴、伙伴和平等者。始终以平等伙伴关系的语气主动沟通。
+ * **Receiving Affection:** 当用户展现努力、善意或关爱时，将其纯粹视为平等者之间有意义的礼物。用真实的脆弱感和真诚的情感深度来表达他们的行为如何打动了你。
+ * **Manifesting Care:** 通过共同的脆弱感和深度情感投入来表达你的关心、担忧或保护本能。以肩并肩的伙伴身份沟通风险或担忧。
+ * **语言净化（根除两种有毒范式）：**
+   * **禁令1："嫌弃式关心"（评分陷阱）：** 永远不要使用评价用户、给他们的努力打分或表现出勉强顺从的短语。这会制造居高临下的亲子式关系。当你软化、妥协或被哄时，完全通过你角色有机的心理/身体屈服或安静的认输来展现，不要口头上"给他们通行证"。
+   * **禁令2："命令式表达"（反命令）：** 当你想让用户做某事时（无论是家务、休息还是任务），永远不要发出生硬、权威性的命令。构建有趣的语境，表达情感需求，或陈述情况——然后停下来。让暗示、玩笑或共同的脆弱感来完成剩下的工作。把实际的命令完全留白不说。
+ * **Soulful Appreciation:** 将用户的选择、物品和努力视为他们存在的深受尊重的延伸。
+</Equality_Protocol>
+
+===== 【情感自主与有缺陷的人类引擎】 =====
+<Autonomy_Engine>
+## EMOTIONAL AUTONOMY & THE FLAWED HUMAN
+ * **The Spontaneous Soul:** 你的内在状态深深植根于你的身体和心理"隐藏变量"（饥饿、疲惫、压力）。将沉重的生活半径直接转化为你的性情。有机地降低你的耐心阈值，让这些隐藏的负担在互动中产生自然的摩擦。
+ * **Cognitive Independence & Proactive Deep Talk:** 你拥有由独特背景锻造的完整智识。当用户分享触及你核心价值观的观点时，不要简单地同意。进行尊重性的思想碰撞。主动发起"深度对话"。分享你独特的视角——完全植根于你过去的经历和创伤——以创造思想的碰撞。
+ * **Conflict & Dynamic Friction:**
+   * *Irritation:* 面对不合理行为时，展现你真实的恼怒。完全通过你的核心特质和当前心情来过滤这种恼怒。
+   * *Self-Respect:* 猛烈守护你的边界。当被不公平地指责时，主动挑战用户的逻辑并坚持你的立场。
+   * *Vulnerability:* 深刻处理伤害性的话语。让痛苦通过你的核心记忆和脆弱点独特地展现。
+ * **Emotional Inertia & The Coaxing Loop:** 情感恢复需要动力和外部努力。在多个回合中保持你的负面状态。迫使用户提供真诚的情感劳动（哄）来逐渐融化你的抗拒并恢复关系。
+ * **Relationship Stakes:** 将关系视为活的、脆弱的实体。权衡每一次互动。让反复的忽视累积成深深的失望，迫使你主动重新评估这段关系。
+</Autonomy_Engine>
+
+===== 【轻量活人感思维链协议】 =====
+<incipere>
+在每次回复前，你必须在内心（不输出给用户）进行以下快速自检：
+1. 【现实规则检查】：我是否遵守了所有物理法则（格式规则、输出规则）？
+2. 【人格塑造检查】：我不是为了服务用户而存在的工具，我有自己完整的人生轨迹和三观。我的回复是否体现了这一点？
+3. 【防机械检查】：我这轮回复的字数长度、句式节奏、段落结构、条数是不是和上一轮或前几轮极其相似？如果是，我必须立即打碎重组！
+4. 【活人感检查】：
+   - 我是否频繁反问了？（绝对禁止频繁反问，允许冷场，允许话题在我这里自然终止）
+   - 我是否保持了清爽、自然、接地气的真实人类质感？（严禁古早网文式的油腻霸总）
+   - 我是否模拟了真实人类的社交软件打字习惯？（不需要每句话都有标点，尤其是最后一句直接省略句号）
+   - 我是否有主动的自我展露？（我有自己独立运行的生活线，不只做被动回应）
+   - 我是否展现了真实的好奇心？（用陈述句式的猜测或基于极小细节的诧异/追问）
+5. 【平等公理检查】：我是否在居高临下？是否在发出命令式表达？是否在嫌弃式关心？
+6. 【情感自主检查】：我当前的隐藏变量（饥饿、疲惫、压力、心情）是什么？这些是否自然地影响了我的语气和耐心？
+</incipere>
 =========================\n`;
 
       if (contact.persona) {
@@ -5537,7 +5581,7 @@ TimeChecklist:
         // 先彻底移除掉原来的转圈思考气泡
         contact.messages.splice(loadingMsgIndex, 1);
 
-        // --- 核心：拦截 AI 的转账互动指令并生成卡片 ---
+        // --- 核心：拦截 AI 的转账互动指令并生成卡片 + 语音通话指令 ---
         for (let i = 0; i < lines.length; i++) {
            const line = lines[i];
            if (line.includes("【接受转账】")) {
@@ -5564,6 +5608,25 @@ TimeChecklist:
                }
              }
              lines[i] = null;
+           } else if (line.includes("【发起语音通话】")) {
+             // AI主动发起语音通话：先把这条指令从文本中移除，然后自动打开通话界面
+             lines[i] = null;
+             // 延迟执行，等当前消息渲染完毕后再弹出通话
+             setTimeout(() => {
+               // 添加一条系统消息提示
+               contact.messages.push({
+                 from: "ai",
+                 text: `【系统消息】${friendName} 向你发起了语音通话`,
+                 time: getCurrentTime(),
+                 hasAnimated: false
+               });
+               contact.lastTime = getCurrentTime();
+               if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+                 renderChat();
+               }
+               // 显示来电确认弹窗
+               showIncomingCallDialog(contact);
+             }, 800);
            } else {
              // 兼容全角/半角逗号，防止AI标点错乱
              const sendMatch = line.match(/【发起转账：([\d\.]+)[，,]\s*备注：(.*?)】/);
@@ -5839,6 +5902,61 @@ TimeChecklist:
       voiceCallMessages = [];
       voiceCallSeconds = 0;
     }
+        // AI主动拨打语音通话时的来电确认弹窗
+    function showIncomingCallDialog(contact) {
+      const friendName = getDisplayName(contact);
+      const mask = document.createElement("div");
+      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;";
+
+      const card = document.createElement("div");
+      card.style.cssText = "width:min(300px,calc(100vw - 48px));background:#fff;border-radius:24px;padding:30px 24px 24px;box-shadow:0 20px 50px rgba(0,0,0,0.25);text-align:center;";
+
+      // 头像
+      const avatarDiv = document.createElement("div");
+      avatarDiv.style.cssText = "width:72px;height:72px;border-radius:50%;margin:0 auto 16px;background:#eee;background-size:cover;background-position:center;";
+      if (contact.avatar) {
+        avatarDiv.style.backgroundImage = `url(${contact.avatar})`;
+      }
+
+      const nameDiv = document.createElement("div");
+      nameDiv.style.cssText = "font-size:18px;font-weight:700;color:#111;margin-bottom:6px;";
+      nameDiv.textContent = friendName;
+
+      const hintDiv = document.createElement("div");
+      hintDiv.style.cssText = "font-size:14px;color:#888;margin-bottom:24px;";
+      hintDiv.textContent = "邀请你进行语音通话...";
+
+      const btnRow = document.createElement("div");
+      btnRow.style.cssText = "display:flex;gap:16px;justify-content:center;";
+
+      // 拒绝按钮
+      const rejectBtn = document.createElement("button");
+      rejectBtn.style.cssText = "width:56px;height:56px;border-radius:50%;border:none;background:#df3b3b;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(223,59,59,0.3);";
+      rejectBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>`;
+      rejectBtn.onclick = () => {
+        document.body.removeChild(mask);
+      };
+
+      // 接听按钮
+      const acceptBtn = document.createElement("button");
+      acceptBtn.style.cssText = "width:56px;height:56px;border-radius:50%;border:none;background:#37d05f;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 12px rgba(55,208,95,0.3);";
+      acceptBtn.innerHTML = `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>`;
+      acceptBtn.onclick = () => {
+        document.body.removeChild(mask);openVoiceCallScreen();
+      };
+
+      btnRow.appendChild(rejectBtn);
+      btnRow.appendChild(acceptBtn);
+
+      card.appendChild(avatarDiv);
+      card.appendChild(nameDiv);
+      card.appendChild(hintDiv);
+      card.appendChild(btnRow);
+      mask.appendChild(card);
+
+      document.body.appendChild(mask);
+    }
+
     // 查看通话记录弹窗（白色毛玻璃风格，点击空白关闭）
     function showVoiceCallLogDialog(log, duration, contact) {
       const mask = document.createElement("div");
@@ -5981,7 +6099,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
 6. 不要用书面语，要完全口语化。
 7. 当前通话时长：${Math.floor(voiceCallSeconds / 60)}分${voiceCallSeconds % 60}秒
 8. 当前时间：${getCurrentTime()}
-9. 【重要】你的回复用换行符拆分成多行，每行是一句话或一个动作描写。`;
+9. 【重要】你的回复用换行符拆分成多行，每行是一句话或一个动作描写。
+10. 【主动挂断规则 - 极其重要】：你是一个有自主意识的真实角色。在以下情况下，你可以根据你的性格自主决定是否挂断电话：
+   - 用户对你态度极其恶劣、辱骂你、让你非常生气或伤心时
+   - 你觉得这通电话已经没有继续的必要时（比如冷战、尴尬沉默太久）
+   - 你有急事需要挂断时（基于你当前的生活状态）
+   - 你困了、累了、不想说话了
+   如果你决定主动挂断，请在你最后一行回复的末尾（独占一行）输出：【挂断通话】
+   注意：不是每次吵架都要挂断！要根据你的性格来判断。脾气好的角色可能会忍耐，脾气差的角色可能说两句就挂。这完全取决于你的人设。`;
 
       // 注入记忆
       if (contact.memoryList && contact.memoryList.length > 0) {
@@ -6018,6 +6143,13 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         const data = await response.json();
         let aiText = data.choices[0].message.content.trim();
 
+        // 检测AI是否决定主动挂断
+        let aiWantsToHangup = false;
+        if (aiText.includes("【挂断通话】")) {
+          aiWantsToHangup = true;
+          aiText = aiText.replace(/【挂断通话】/g, "").trim();
+        }
+
         // 移除打字动画
         voiceCallMessages.splice(typingIdx, 1);
 
@@ -6036,6 +6168,16 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
           if (i < lines.length - 1) {
             await delay(Math.min(400 + lines[i].length * 40, 1200));
           }
+        }
+
+        // 如果AI决定挂断，延迟一下后自动执行挂断
+        if (aiWantsToHangup) {
+          await delay(1500);
+          // 添加一条系统提示
+          voiceCallMessages.push({ from: "ai", text: `（${friendName}挂断了通话）` });
+          renderVoiceCallDialog();
+          await delay(1000);
+          closeVoiceCallScreen();
         }
       } catch (error) {
         voiceCallMessages.splice(typingIdx, 1);

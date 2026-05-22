@@ -2812,12 +2812,14 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      cursor: pointer;
+      cursor: grab;
       overflow: hidden;
-      transition: transform 0.2s;
-    }
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;}
     .vc-float-ball.show { display: flex; }
-    .vc-float-ball:active { transform: scale(0.92); }
+    .vc-float-ball.dragging { cursor: grabbing; transform: scale(1.08); transition: transform 0.15s; }
+    .vc-float-ball:not(.dragging) { transition: top 0.3s ease, right 0.3s ease, transform 0.2s; }
     .vc-float-ball-avatar {
       position: absolute;
       inset: 0;
@@ -6083,15 +6085,122 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       this.style.height = this.scrollHeight + "px";
     });
 
-    // ====== 悬浮球逻辑 ======
     let vcFloatTimerInterval = null;
     let vcFloatBubbleTimer = null;
+    let vcFloatBubbleQueue = [];
+    let vcFloatBubbleShowing = false;
+
+    // ====== 悬浮球拖动逻辑（仅限右侧上下拖动）======
+    let vcBallDragging = false;
+    let vcBallDragStartY = 0;
+    let vcBallStartTop = 0;
+    let vcBallMoved = false;
+    let vcBallDragInited = false;
+
+    function initVcFloatBallDrag() {
+      if (vcBallDragInited) return;
+      vcBallDragInited = true;
+      const ball = document.getElementById("vcFloatBall");
+
+      // 触摸拖动
+      ball.addEventListener("touchstart", (e) => {
+        if (e.touches.length !== 1) return;
+        vcBallDragging = true;
+        vcBallMoved = false;
+        vcBallDragStartY = e.touches[0].clientY;
+        const rect = ball.getBoundingClientRect();
+        vcBallStartTop = rect.top;
+        ball.classList.add("dragging");
+      }, { passive: true });
+
+      ball.addEventListener("touchmove", (e) => {
+        if (!vcBallDragging) return;
+        const touch = e.touches[0];
+        const dy = touch.clientY - vcBallDragStartY;
+        if (Math.abs(dy) > 5) vcBallMoved = true;
+        let newTop = vcBallStartTop + dy;
+        const ballSize = 56;
+        const maxTop = window.innerHeight - ballSize - 10;
+        const minTop = 10;
+        newTop = Math.max(minTop, Math.min(maxTop, newTop));
+        ball.style.top = newTop + "px";
+        updateVcFloatBubblePosition();
+      }, { passive: true });
+
+      ball.addEventListener("touchend", () => {
+        if (!vcBallDragging) return;
+        vcBallDragging = false;
+        ball.classList.remove("dragging");
+        if (!vcBallMoved) {
+          handleBallClick();
+        }
+      });
+
+      ball.addEventListener("touchcancel", () => {
+        vcBallDragging = false;
+        ball.classList.remove("dragging");
+      });
+
+      // 鼠标拖动（PC端）
+      ball.addEventListener("mousedown", (e) => {
+        e.preventDefault();
+        vcBallDragging = true;
+        vcBallMoved = false;
+        vcBallDragStartY = e.clientY;
+        const rect = ball.getBoundingClientRect();
+        vcBallStartTop = rect.top;
+        ball.classList.add("dragging");
+
+        const onMouseMove = (ev) => {
+          if (!vcBallDragging) return;
+          const dy = ev.clientY - vcBallDragStartY;
+          if (Math.abs(dy) > 5) vcBallMoved = true;
+          let newTop = vcBallStartTop + dy;
+          const ballSize = 56;
+          const maxTop = window.innerHeight - ballSize - 10;
+          const minTop = 10;
+          newTop = Math.max(minTop, Math.min(maxTop, newTop));
+          ball.style.top = newTop + "px";
+          updateVcFloatBubblePosition();
+        };
+
+        const onMouseUp = () => {
+          vcBallDragging = false;
+          ball.classList.remove("dragging");
+          document.removeEventListener("mousemove", onMouseMove);
+          document.removeEventListener("mouseup", onMouseUp);
+          if (!vcBallMoved) {
+            handleBallClick();
+          }
+        };
+
+        document.addEventListener("mousemove", onMouseMove);
+        document.addEventListener("mouseup", onMouseUp);
+      });
+
+      ball.onclick = null;
+    }
+
+    function handleBallClick() {
+      hideVcFloatBall();
+      refreshVoiceCallUI();
+      document.getElementById("voiceCallScreen").classList.add("show");
+      renderVoiceCallDialog();
+    }
+
+    function updateVcFloatBubblePosition() {
+      const bubble = document.getElementById("vcFloatBubble");
+      const ball = document.getElementById("vcFloatBall");
+      if (!ball.classList.contains("show")) return;
+      const ballRect = ball.getBoundingClientRect();
+      bubble.style.top = (ballRect.top + ballRect.height / 2 - 20) + "px";
+      bubble.style.right = (window.innerWidth - ballRect.left + 8) + "px";
+    }
 
     function minimizeVoiceCall() {
-      // 隐藏通话全屏界面
       document.getElementById("voiceCallScreen").classList.remove("show");
-      // 显示悬浮球
-      showVcFloatBall();}
+      showVcFloatBall();
+    }
 
     function showVcFloatBall() {
       const ball = document.getElementById("vcFloatBall");
@@ -6107,20 +6216,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
 
       ball.classList.add("show");
 
-      // 同步计时器到悬浮球
+      initVcFloatBallDrag();
+
       if (vcFloatTimerInterval) clearInterval(vcFloatTimerInterval);
       vcFloatTimerInterval = setInterval(() => {
         const mins = String(Math.floor(voiceCallSeconds / 60)).padStart(2, "0");
         const secs = String(voiceCallSeconds % 60).padStart(2, "0");
         ballTimer.textContent = `${mins}:${secs}`;
       }, 1000);
-
-      // 点击悬浮球重新打开通话界面
-      ball.onclick = () => {
-        hideVcFloatBall();
-        refreshVoiceCallUI(); // 同步最新头像/名字/背景
-        document.getElementById("voiceCallScreen").classList.add("show");renderVoiceCallDialog();
-      };
     }
 
     function hideVcFloatBall() {
@@ -6131,17 +6234,37 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         vcFloatTimerInterval = null;
       }
       hideVcFloatBubble();
+      vcFloatBubbleQueue = [];
+      vcFloatBubbleShowing = false;
     }
 
     function showVcFloatBubble(text) {
-      const bubble = document.getElementById("vcFloatBubble");
       const ball = document.getElementById("vcFloatBall");
       if (!ball.classList.contains("show")) return;
+      vcFloatBubbleQueue.push(text);
+      if (!vcFloatBubbleShowing) {
+        processVcFloatBubbleQueue();
+      }
+    }
 
-      // 定位气泡在悬浮球左侧
-      const ballRect = ball.getBoundingClientRect();
-      bubble.style.top = (ballRect.top + ballRect.height / 2 - 20) + "px";
-      bubble.style.right = (window.innerWidth - ballRect.left + 8) + "px";
+    function processVcFloatBubbleQueue() {
+      if (vcFloatBubbleQueue.length === 0) {
+        vcFloatBubbleShowing = false;
+        return;
+      }
+
+      vcFloatBubbleShowing = true;
+      const text = vcFloatBubbleQueue.shift();
+
+      const bubble = document.getElementById("vcFloatBubble");
+      const ball = document.getElementById("vcFloatBall");
+      if (!ball.classList.contains("show")) {
+        vcFloatBubbleShowing = false;
+        vcFloatBubbleQueue = [];
+        return;
+      }
+
+      updateVcFloatBubblePosition();
 
       bubble.textContent = text;
       bubble.classList.add("show");
@@ -6149,13 +6272,23 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
 
       if (vcFloatBubbleTimer) clearTimeout(vcFloatBubbleTimer);
       vcFloatBubbleTimer = setTimeout(() => {
-        hideVcFloatBubble();
+        bubble.classList.remove("show");
+        setTimeout(() => {
+          bubble.style.display = "none";
+          setTimeout(() => {
+            processVcFloatBubbleQueue();
+          }, 500);
+        }, 300);
       }, 3000);
     }
 
     function hideVcFloatBubble() {
       const bubble = document.getElementById("vcFloatBubble");
       bubble.classList.remove("show");
+      if (vcFloatBubbleTimer) {
+        clearTimeout(vcFloatBubbleTimer);
+        vcFloatBubbleTimer = null;
+      }
       setTimeout(() => { bubble.style.display = "none"; }, 300);
     }
 

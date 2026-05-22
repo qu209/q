@@ -5746,11 +5746,9 @@ TimeChecklist:
       vcName.textContent = getDisplayName(contact);
 
       if (contact.voiceCallBg) {
-        vcBg.style.backgroundImage = `url(${contact.voiceCallBg})`;
-        vcBg.style.background = "";
+        vcBg.style.cssText = `position:absolute;inset:0;background-image:url(${contact.voiceCallBg});background-size:cover;background-position:center;background-repeat:no-repeat;filter:brightness(0.4) blur(6px);transform:scale(1.1);z-index:0;`;
       } else {
-        vcBg.style.backgroundImage = "none";
-        vcBg.style.background = "#1a1a2e";
+        vcBg.style.cssText = "position:absolute;inset:0;background:#1a1a2e;filter:none;transform:none;z-index:0;";
       }
 
       // 同步悬浮球头像

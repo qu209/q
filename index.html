@@ -7641,7 +7641,8 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
   
       applyBubbleStyleToContact(contact);
 
-            screenChatDetails.classList.remove("active");
+      // 同步通话界面和悬浮球的头像/名字/背景
+      if (typeof refreshVoiceCallUI === "function") refreshVoiceCallUI();screenChatDetails.classList.remove("active");
       screens.chat.classList.add("active");
       chatTitle.textContent = getDisplayName(contact);
       renderChat();

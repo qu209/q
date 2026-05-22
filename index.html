@@ -4404,7 +4404,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             previewText = "[表情包]";
           } else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) {
             previewText = "[转账]";
-          } else if (lastMsg.text.startsWith("[VOICE_MSG|")) {
+          } else if (lastMsg.text.startsWith("[VOICE_MSG|") || lastMsg.text.startsWith("[VOICE_MSG:")) {
             previewText = "[语音]";
           } else if (lastMsg.text.startsWith("[VOICE_CALL|")) {
             previewText = "[语音通话]";
@@ -4869,8 +4869,11 @@ if (msg.isTyping) {
                 }, 0);
               }
             } else if (msg.text.startsWith("【系统消息】")) {
-              bubble.classList.add("is-transfer"); 
+              bubble.classList.add("is-transfer");
+              bubble.style.background = "transparent";
               textSpan.innerHTML = `<div class="system-msg">${msg.text.replace("【系统消息】", "")}</div>`;
+              // 标记这条消息为系统消息，后面会特殊处理布局
+              row._isSystemMsg = true;
             } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
               // 渲染表情包图片
               const parts = msg.text.slice(1, -1).split("|");
@@ -4883,11 +4886,20 @@ if (msg.isTyping) {
               stickerImg.title = stickerLabel;
               bubble.appendChild(stickerImg);
               textSpan.remove && textSpan.remove();
-            } else if (msg.text.startsWith("[VOICE_MSG|")) {
-              // 渲染语音消息气泡
-              const voiceParts = msg.text.slice(1, -1).split("|");
-              const voiceDuration = voiceParts[1] || "0";
-              const voiceText = voiceParts.slice(2).join("|") || "";
+            } else if (msg.text.startsWith("[VOICE_MSG|") || msg.text.startsWith("[VOICE_MSG:")) {
+              // 渲染语音消息气泡（兼容竖线和冒号分隔符）
+              const voiceRaw = msg.text.slice(1, -1);
+              const voiceParts = voiceRaw.replace(/^VOICE_MSG[|:]/, "").split("|");
+              if (voiceParts.length === 1) {
+                // 可能全部用冒号分隔：VOICE_MSG:5:文字
+                const colonParts = voiceRaw.split(":");
+                colonParts.shift(); // 去掉 VOICE_MSG
+                var voiceDuration = colonParts[0] || "0";
+                var voiceText = colonParts.slice(1).join(":") || "";
+              } else {
+                var voiceDuration = voiceParts[0] || "0";
+                var voiceText = voiceParts.slice(1).join("|") || "";
+              }
               bubble.innerHTML = '';
               const voiceBarInner = document.createElement("div");
               voiceBarInner.className = "voice-bar-inner";
@@ -4981,19 +4993,30 @@ if (msg.isTyping) {
             contentWrap.appendChild(bubble._voiceTranscript);
           }
 
-          if ((positionClass === "single" || positionClass === "last") && !msg.isTyping) {
+          if ((positionClass === "single" || positionClass === "last") && !msg.isTyping && !msg.text.startsWith("【系统消息】")) {
             const time = document.createElement("div");
             time.className = "message-time";
             time.textContent = msg.time || getCurrentTime();
             contentWrap.appendChild(time);
           }
 
-          // 按严格顺序把节点放入 row：先头像，再气泡，最后复选框
-          // 配合原本的 flex-direction (AI是 row, ME是 row-reverse)
-          // 就能完美实现：AI气泡在左，复选框在气泡右侧；我的气泡在右，复选框在气泡左侧！
-          row.appendChild(avatar);
-          row.appendChild(contentWrap);
-          row.appendChild(checkbox); 
+          // 如果是系统消息，不显示头像和复选框，整行居中
+          if (row._isSystemMsg) {
+            row.className = "message-row";
+            row.style.cssText = "display:flex;justify-content:center;padding:0;margin-bottom:8px;width:100%;";
+            avatar.style.display = "none";
+            checkbox.style.display = "none";
+            contentWrap.style.alignItems = "center";
+            contentWrap.style.maxWidth = "100%";
+            row.appendChild(contentWrap);
+          } else {
+            // 按严格顺序把节点放入 row：先头像，再气泡，最后复选框
+            // 配合原本的 flex-direction (AI是 row, ME是 row-reverse)
+            // 就能完美实现：AI气泡在左，复选框在气泡右侧；我的气泡在右，复选框在气泡左侧！
+            row.appendChild(avatar);
+            row.appendChild(contentWrap);
+            row.appendChild(checkbox);
+          }
         } else {
           // 【如果核心内容完全没变】，只微调头像和时间的显示隐藏，保护内部的 details 标签不闪动
           const avatar = row.querySelector('.chat-avatar');
@@ -5044,7 +5067,7 @@ if (msg.isTyping) {
         quoteText = "[表情包]";
       } else if (msg.text.startsWith("[TRANSFER|") || msg.text.startsWith("[TRANSFER_REPLY|")) {
         quoteText = "[转账]";
-      } else if (msg.text.startsWith("[VOICE_MSG|")) {
+      } else if (msg.text.startsWith("[VOICE_MSG|") || msg.text.startsWith("[VOICE_MSG:")) {
         quoteText = "[语音]";
       } else if (msg.text.startsWith("[VOICE_CALL|")) {
         quoteText = "[语音通话]";
@@ -5074,9 +5097,10 @@ if (msg.isTyping) {
         copyText = "[表情包]";
       } else if (msg.text.startsWith("[TRANSFER|") || msg.text.startsWith("[TRANSFER_REPLY|")) {
         copyText = "[转账]";
-      } else if (msg.text.startsWith("[VOICE_MSG|")) {
-        const _vp = msg.text.slice(1, -1).split("|");
-        copyText = _vp.slice(2).join("|") || "[语音]";
+      } else if (msg.text.startsWith("[VOICE_MSG|") || msg.text.startsWith("[VOICE_MSG:")) {
+        const _raw = msg.text.slice(1, -1);
+        const _vp = _raw.includes("|") ? _raw.split("|") : _raw.split(":");
+        copyText = _vp.slice(2).join(_raw.includes("|") ? "|" : ":") || "[语音]";
       } else if (msg.text.startsWith("[VOICE_CALL|")) {
         copyText = "[语音通话]";
       } else {
@@ -5242,7 +5266,12 @@ if (msg.isTyping) {
 - 如果接受，请务必在回复中单独占一行输出：【接受转账】
 - 如果拒绝/退回，请务必在回复中单独占一行输出：【退回转账】
 - 如果你想主动给用户发红包、转账表达感谢或撒娇要钱等，请在回复中单独占一行输出：【发起转账：金额，备注：xxx】（例如：【发起转账：52.0，备注：去买杯奶茶】）。金额必须是纯数字。
-8. 语音通话功能：你想主动拨打语音时输出：【发起语音通话】
+8. 语音通话功能（极其重要，必须严格区分）：
+   - 【语音消息】和【语音通话/打电话】是完全不同的两个功能！
+   - 当用户说"发语音""发个语音""语音说"时 → 这是让你发语音消息，用[VOICE_MSG|时长|内容] 格式
+   - 当用户说"打电话""打语音""语音通话""call我""打个电话""给我打""视频""facetime""通话"时 → 这是让你发起语音通话，你必须输出：【发起语音通话】
+   - 当你自己想主动打电话给用户时 → 输出：【发起语音通话】
+   - 千万不要把"打电话/打语音/通话"理解成发语音消息！这两个功能完全不同！
 
 === 进阶定制指令（分场景细化） ===
 所有进阶版本均基于核心基础指令叠加，请根据你的人设自动匹配，直接在基础指令后拼接即可：
@@ -5499,8 +5528,8 @@ TimeChecklist:
            }
         }
         
-        // 语音消息转译为可读文本给AI看
-        const voiceMsgMatch = messageContent && typeof messageContent ==='string' && messageContent.match(/\[VOICE_MSG\|(\d+)\|(.+)\]/);
+        // 语音消息转译为可读文本给AI看（兼容竖线和冒号分隔符）
+        const voiceMsgMatch = messageContent && typeof messageContent ==='string' && messageContent.match(/\[VOICE_MSG[|:](\d+)[|:](.+)\]/);
         if (voiceMsgMatch) {
           messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
         }
@@ -5608,24 +5637,28 @@ TimeChecklist:
                }
              }
              lines[i] = null;
-           } else if (line.includes("【发起语音通话】")) {
-             // AI主动发起语音通话：先把这条指令从文本中移除，然后自动打开通话界面
+           } else if (line.includes("【发起语音通话】") || line.includes("【发起通话】") || line.includes("【拨打电话】") || line.includes("【打电话】") || line.includes("【拨打语音】")) {
+             // AI主动发起语音通话：先把这条指令从文本中移除，然后弹出来电界面
              lines[i] = null;
-             // 延迟执行，等当前消息渲染完毕后再弹出通话
+             // 延迟执行，等当前消息渲染完毕后再弹出来电
+             const _vcContact = contact; // 闭包保存引用
+             const _vcFriendName = friendName;
              setTimeout(() => {
-               // 添加一条系统消息提示
-               contact.messages.push({
+               // 添加一条居中的系统消息提示（不在气泡中显示）
+               _vcContact.messages.push({
                  from: "ai",
-                 text: `【系统消息】${friendName} 向你发起了语音通话`,
+                 text: `【系统消息】${_vcFriendName} 向你发起了语音通话`,
                  time: getCurrentTime(),
                  hasAnimated: false
                });
-               contact.lastTime = getCurrentTime();
-               if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+               _vcContact.lastTime = getCurrentTime();
+               // 标记这次通话是AI发起的，挂断后通话记录气泡挂在AI方
+               _vcContact._pendingCallFrom = "ai";
+               if (state.activeContactId === _vcContact.id && screens.chat.classList.contains("active")) {
                  renderChat();
                }
-               // 显示来电确认弹窗
-               showIncomingCallDialog(contact);
+               // 显示来电确认弹窗（有接听和拒绝按钮）
+               showIncomingCallDialog(_vcContact);
              }, 800);
            } else {
              // 兼容全角/半角逗号，防止AI标点错乱
@@ -5633,6 +5666,13 @@ TimeChecklist:
              if (sendMatch) {
                 const amt = sendMatch[1], note = sendMatch[2];
                 lines[i] = `[TRANSFER|${amt}|${note}|pending|ai]`; // 转化为AI发来的等待接收卡片
+             }
+             
+             // 修复：拦截AI错误格式的语音消息指令（用冒号代替竖线的情况）
+             // 例如 AI输出了 [VOICE_MSG:5:文字内容] 而不是 [VOICE_MSG|5|文字内容]
+             const voiceMsgFixMatch = line.match(/^\[VOICE_MSG[:\|](\d+)[:\|](.+)\]$/);
+             if (voiceMsgFixMatch) {
+               lines[i] = `[VOICE_MSG|${voiceMsgFixMatch[1]}|${voiceMsgFixMatch[2]}]`;
              }
            }
         }
@@ -5886,22 +5926,29 @@ TimeChecklist:
         const mins = String(Math.floor(voiceCallSeconds / 60)).padStart(2, "0");
         const secs = String(voiceCallSeconds % 60).padStart(2, "0");
         const durationStr = `${mins}:${secs}`;
+        // 根据发起方决定通话记录气泡挂在哪一方
+        const callFrom = contact._pendingCallFrom || "me";
         // 保存通话记录到消息中，用特殊标记
         contact.messages.push({
-          from: "me",
+          from: callFrom,
           text: `[VOICE_CALL|${durationStr}]`,
           time: getCurrentTime(),
           hasAnimated: false,
           voiceCallLog: JSON.parse(JSON.stringify(voiceCallMessages)) // 深拷贝保存对话记录
         });
         contact.lastTime = getCurrentTime();
+        // 清除标记
+        delete contact._pendingCallFrom;
         renderChat();
         renderContacts();
+      } else if (contact) {
+        // 即使没有对话记录也清除标记
+        delete contact._pendingCallFrom;
       }
 
       voiceCallMessages = [];
       voiceCallSeconds = 0;
-    }
+     }
         // AI主动拨打语音通话时的来电确认弹窗
     function showIncomingCallDialog(contact) {
       const friendName = getDisplayName(contact);
@@ -6192,6 +6239,23 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       // 第4个inventory-item是"语音通话"
       if (inventoryItems.length >= 4) {
         inventoryItems[3].addEventListener("click", () => {
+          const contact = getContact(state.activeContactId);
+          if (contact) {
+            // 标记这次通话是用户发起的
+            contact._pendingCallFrom = "me";
+            // 添加居中的系统消息
+            const friendName = getDisplayName(contact);
+            contact.messages.push({
+              from: "ai",
+              text: `【系统消息】你向 ${friendName} 发起了语音通话`,
+              time: getCurrentTime(),
+              hasAnimated: false
+            });
+            contact.lastTime = getCurrentTime();
+            if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+              renderChat();
+            }
+          }
           openVoiceCallScreen();
         });
       }

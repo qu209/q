@@ -2794,6 +2794,84 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .voice-call-send-btn svg {
       color: #fff;
     }
+    /*====== 语音通话悬浮球样式 ====== */
+    .vc-float-ball {
+      position: fixed;
+      right: 12px;
+      top: calc(120px + var(--safe-top));
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.3);
+      box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+      z-index: 8999;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      overflow: hidden;
+      transition: transform 0.2s;
+    }
+    .vc-float-ball.show { display: flex; }
+    .vc-float-ball:active { transform: scale(0.92); }
+    .vc-float-ball-avatar {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0.4;
+    }
+    .vc-float-ball-timer {
+      position: relative;
+      z-index: 1;
+      font-size: 11px;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+      font-variant-numeric: tabular-nums;
+    }
+    .vc-float-ball-dot {
+      position: relative;
+      z-index: 1;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #37d05f;
+      margin-bottom: 2px;
+      animation: voicePulse 1.5s infinite;
+    }
+    /*悬浮球旁边的AI说话气泡 */
+    .vc-float-bubble {
+      position: fixed;
+      right: 76px;
+      z-index: 8998;
+      max-width: 200px;
+      padding: 8px 14px;
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px 16px 4px 16px;
+      font-size: 13px;
+      color: #111;
+      line-height: 1.5;
+      word-break: break-word;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      opacity: 0;
+      transform: translateX(10px) scale(0.95);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+      display: none;
+    }
+    .vc-float-bubble.show {
+      display: block;
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
 
   </style>
   
@@ -3393,6 +3471,8 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       <div class="voice-call-bg" id="voiceCallBg"></div>
       <div class="voice-call-content">
         <div class="voice-call-top">
+          <button id="voiceCallMinimizeBtn" style="position:absolute;left:16px;top:calc(16px + var(--safe-top));appearance:none;border:none;background:rgba(255,255,255,0.15);width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+          </button>
           <div class="voice-call-avatar" id="voiceCallAvatar">
             <img class="voice-call-avatar-frame" id="voiceCallAvatarFrame" src="" style="display:none;" />
           </div>
@@ -3403,10 +3483,11 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
         <div class="voice-call-dialog" id="voiceCallDialog"></div>
         <div class="voice-call-hangup-area">
           <button class="voice-call-hangup-btn" id="voiceCallHangupBtn" aria-label="挂断">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.4512.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-            </svg>
-          </button>
+  <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+  </svg>
+</button>
+
         </div>
         <div class="voice-call-input-area">
           <div class="voice-call-input-wrap">
@@ -3419,6 +3500,13 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
         </div>
       </div>
     </div>
+    <!-- 语音通话悬浮球 -->
+    <div class="vc-float-ball" id="vcFloatBall">
+      <div class="vc-float-ball-avatar" id="vcFloatBallAvatar"></div>
+      <div class="vc-float-ball-dot"></div>
+      <div class="vc-float-ball-timer" id="vcFloatBallTimer">00:00</div>
+    </div>
+    <div class="vc-float-bubble" id="vcFloatBubble"></div>
 
     <section class="screen chat-screen" id="screen-chat-details">
       <div class="chat-header" style="border-bottom: none; background: #f2f2f7;">
@@ -5705,6 +5793,7 @@ TimeChecklist:
     function closeVoiceCallScreen() {
       const vcScreen = document.getElementById("voiceCallScreen");
       vcScreen.classList.remove("show");
+      hideVcFloatBall(); // 挂断时也清理悬浮球
 
       // 停止计时器
       if (voiceCallTimerInterval) {
@@ -5734,24 +5823,22 @@ TimeChecklist:
       voiceCallMessages = [];
       voiceCallSeconds = 0;
     }
-    // 查看通话记录弹窗
+    // 查看通话记录弹窗（白色毛玻璃风格，点击空白关闭）
     function showVoiceCallLogDialog(log, duration, contact) {
       const mask = document.createElement("div");
-      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);";
+      mask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.3);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);";
       
       const card = document.createElement("div");
-      card.style.cssText = "width:min(360px,calc(100vw - 48px));max-height:70vh;background:#1a1a2e;border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,0.4);";
+      card.style.cssText = "width:min(340px,calc(100vw - 48px));max-height:65vh;background:rgba(255,255,255,0.85);backdrop-filter:blur(24px) saturate(180%);-webkit-backdrop-filter:blur(24px) saturate(180%);border-radius:24px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,0.12);border:1px solid rgba(255,255,255,0.5);";
       
-      // 头部
       const header = document.createElement("div");
-      header.style.cssText = "padding:20px 20px 14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.08);flex-shrink:0;";
+      header.style.cssText = "padding:20px 20px 14px;text-align:center;border-bottom:1px solid rgba(0,0,0,0.06);flex-shrink:0;";
       const contactName = contact ? getDisplayName(contact) : "角色";
       header.innerHTML = `
-        <div style="font-size:16px;font-weight:700;color:#fff;margin-bottom:4px;">语音通话记录</div>
-        <div style="font-size:13px;color:rgba(255,255,255,0.4);">与 ${contactName} ·时长 ${duration}</div>
+        <div style="font-size:16px;font-weight:700;color:#111;margin-bottom:4px;">语音通话记录</div>
+        <div style="font-size:13px;color:#999;">与 ${contactName} · 时长 ${duration}</div>
       `;
       
-      // 对话内容区
       const body = document.createElement("div");
       body.style.cssText = "flex:1;overflow-y:auto;padding:16px 20px;display:flex;flex-direction:column;gap:8px;-webkit-overflow-scrolling:touch;";
       
@@ -5760,17 +5847,16 @@ TimeChecklist:
         const line = document.createElement("div");
         line.style.cssText = "text-align:center;font-size:14px;line-height:1.7;word-break:break-word;white-space:pre-wrap;padding:4px 0;";
         if (msg.from === "me") {
-          line.style.color = "rgba(255,255,255,0.92)";
+          line.style.color = "#111";
           line.textContent = msg.text;
         } else {
-          // 解析括号动作
           const parts = msg.text.split(/([（(][^）)]*[）)])/g);
           let html = "";
           parts.forEach(part => {
             if (/^[（(]/.test(part)) {
-              html += `<span style="color:rgba(255,255,255,0.25);font-style:italic;font-size:13px;">${part}</span>`;
+              html += `<span style="color:#bbb;font-style:italic;font-size:13px;">${part}</span>`;
             } else if (part.trim()) {
-              html += `<span style="color:rgba(255,255,255,0.5);">${part}</span>`;
+              html += `<span style="color:#888;">${part}</span>`;
             }
           });
           line.innerHTML = html || msg.text;
@@ -5778,18 +5864,8 @@ TimeChecklist:
         body.appendChild(line);
       });
       
-      // 底部关闭按钮
-      const footer = document.createElement("div");
-      footer.style.cssText = "padding:14px 20px;text-align:center;border-top:1px solid rgba(255,255,255,0.08);flex-shrink:0;";
-      const closeBtn = document.createElement("button");
-      closeBtn.style.cssText = "appearance:none;border:none;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.7);font-size:15px;font-weight:600;padding:10px 40px;border-radius:12px;cursor:pointer;";
-      closeBtn.textContent = "关闭";
-      closeBtn.onclick = () => document.body.removeChild(mask);
-      footer.appendChild(closeBtn);
-      
       card.appendChild(header);
       card.appendChild(body);
-      card.appendChild(footer);
       mask.appendChild(card);
       
       mask.addEventListener("click", (e) => {
@@ -5936,8 +6012,13 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         for (let i = 0; i < lines.length; i++) {
           voiceCallMessages.push({ from: "ai", text: lines[i] });
           renderVoiceCallDialog();
+          // 如果通话界面被最小化了，在悬浮球旁显示气泡
+          if (document.getElementById("vcFloatBall").classList.contains("show")) {
+            const plainText = lines[i].replace(/[（(][^）)]*[）)]/g, '').trim();
+            if (plainText) showVcFloatBubble(plainText);
+          }
           if (i < lines.length - 1) {
-            await delay(Math.min(400+ lines[i].length * 40, 1200));
+            await delay(Math.min(400 + lines[i].length * 40, 1200));
           }
         }
       } catch (error) {
@@ -5960,7 +6041,13 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
 
     // 绑定挂断按钮
     document.getElementById("voiceCallHangupBtn").addEventListener("click", () => {
+      hideVcFloatBall();
       closeVoiceCallScreen();
+    });
+
+    // 绑定最小化按钮（返回键）
+    document.getElementById("voiceCallMinimizeBtn").addEventListener("click", () => {
+      minimizeVoiceCall();
     });
 
     // 绑定发送按钮
@@ -5981,6 +6068,81 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       this.style.height = "22px";
       this.style.height = this.scrollHeight + "px";
     });
+
+    // ====== 悬浮球逻辑 ======
+    let vcFloatTimerInterval = null;
+    let vcFloatBubbleTimer = null;
+
+    function minimizeVoiceCall() {
+      // 隐藏通话全屏界面
+      document.getElementById("voiceCallScreen").classList.remove("show");
+      // 显示悬浮球
+      showVcFloatBall();}
+
+    function showVcFloatBall() {
+      const ball = document.getElementById("vcFloatBall");
+      const ballAvatar = document.getElementById("vcFloatBallAvatar");
+      const ballTimer = document.getElementById("vcFloatBallTimer");
+      const contact = getContact(state.activeContactId);
+
+      if (contact && contact.avatar) {
+        ballAvatar.style.backgroundImage = `url(${contact.avatar})`;
+      } else {
+        ballAvatar.style.backgroundImage = "linear-gradient(135deg,#d7d7d7,#c9c9c9)";
+      }
+
+      ball.classList.add("show");
+
+      // 同步计时器到悬浮球
+      if (vcFloatTimerInterval) clearInterval(vcFloatTimerInterval);
+      vcFloatTimerInterval = setInterval(() => {
+        const mins = String(Math.floor(voiceCallSeconds / 60)).padStart(2, "0");
+        const secs = String(voiceCallSeconds % 60).padStart(2, "0");
+        ballTimer.textContent = `${mins}:${secs}`;
+      }, 1000);
+
+      // 点击悬浮球重新打开通话界面
+      ball.onclick = () => {
+        hideVcFloatBall();
+        document.getElementById("voiceCallScreen").classList.add("show");renderVoiceCallDialog(); // 刷新对话区
+      };
+    }
+
+    function hideVcFloatBall() {
+      const ball = document.getElementById("vcFloatBall");
+      ball.classList.remove("show");
+      if (vcFloatTimerInterval) {
+        clearInterval(vcFloatTimerInterval);
+        vcFloatTimerInterval = null;
+      }
+      hideVcFloatBubble();
+    }
+
+    function showVcFloatBubble(text) {
+      const bubble = document.getElementById("vcFloatBubble");
+      const ball = document.getElementById("vcFloatBall");
+      if (!ball.classList.contains("show")) return;
+
+      // 定位气泡在悬浮球左侧
+      const ballRect = ball.getBoundingClientRect();
+      bubble.style.top = (ballRect.top + ballRect.height / 2 - 20) + "px";
+      bubble.style.right = (window.innerWidth - ballRect.left + 8) + "px";
+
+      bubble.textContent = text;
+      bubble.classList.add("show");
+      bubble.style.display = "block";
+
+      if (vcFloatBubbleTimer) clearTimeout(vcFloatBubbleTimer);
+      vcFloatBubbleTimer = setTimeout(() => {
+        hideVcFloatBubble();
+      }, 3000);
+    }
+
+    function hideVcFloatBubble() {
+      const bubble = document.getElementById("vcFloatBubble");
+      bubble.classList.remove("show");
+      setTimeout(() => { bubble.style.display = "none"; }, 300);
+    }
 
     // ========== 新增：1. 转账功能逻辑 (安全键盘版) ==========
     const transferItemBtn = document.getElementById("transferItemBtn");

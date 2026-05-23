@@ -6,7 +6,31 @@
     name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0, viewport-fit=cover"
   />
-  <title>小手机</title>
+  <title>Tacenda</title>
+  <link rel="manifest" id="manifestLink" />
+  <link rel="apple-touch-icon" href="https://i.postimg.cc/8Pgm5B6w/IMG-5211.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tacenda" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#111111" />
+  <script>
+    // 动态生成 manifest（因为是单HTML文件，无法引用外部json）
+    const manifestData = {
+      name: "Tacenda",
+      short_name: "Tacenda",
+      description: "AI好友聊天",
+      start_url: location.href.split('?')[0],
+      display: "standalone",
+      background_color: "#ffffff",
+      theme_color: "#111111",
+      icons: [
+        { src: "https://i.postimg.cc/8Pgm5B6w/IMG-5211.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },{ src: "https://i.postimg.cc/8Pgm5B6w/IMG-5211.png", sizes: "192x192", type: "image/png", purpose: "any" }
+      ]
+    };
+    const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+    document.getElementById('manifestLink').href = URL.createObjectURL(blob);
+  </script>
   <style>
     :root {
       --bg: #ffffff;

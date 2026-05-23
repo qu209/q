@@ -11009,6 +11009,272 @@ ${imagePromptInstruction}`;
       console.log("IndexedDB 存档加载完毕，所有数据已恢复");
     }).catch(err => {
       console.error("IndexedDB 加载失败，使用默认数据:", err);});
+
+    // ====== 音乐播放器逻辑 ======
+    (function() {
+      const MUSIC_KEY = 'tacenda_music_list';
+      const DEFAULT_SONGS = [
+        { id: Date.now(), name: 'Heaven', url: 'https://img.heliar.top/file/1779560853653_Heaven-Ailee.mp3' }
+      ];
+
+      let songs = [];
+      let currentAudio = null;
+      let currentPlayingId = null;
+      let dragSrcIndex = null;
+      let addFileBlob = null;
+
+      function loadSongs() {
+        try {
+          const saved = localStorage.getItem(MUSIC_KEY);
+          songs = saved ? JSON.parse(saved) : [...DEFAULT_SONGS];
+        } catch(e) {
+          songs = [...DEFAULT_SONGS];
+        }
+      }
+
+      function saveSongs() {
+        // 不保存 blob url（刷新后失效），只保存 http url
+        const toSave = songs.map(s => ({ id: s.id, name: s.name, url: s.blobUrl ? '' : s.url })).filter(s => s.url);
+        try { localStorage.setItem(MUSIC_KEY, JSON.stringify(toSave)); } catch(e) {}
+      }
+
+      function formatTime(s) {
+        if (!isFinite(s)) return '0:00';
+        const m = Math.floor(s / 60);
+        const sec = Math.floor(s % 60);
+        return m + ':' + (sec < 10 ? '0' : '') + sec;
+      }
+
+      function stopCurrent() {
+        if (currentAudio) {
+          currentAudio.pause();
+          currentAudio = null;
+          currentPlayingId = null;
+        }
+      }
+
+      function playSong(song) {
+        if (currentPlayingId === song.id) {
+          stopCurrent();
+          renderSongList();
+          return;
+        }
+        stopCurrent();
+        const audio = new Audio(song.url);
+        audio.play().catch(() => {});
+        currentAudio = audio;
+        currentPlayingId = song.id;
+        audio.addEventListener('ended', () => {
+          currentPlayingId = null;
+          currentAudio = null;
+          renderSongList();
+        });
+        renderSongList();
+      }
+
+      function renderSongList() {
+        const list = document.getElementById('musicSongList');
+        if (!list) return;
+        if (songs.length === 0) {
+          list.innerHTML = '<div style="text-align:center;color:#bbb;padding:30px 0;font-size:14px;">还没有歌曲，点下方添加</div>';
+          return;
+        }
+        list.innerHTML = '';
+        songs.forEach((song, idx) => {
+          const isPlaying = currentPlayingId === song.id;
+          const row = document.createElement('div');
+          row.setAttribute('draggable', 'true');
+          row.style.cssText = 'display:flex;align-items:center;gap:12px;padding:14px 4px;border-bottom:1px solid #f0f0f0;cursor:pointer;user-select:none;-webkit-user-select:none;';
+          row.dataset.idx = idx;
+
+          // 拖动手柄
+          const handle = document.createElement('div');
+          handle.style.cssText = 'flex-shrink:0;color:#ccc;font-size:18px;cursor:grab;padding:0 4px;';
+          handle.innerHTML = '⠿';
+
+          // 播放状态图标
+          const icon = document.createElement('div');
+          icon.style.cssText = 'flex-shrink:0;width:32px;height:32px;border-radius:50%;background:' + (isPlaying ? '#C1D0DC' : '#f0f0f0') + ';display:flex;align-items:center;justify-content:center;';
+          icon.innerHTML = isPlaying
+            ? '<svg width="14" height="14" viewBox="0 0 24 24" fill="#fff"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>'
+            : '<svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><polygon points="5,3 19,12 5,21"/></svg>';
+
+          // 歌名
+          const name = document.createElement('div');
+          name.style.cssText = 'flex:1;font-size:15px;font-weight:' + (isPlaying ? '600' : '400') + ';color:' + (isPlaying ? '#5b8fa8' : '#111') + ';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+          name.textContent = song.name;
+
+          // 删除（长按触发）
+          let pressTimer = null;
+          row.addEventListener('touchstart', () => {
+            pressTimer = setTimeout(async () => {
+              const ok = await sysConfirm('删除歌曲"' + song.name + '"？');
+              if (ok) {
+                if (currentPlayingId === song.id) stopCurrent();
+                songs.splice(idx, 1);
+                saveSongs();
+                renderSongList();
+              }
+            }, 600);
+          }, { passive: true });
+          row.addEventListener('touchend', () => clearTimeout(pressTimer));
+          row.addEventListener('touchmove', () => clearTimeout(pressTimer));
+
+          // 点击播放
+          row.addEventListener('click', () => {
+            playSong(song);
+          });
+
+          // 拖拽排序
+          row.addEventListener('dragstart', (e) => {
+            dragSrcIndex = idx;
+            e.dataTransfer.effectAllowed = 'move';
+            setTimeout(() => { row.style.opacity = '0.4'; }, 0);
+          });
+          row.addEventListener('dragend', () => { row.style.opacity = '1'; });
+          row.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+          });
+          row.addEventListener('drop', (e) => {
+            e.preventDefault();
+            if (dragSrcIndex === null || dragSrcIndex === idx) return;
+            const moved = songs.splice(dragSrcIndex, 1)[0];
+            songs.splice(idx, 0, moved);
+            saveSongs();
+            renderSongList();
+          });
+
+          row.appendChild(handle);
+          row.appendChild(icon);
+          row.appendChild(name);
+          list.appendChild(row);
+        });
+      }
+
+      function showMusicModal() {
+        loadSongs();
+        showListView();
+        renderSongList();
+        document.getElementById('musicPlayerMask').classList.add('show');
+      }
+
+      function hideMusicModal() {
+        document.getElementById('musicPlayerMask').classList.remove('show');
+      }
+
+      function showListView() {
+        document.getElementById('musicListView').style.display = 'flex';
+        document.getElementById('musicAddView').style.display = 'none';
+        document.getElementById('musicModalTitle').textContent = '播放列表';
+      }
+
+      function showAddView() {
+        document.getElementById('musicListView').style.display = 'none';
+        document.getElementById('musicAddView').style.display = 'flex';
+        document.getElementById('musicModalTitle').textContent = '添加歌曲';
+        document.getElementById('musicNewName').value = '';
+        document.getElementById('musicNewUrl').value = '';
+        document.getElementById('musicFileName').textContent = '';
+        document.getElementById('musicAddError').textContent = '';
+        addFileBlob = null;
+      }
+
+      // menuBtn 点击
+      document.getElementById('menuBtn').addEventListener('click', showMusicModal);
+
+      // 取消
+      document.getElementById('musicCancelBtn').addEventListener('click', hideMusicModal);
+      document.getElementById('musicPlayerMask').addEventListener('click', function(e) {
+        if (e.target === this) hideMusicModal();
+      });
+
+      // 点添加歌曲
+      document.getElementById('musicAddSongBtn').addEventListener('click', showAddView);
+
+      // 添加视图：返回
+      document.getElementById('musicAddCancelBtn').addEventListener('click', showListView);
+
+      // 选择文件
+      document.getElementById('musicChooseFileBtn').addEventListener('click', () => {
+        document.getElementById('musicFileInput').click();
+      });
+      document.getElementById('musicFileInput').addEventListener('change', function() {
+        const file = this.files[0];
+        if (!file) return;
+        addFileBlob = URL.createObjectURL(file);
+        document.getElementById('musicFileName').textContent = file.name;
+        if (!document.getElementById('musicNewName').value.trim()) {
+          document.getElementById('musicNewName').value = file.name.replace(/\.[^.]+$/, '');
+        }
+      });
+
+      // 确认添加
+      document.getElementById('musicAddConfirmBtn').addEventListener('click', () => {
+        const nameVal = document.getElementById('musicNewName').value.trim();
+        const urlVal = document.getElementById('musicNewUrl').value.trim();
+        const err = document.getElementById('musicAddError');
+        if (!nameVal) { err.textContent = '请输入歌曲名称'; return; }
+        if (!urlVal && !addFileBlob) { err.textContent = '请输入链接或选择文件'; return; }
+        err.textContent = '';
+        songs.push({
+          id: Date.now(),
+          name: nameVal,
+          url: addFileBlob || urlVal,
+          blobUrl: !!addFileBlob
+        });
+        saveSongs();
+        addFileBlob = null;
+        showListView();
+        renderSongList();
+      });
+
+      loadSongs();
+    })();
   </script>
+      <!-- ====== 音乐播放器弹窗 ====== -->
+    <div class="modal-mask" id="musicPlayerMask">
+      <div class="modal" style="max-height: 80vh; display: flex; flex-direction: column;">
+        <div class="modal-drag-bar"></div>
+        <div class="modal-title-bar">
+          <span id="musicModalTitle">播放列表</span>
+        </div>
+
+        <!-- 歌曲列表视图 -->
+        <div id="musicListView" style="display: flex; flex-direction: column; flex: 1; min-height: 0;">
+          <div id="musicSongList" style="flex: 1; overflow-y: auto; padding: 0 16px; max-height: 45vh;"></div>
+          <div class="modal-actions" style="flex-shrink: 0;">
+            <button class="btn btn-light" id="musicCancelBtn">取消</button>
+            <button class="btn btn-dark" id="musicAddSongBtn">添加歌曲</button>
+          </div>
+        </div>
+
+        <!-- 添加歌曲视图 -->
+        <div id="musicAddView" style="display: none; flex-direction: column;">
+          <div class="modal-body">
+            <div class="field">
+              <label>歌曲名称</label>
+              <input class="input" id="musicNewName" placeholder="请输入歌曲名" />
+            </div>
+            <div class="field">
+              <label>歌曲链接（URL）</label>
+              <input class="input" id="musicNewUrl" placeholder="https://..." />
+            </div>
+            <div style="text-align: center; font-size: 13px; color: #aaa; padding: 4px 0;">— 或者 —</div>
+            <div class="field">
+              <label>从手机选择 MP3 文件</label>
+              <input type="file" id="musicFileInput" accept="audio/mp3,audio/*" style="display: none;" />
+              <button class="btn btn-light" id="musicChooseFileBtn" style="width: 100%; height: 46px; border-radius: 14px; font-size: 15px;">选择文件</button>
+              <div id="musicFileName" style="font-size: 12px; color: #aaa; margin-top: 6px; padding-left: 4px;"></div>
+            </div>
+            <div id="musicAddError" class="modal-error"></div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn btn-light" id="musicAddCancelBtn">返回</button>
+            <button class="btn btn-dark" id="musicAddConfirmBtn">添加</button>
+          </div>
+        </div>
+      </div>
+    </div>
 </body>
 </html>

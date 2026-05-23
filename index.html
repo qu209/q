@@ -4331,8 +4331,8 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
           </div>
         </div>
         <div class="music-player-controls">
-          <button class="music-ctrl-btn" id="musicPrevBtn" aria-label="上一首">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M66h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+          <button class="music-ctrl-btn" id="musicModeBtn" aria-label="播放模式" title="列表循环">
+            <svg id="musicModeIcon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>
           </button>
           <button class="music-ctrl-btn play-pause" id="musicPlayPauseBtn" aria-label="播放/暂停">
             <svg id="musicPlayIcon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
@@ -4359,7 +4359,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         <div class="music-add-file-btn" id="musicAddFileBtn">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           选择手机音乐文件
-          <input type="file" id="musicAddFileInput" accept="audio/*" />
+          <input type="file" id="musicAddFileInput" accept="audio/*,.mp3,.m4a,.wav,.ogg,.flac,.aac" />
         </div>
         <div class="music-add-file-hint" id="musicAddFileHint"></div>
         <div class="music-add-actions">
@@ -11372,7 +11372,7 @@ ${imagePromptInstruction}`;
       console.error("IndexedDB 加载失败，使用默认数据:", err);
     });
 
-    // ====== 音乐播放器完整逻辑 ======
+// ====== 音乐播放器完整逻辑 ======
     (function() {
       // 初始化默认歌曲列表
       if (!state.musicList) {
@@ -11393,8 +11393,8 @@ ${imagePromptInstruction}`;
       const musicAddCancelBtn = document.getElementById("musicAddCancelBtn");
       const musicAddConfirmBtn = document.getElementById("musicAddConfirmBtn");
       const musicPlayPauseBtn = document.getElementById("musicPlayPauseBtn");
-      const musicPrevBtn = document.getElementById("musicPrevBtn");
       const musicNextBtn = document.getElementById("musicNextBtn");
+      const musicModeBtn = document.getElementById("musicModeBtn");
       const musicPlayIcon = document.getElementById("musicPlayIcon");
       const musicPauseIcon = document.getElementById("musicPauseIcon");
       const musicNowPlaying = document.getElementById("musicNowPlaying");
@@ -11406,9 +11406,30 @@ ${imagePromptInstruction}`;
 
       let currentPlayingIndex = -1;
       let isPlaying = false;
-      let tempFileDataUrl = ""; // 临时存储选择的本地文件
+      let tempFileDataUrl = "";
+      // 临时存储本地文件的Object URL（不存入IndexedDB，仅运行时使用）
+      let tempFileObjectUrl = "";
 
-      // 格式化秒数为m:ss
+      // 播放模式：loop（列表循环）、shuffle（随机）、single（单曲循环）
+      let playMode = "loop";
+
+      // 播放模式SVG图标
+      const MODE_ICONS = {
+        loop: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path></svg>',
+        shuffle: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 3 21 3 21 8"></polyline><line x1="4" y1="20" x2="21" y2="3"></line><polyline points="21 16 21 21 16 21"></polyline><line x1="15" y1="15" x2="21" y2="21"></line><line x1="4" y1="4" x2="9" y2="9"></line></svg>',
+        single: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="17 1 21 5 17 9"></polyline><path d="M3 11V9a4 4 0 0 1 4-4h14"></path><polyline points="7 23 3 19 7 15"></polyline><path d="M21 13v2a4 4 0 0 1-4 4H3"></path><text x="10" y="15" font-size="10" fill="currentColor" stroke="none" font-weight="700">1</text></svg>'
+      };
+      const MODE_LABELS = {
+        loop: "列表循环",
+        shuffle: "随机播放",
+        single: "单曲循环"
+      };
+
+      function updateModeIcon() {
+        const iconEl = document.getElementById("musicModeIcon");
+        if (iconEl) iconEl.outerHTML = MODE_ICONS[playMode].replace('<svg', '<svg id="musicModeIcon"');musicModeBtn.title = MODE_LABELS[playMode];
+      }
+
       function formatTime(sec) {
         if (isNaN(sec) || !isFinite(sec)) return "0:00";
         const m = Math.floor(sec / 60);
@@ -11416,7 +11437,6 @@ ${imagePromptInstruction}`;
         return m + ":" + String(s).padStart(2, "0");
       }
 
-      // 更新播放/暂停图标
       function updatePlayPauseIcon() {
         if (isPlaying) {
           musicPlayIcon.style.display = "none";
@@ -11427,7 +11447,6 @@ ${imagePromptInstruction}`;
         }
       }
 
-      // 播放指定索引的歌曲
       function playSong(index) {
         if (!state.musicList || index < 0 || index >= state.musicList.length) return;
         const song = state.musicList[index];
@@ -11439,11 +11458,11 @@ ${imagePromptInstruction}`;
           musicNowPlaying.textContent = "正在播放：" + song.name;
           renderMusicList();
         }).catch(err => {
-          console.log("播放失败:", err);musicNowPlaying.textContent = "播放失败，请检查链接";
+          console.log("播放失败:", err);
+          musicNowPlaying.textContent = "播放失败，请检查链接";
         });
       }
 
-      // 暂停
       function pauseSong() {
         audioEl.pause();
         isPlaying = false;
@@ -11451,7 +11470,6 @@ ${imagePromptInstruction}`;
         renderMusicList();
       }
 
-      // 继续播放
       function resumeSong() {
         if (audioEl.src) {
           audioEl.play().then(() => {
@@ -11462,20 +11480,56 @@ ${imagePromptInstruction}`;
         }
       }
 
-      // 上一首
-      function prevSong() {
+      // 根据播放模式决定下一首
+      function nextSongByMode() {
         if (!state.musicList || state.musicList.length === 0) return;
-        let idx = currentPlayingIndex - 1;
-        if (idx < 0) idx = state.musicList.length - 1;
-        playSong(idx);
+        if (playMode === "single") {
+          // 单曲循环：重新播放当前歌曲
+          if (currentPlayingIndex >= 0) {
+            audioEl.currentTime = 0;
+            audioEl.play().then(() => {
+              isPlaying = true;
+              updatePlayPauseIcon();
+              renderMusicList();
+            }).catch(() => {});
+          }
+        } else if (playMode === "shuffle") {
+          // 随机播放
+          if (state.musicList.length === 1) {
+            playSong(0);
+          } else {
+            let randIdx;
+            do {
+              randIdx = Math.floor(Math.random() * state.musicList.length);
+            } while (randIdx === currentPlayingIndex && state.musicList.length > 1);
+            playSong(randIdx);
+          }
+        } else {
+          // 列表循环
+          let idx = currentPlayingIndex + 1;
+          if (idx >= state.musicList.length) idx = 0;
+          playSong(idx);
+        }
       }
 
-      // 下一首
-      function nextSong() {
+      // 手动点击下一首（始终切歌，不受单曲循环限制）
+      function nextSongManual() {
         if (!state.musicList || state.musicList.length === 0) return;
-        let idx = currentPlayingIndex + 1;
-        if (idx >= state.musicList.length) idx = 0;
-        playSong(idx);
+        if (playMode === "shuffle") {
+          if (state.musicList.length === 1) {
+            playSong(0);
+          } else {
+            let randIdx;
+            do {
+              randIdx = Math.floor(Math.random() * state.musicList.length);
+            } while (randIdx === currentPlayingIndex && state.musicList.length > 1);
+            playSong(randIdx);
+          }
+        } else {
+          let idx = currentPlayingIndex + 1;
+          if (idx >= state.musicList.length) idx = 0;
+          playSong(idx);
+        }
       }
 
       // 进度条更新
@@ -11488,9 +11542,9 @@ ${imagePromptInstruction}`;
         }
       });
 
-      // 播放结束自动下一首
+      // 播放结束：根据模式决定下一步
       audioEl.addEventListener("ended", () => {
-        nextSong();
+        nextSongByMode();
       });
 
       // 点击进度条跳转
@@ -11513,12 +11567,10 @@ ${imagePromptInstruction}`;
           item.draggable = true;
           item.dataset.idx = idx;
 
-          //拖动手柄
           const dragHandle = document.createElement("span");
           dragHandle.className = "music-player-item-drag";
           dragHandle.textContent = "☰";
 
-          // 图标
           const icon = document.createElement("div");
           icon.className = "music-player-item-icon";
           if (idx === currentPlayingIndex && isPlaying) {
@@ -11527,7 +11579,6 @@ ${imagePromptInstruction}`;
             icon.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55C7.79 13 6 14.79 6 17s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>';
           }
 
-          // 信息
           const info = document.createElement("div");
           info.className = "music-player-item-info";
           const nameEl = document.createElement("div");
@@ -11549,9 +11600,8 @@ ${imagePromptInstruction}`;
           item.appendChild(icon);
           item.appendChild(info);
 
-          // 点击播放
           item.addEventListener("click", (e) => {
-            if (e.target.closest(".music-player-item-drag")) return; // 拖动手柄不触发播放
+            if (e.target.closest(".music-player-item-drag")) return;
             if (idx === currentPlayingIndex) {
               if (isPlaying) pauseSong();
               else resumeSong();
@@ -11569,7 +11619,6 @@ ${imagePromptInstruction}`;
               longTriggered = true;
               const ok = await sysConfirm("确定要删除歌曲「" + song.name + "」吗？", "删除歌曲", true);
               if (ok) {
-                // 如果删除的是正在播放的歌
                 if (idx === currentPlayingIndex) {
                   audioEl.pause();
                   audioEl.src = "";
@@ -11591,14 +11640,14 @@ ${imagePromptInstruction}`;
           const cancelLong = () => { if (longTimer) { clearTimeout(longTimer); longTimer = null; } };
           item.addEventListener("touchstart", startLong, { passive: true });
           item.addEventListener("touchmove", cancelLong, { passive: true });
-          item.addEventListener("touchend", () => { cancelLong(); if (longTriggered) { longTriggered = false; } });
+          item.addEventListener("touchend", () => { cancelLong(); if (longTriggered) longTriggered = false; });
           item.addEventListener("touchcancel", cancelLong);
           item.addEventListener("mousedown", startLong);
           item.addEventListener("mousemove", cancelLong);
           item.addEventListener("mouseup", cancelLong);
           item.addEventListener("mouseleave", cancelLong);
 
-          //拖动排序
+          // 拖动排序
           item.addEventListener("dragstart", (e) => {
             e.dataTransfer.setData("musicDragIdx", idx);
             item.classList.add("dragging");
@@ -11614,7 +11663,6 @@ ${imagePromptInstruction}`;
             if (from !== to && !isNaN(from)) {
               const moved = state.musicList.splice(from, 1)[0];
               state.musicList.splice(to, 0, moved);
-              // 更新当前播放索引
               if (currentPlayingIndex === from) {
                 currentPlayingIndex = to;
               } else if (from < currentPlayingIndex && to >= currentPlayingIndex) {
@@ -11630,20 +11678,20 @@ ${imagePromptInstruction}`;
         });
       };
 
-      // ====== 打开音乐弹窗 ======
+      //====== 打开音乐弹窗 ======
       document.getElementById("menuBtn").addEventListener("click", (e) => {
         e.stopPropagation();
         musicPlayerMask.classList.add("show");
         renderMusicList();
-        // 如果有正在播放的歌，更新显示
+        updateModeIcon();
         if (currentPlayingIndex >= 0 && state.musicList[currentPlayingIndex]) {
           musicNowPlaying.textContent = (isPlaying ? "正在播放：" : "已暂停：") + state.musicList[currentPlayingIndex].name;
         }
       });
 
-      //关闭音乐弹窗（不停止播放）
       musicCloseBtn.addEventListener("click", () => {
-        musicPlayerMask.classList.remove("show");});
+        musicPlayerMask.classList.remove("show");
+      });
       musicPlayerMask.addEventListener("click", (e) => {
         if (e.target === musicPlayerMask) musicPlayerMask.classList.remove("show");
       });
@@ -11659,9 +11707,22 @@ ${imagePromptInstruction}`;
         }
       });
 
-      // 上一首/下一首
-      musicPrevBtn.addEventListener("click", prevSong);
-      musicNextBtn.addEventListener("click", nextSong);
+      // 播放模式切换按钮
+      musicModeBtn.addEventListener("click", () => {
+        if (playMode === "loop") playMode = "shuffle";
+        else if (playMode === "shuffle") playMode = "single";
+        else playMode = "loop";
+        updateModeIcon();
+        // 显示当前模式提示
+        musicNowPlaying.textContent = MODE_LABELS[playMode];setTimeout(() => {
+          if (currentPlayingIndex >= 0 && state.musicList[currentPlayingIndex]) {
+            musicNowPlaying.textContent = (isPlaying ? "正在播放：" : "已暂停：") + state.musicList[currentPlayingIndex].name;
+          }
+        }, 1200);
+      });
+
+      // 下一首
+      musicNextBtn.addEventListener("click", nextSongManual);
 
       // ====== 添加歌曲弹窗 ======
       musicAddBtn.addEventListener("click", () => {
@@ -11669,6 +11730,7 @@ ${imagePromptInstruction}`;
         musicAddUrlInput.value = "";
         musicAddFileHint.textContent = "";
         tempFileDataUrl = "";
+        tempFileObjectUrl = "";
         musicAddMask.classList.add("show");
         setTimeout(() => musicAddNameInput.focus(), 80);
       });
@@ -11680,7 +11742,7 @@ ${imagePromptInstruction}`;
         if (e.target === musicAddMask) musicAddMask.classList.remove("show");
       });
 
-      // 选择本地文件
+      // 选择本地文件—— 使用 Object URL 而非 data URL，解决大文件无法上传的问题
       musicAddFileInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
@@ -11692,11 +11754,10 @@ ${imagePromptInstruction}`;
         musicAddFileHint.textContent = "已选择：" + file.name;
         musicAddFileHint.style.color = "#4a90c4";
 
-        // 转为data URL（注意：大文件会导致存储膨胀）
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-          tempFileDataUrl = ev.target.result;};
-        reader.readAsDataURL(file);
+        // 使用 Object URL（轻量级，不会撑爆存储）
+        if (tempFileObjectUrl) URL.revokeObjectURL(tempFileObjectUrl);
+        tempFileObjectUrl = URL.createObjectURL(file);
+        tempFileDataUrl = ""; // 清空data URL标记
         e.target.value = "";
       });
 
@@ -11712,8 +11773,10 @@ ${imagePromptInstruction}`;
         }
 
         let finalUrl = "";
-        if (tempFileDataUrl) {
-          finalUrl = tempFileDataUrl;
+        if (tempFileObjectUrl) {
+          // 本地文件使用 Object URL（仅本次会话有效，刷新后需重新添加）
+          finalUrl = tempFileObjectUrl;
+          tempFileObjectUrl = ""; // 转移所有权，不再释放
         } else if (url) {
           finalUrl = url;
         } else {
@@ -11728,12 +11791,12 @@ ${imagePromptInstruction}`;
           url: finalUrl
         };
         state.musicList.push(newSong);
-        tempFileDataUrl = "";
         musicAddMask.classList.remove("show");
         renderMusicList();
       });
 
-    })();
+      // 初始化模式图标
+      updateModeIcon();})();
   </script>
 </body>
 </html>

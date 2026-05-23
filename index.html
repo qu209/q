@@ -3259,6 +3259,12 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             <input type="range" id="fontSizeInput" min="12" max="25" step="1" value="15" style="width: 100%; accent-color: #C1D0DC; height: 4px; outline: none; margin: 4px 0 8px 0;" />
           </div>
 
+        </div><div style="font-size: 13px; color: #8e8e93; margin: 24px 0 8px 12px;">系统推送</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
+            开启后，当页面在后台时（切到主屏幕或其他APP），AI角色发消息、发动态、回复评论等操作将通过手机系统通知推送提醒你。
+          </div>
+          <button class="btn" id="testPushBtn" style="width: 100%; background: #C1D0DC; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">测试后台推送</button>
         </div>
 
       </div>
@@ -10237,6 +10243,9 @@ ${imagePromptInstruction}`;
     }
 
     function showNotifBanner(avatarUrl, name, text, onClick) {
+      // ====== 新增：同时触发系统推送（页面在后台时） ======
+      pushIfBackground(name, text, avatarUrl);
+
       // 如果同一个人的消息已经在队列里排着，合并成最新一条（防止排队太长）
       const existingIdx = notifBannerQueue.findIndex(q => q.name === name);
       if (existingIdx !== -1) {
@@ -10894,7 +10903,84 @@ ${imagePromptInstruction}`;
       });
     }
 
+    // ====== 系统推送通知引擎 ======
+    function requestNotificationPermission() {
+      return new Promise((resolve) => {
+        if (!("Notification" in window)) { resolve("denied"); return; }
+        if (Notification.permission === "granted") { resolve("granted"); return; }
+        if (Notification.permission === "denied") { resolve("denied"); return; }
+        Notification.requestPermission().then(resolve);
+      });
+    }
+
+    function sendSystemNotification(title, body, icon) {
+      if (!("Notification" in window)) return;
+      if (Notification.permission !== "granted") return;
+      try {
+        const n = new Notification(title, {
+          body: body,
+          icon: icon || "",
+          badge: icon || "",
+          tag: "xsj-" + Date.now(),
+          renotify: true,
+          silent: false
+        });
+        n.onclick = () => {
+          window.focus();
+          n.close();
+        };
+      } catch(e) {
+        // iOS Safari 不支持 new Notification，静默忽略
+        console.log("系统通知发送失败:", e);
+      }
+    }
+
+    // 封装：页面不可见时发送系统推送
+    function pushIfBackground(contactName, msgPreview, avatarUrl) {
+      if (document.visibilityState === "hidden") {
+        const title = contactName;
+        const body = msgPreview;
+        sendSystemNotification(title, body, avatarUrl || "");
+      }
+    }
+
+    // 测试推送按钮
+    document.getElementById("testPushBtn").addEventListener("click", async () => {
+      const perm = await requestNotificationPermission();
+      if (perm === "denied") {
+        await sysAlert("系统通知权限被拒绝了！请前往手机设置 →浏览器 → 通知，手动开启通知权限。");
+        return;
+      }
+
+      // 第一步：弹出说明弹窗
+      await sysAlert(
+        "点击【好的】后，将立即发送一条前台测试通知。\n\n收到后，请立刻把这个网页切到后台（退到手机主屏幕，或者切换到别的APP）。\n\n10秒后，你的手机将会收到一条系统后台推送！",
+        "测试后台推送"
+      );
+
+      // 第二步：立即发送前台通知
+      sendSystemNotification(
+        "前台通知测试 ✅",
+        "如果你看到了这条通知，说明通知权限已成功开启！现在请切到后台等待10秒...",
+        ""
+      );
+
+      // 第三步：10秒后发送后台通知
+      setTimeout(() => {
+        sendSystemNotification(
+          "后台推送测试成功！🎉",
+          "太棒了！你的后台推送功能完全正常，可以在切出网页时收到AI好友的消息了！",
+          ""
+        );
+      }, 10000);
+    });
+
     // ====== 核心：启动时异步从 IndexedDB 加载存档并覆盖默认数据 ======
+    // 启动时静默请求通知权限（不打扰用户）
+    if ("Notification" in window && Notification.permission === "default") {
+      // 不主动弹窗，等用户点测试按钮时再请求
+    }
+
     initFromDB().then(() => {
       console.log("IndexedDB 存档加载完毕，所有数据已恢复");
     }).catch(err => {

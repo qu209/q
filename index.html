@@ -8193,14 +8193,26 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     });
 
     // 选择本地字体文件
+        // 选择本地字体文件（转为 base64 Data URL 永久保存到 IndexedDB）
     fontFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
-      if (file) {
-        const fileUrl = URL.createObjectURL(file);
-        state.fontSettings.url = fileUrl;
-        fontUrlInput.value = fileUrl;
-        applyGlobalFontAndSize();
+      if (!file) return;
+      // 检查文件大小，超过 8MB 提示
+      if (file.size > 8 * 1024 * 1024) {
+        sysAlert("字体文件太大（超过8MB），可能导致存储异常。建议使用在线字体链接或更小的字体文件。");
+        e.target.value = "";
+        return;
       }
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64Url = ev.target.result; // data:font/ttf;base64,... 格式
+        state.fontSettings.url = base64Url;
+        fontUrlInput.value = "(已加载本地字体文件)";
+        applyGlobalFontAndSize();
+        saveStateToDB(); // 立即保存，确保字体数据写入 IndexedDB
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
     });
 
     // 清除字体

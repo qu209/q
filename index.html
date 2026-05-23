@@ -7894,12 +7894,16 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     avatarInput.style.display = "none";
     document.body.appendChild(avatarInput);
 
-    avatarInput.addEventListener("change", (e) => {
+        avatarInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
-        const fileUrl = URL.createObjectURL(file);
-        updateUserAvatar(fileUrl);
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          updateUserAvatar(ev.target.result);
+        };
+        reader.readAsDataURL(file);
       }
+      e.target.value = "";
     });
 
     // 点击"我"界面头像更换（唯一入口）
@@ -8100,13 +8104,18 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     changeAvatarBtn.addEventListener("click", () => {
       contactAvatarInput.click();
     });
-    contactAvatarInput.addEventListener("change", (e) => {
+        contactAvatarInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
-        const fileUrl = URL.createObjectURL(file);
-        detailsAvatarPreview.style.backgroundImage = `url(${fileUrl})`;
-        detailsAvatarPreview.dataset.tempAvatar = fileUrl; // 暂存
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const base64 = ev.target.result;
+          detailsAvatarPreview.style.backgroundImage = `url(${base64})`;
+          detailsAvatarPreview.dataset.tempAvatar = base64;
+        };
+        reader.readAsDataURL(file);
       }
+      e.target.value = "";
     });
 
     // 4. 保存详情
@@ -8247,37 +8256,41 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     uploadFrameBtn.addEventListener("click", () => {
       frameFileInput.click();
     });
-        frameFileInput.addEventListener("change", (e) => {
+                frameFileInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
-        const fileUrl = URL.createObjectURL(file);
-        tempFrameUrl = fileUrl;
-        tempFrameScale = 1;
-        tempFrameX = 0;
-        tempFrameY = 0;
-        
-        frameScaleSlider.value = tempFrameScale;
-        frameXSlider.value = tempFrameX;
-        frameYSlider.value = tempFrameY;
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const base64 = ev.target.result;
+          tempFrameUrl = base64;
+          tempFrameScale = 1;
+          tempFrameX = 0;
+          tempFrameY = 0;
+          
+          frameScaleSlider.value = tempFrameScale;
+          frameXSlider.value = tempFrameX;
+          frameYSlider.value = tempFrameY;
 
-        document.getElementById("frameScaleVal").textContent = "1.00";
-        document.getElementById("frameXVal").textContent = "0";
-        document.getElementById("frameYVal").textContent = "0";
-        
-        // 【核心修改】判断是否已存在，不存在则保存对象以存储独立参数
-        const existingIndex = state.uploadedFrames.findIndex(f => (typeof f === 'string' ? f : f.url) === fileUrl);
-        if (existingIndex === -1) {
-          state.uploadedFrames.unshift({
-            url: fileUrl,
-            scale: 1,
-            x: 0,
-            y: 0
-          });
-        }
-        
-        updateFramePreview();
-        renderFrameHistory();
+          document.getElementById("frameScaleVal").textContent = "1.00";
+          document.getElementById("frameXVal").textContent = "0";
+          document.getElementById("frameYVal").textContent = "0";
+          
+          const existingIndex = state.uploadedFrames.findIndex(f => (typeof f === 'string' ? f : f.url) === base64);
+          if (existingIndex === -1) {
+            state.uploadedFrames.unshift({
+              url: base64,
+              scale: 1,
+              x: 0,
+              y: 0
+            });
+          }
+          
+          updateFramePreview();
+          renderFrameHistory();
+        };
+        reader.readAsDataURL(file);
       }
+      e.target.value = "";
     });
 
     // 9. 渲染历史记录列表 (一排四个)
@@ -8602,20 +8615,22 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     chatBgInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      const url = URL.createObjectURL(file);
-      const contact = getContact(state.activeContactId);
-      if (contact) {
-        contact.chatBg = url;
-        detailsBgPreviewBox.style.backgroundImage = `url(${url})`;
-        if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "none";
-        // 应用到聊天背景
-        const chatBody = document.getElementById("chatBody");
-        if (chatBody) {
-          chatBody.style.backgroundImage = `url(${url})`;
-          chatBody.classList.add("chat-bg-customizable");
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const base64 = ev.target.result;
+        const contact = getContact(state.activeContactId);
+        if (contact) {
+          contact.chatBg = base64;
+          detailsBgPreviewBox.style.backgroundImage = `url(${base64})`;
+          if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "none";
+          const chatBody = document.getElementById("chatBody");
+          if (chatBody) {
+            chatBody.style.backgroundImage = `url(${base64})`;
+            chatBody.classList.add("chat-bg-customizable");
+          }
         }
-      }
-      chatBgInput.value = "";
+      };
+      reader.readAsDataURL(file);chatBgInput.value = "";
     });
 
     // 清除背景
@@ -8644,13 +8659,17 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       vcBgInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
-        const url = URL.createObjectURL(file);
-        const contact = getContact(state.activeContactId);
-        if (contact) {
-          contact.voiceCallBg = url;
-          if (detailsVcBgPreviewBox) detailsVcBgPreviewBox.style.backgroundImage = `url(${url})`;
-          if (detailsVcBgPreviewHint) detailsVcBgPreviewHint.style.display = "none";
-        }
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+          const base64 = ev.target.result;
+          const contact = getContact(state.activeContactId);
+          if (contact) {
+            contact.voiceCallBg = base64;
+            if (detailsVcBgPreviewBox) detailsVcBgPreviewBox.style.backgroundImage = `url(${base64})`;
+            if (detailsVcBgPreviewHint) detailsVcBgPreviewHint.style.display = "none";
+          }
+        };
+        reader.readAsDataURL(file);
         vcBgInput.value = "";
       });
     }
@@ -8847,14 +8866,18 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         walletBgInput.click();
       });
 
-      walletBgInput.addEventListener("change", (e) => {
+            walletBgInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
-          const fileUrl = URL.createObjectURL(file);
-          walletCardBg.style.backgroundImage = `url(${fileUrl})`;
-          state.wallet.bg = fileUrl; // 存入状态中，防止丢失
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const base64 = ev.target.result;
+            walletCardBg.style.backgroundImage = `url(${base64})`;
+            state.wallet.bg = base64;
+          };
+          reader.readAsDataURL(file);
         }
-        walletBgInput.value = ""; // 清空 value，允许重复选同一张图
+        walletBgInput.value = "";
       });
     }
 

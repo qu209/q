@@ -4180,88 +4180,267 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
     }
 
     let longPressTimer = null;
-    let targetMsgIndex = -1; // 记录被长按操作的是哪条消息
+    let targetMsgIndex = -1;
 
-    const state = {
-      isMultiSelecting: false,
-      selectedMsgs: new Set(),
-      replyingToText: "",
-      replyingToSender: "",
-      userAvatar: "",
-      userName: "{{user}}",
-      userHandle: "Sent from 13:14PM",
-      userQuote: "亲爱的，我甚至不知道如何不想你",
-      apiSettings: {
-        url: "",
-        key: "",
-        model: "",
-        temperature: 1.0,
-        enableTranslation: false
-      },
-      fontSettings: {
-        currentPresetId: "default",
-        url: "",
-        size: 15
-      },
-      fontPresets: [
-        { id: "default", name: "默认预设", url: "", size: 15 }
-      ],
-      currentTab: "friends",
-      activeContactId: null,
-      uploadedFrames: [], // 全局保存用户上传过的头像框历史
-      wallet: {
-        balance: 100.00,
-        transactions: []
-      },
-      lorebooks: [], // 全局存储世界书
-      moments: [], // 新增：全局存储朋友圈动态数据
-      imgGenSettings: {
-        enabled: false,
-        pollinationsKey: ""
-      },
-     
-      contacts: [
-        {
-          id: makeId(),
-          remark: "哥",
-       
-           realName: "",
-          persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
-          myPersona: "",
-          avatar: "",
-          frameUrl: "",
-          frameScale: 1,
-          frameX: 0,
-          frameY: 0,
-          showFrameInChat: true,
-          showFrameInHeader: true,
-          statusText: "在线中",
-          statusColor: "#37d05f",
-          lastTime: "22:36",
-      
-          messages: []
+    //====== IndexedDB 持久化引擎 ======
+    const DB_NAME = 'XiaoShouJiDB';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'appState';
+    const STATE_KEY = 'mainState';
+
+    function openDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            db.createObjectStore(STORE_NAME);
+          }
+        };
+        request.onsuccess = (e) => resolve(e.target.result);
+        request.onerror = (e) => reject(e.target.error);
+      });
+    }
+
+    async function saveStateToDB() {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        // 深拷贝，把Set 转为Array
+        const toSave = JSON.parse(JSON.stringify(state, (key, value) => {
+          if (value instanceof Set) return Array.from(value);
+          return value;
+        }));
+        // 不保存运行时临时状态
+        toSave.isMultiSelecting = false;
+        toSave.selectedMsgs = [];
+        toSave.activeContactId = null;
+        // 保存朋友圈封面背景和副标题
+        const coverEl = document.getElementById('momentsCover');
+        if (coverEl) toSave.momentsCoverBg = coverEl.style.backgroundImage || "";
+        const subEl = document.getElementById('momentsSubTitle');
+        if (subEl) toSave.momentsSubTitle = subEl.textContent || "moments";
+        // 保存钱包卡面背景
+        const walletCardEl = document.getElementById('walletCardBg');
+        if (walletCardEl) toSave.walletCardBg = walletCardEl.style.backgroundImage || "";
+        // 保存支付密码
+        toSave._globalPayPassword = globalPayPassword || "";
+        store.put(toSave, STATE_KEY);
+        await new Promise((resolve, reject) => {
+          tx.oncomplete = resolve;
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } catch (e) {
+        console.error("IndexedDB 保存失败:", e);
+      }
+    }
+
+    async function loadStateFromDB() {
+      try {
+        const db = await openDB();
+        const tx = db.transaction(STORE_NAME, 'readonly');
+        const store = tx.objectStore(STORE_NAME);
+        const request = store.get(STATE_KEY);
+        const result = await new Promise((resolve, reject) => {
+          request.onsuccess = () => resolve(request.result);
+          request.onerror = () => reject(request.error);
+        });
+        db.close();
+        return result || null;
+      } catch (e) {
+        console.error("IndexedDB 读取失败:", e);
+        return null;
+      }
+    }
+
+    function getDefaultState() {
+      return {
+        isMultiSelecting: false,
+        selectedMsgs: [],
+        replyingToText: "",
+        replyingToSender: "",
+        userAvatar: "",
+        userName: "{{user}}",
+        userHandle: "Sent from 13:14PM",
+        userQuote: "亲爱的，我甚至不知道如何不想你",
+        apiSettings: {
+          url: "",
+          key: "",
+          model: "",
+          temperature: 1.0,
+          enableTranslation: false
         },
-        {
-          id: makeId(),
-          remark: "()",
-          realName: "",
-          persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
-          myPersona: "",
-          avatar: "",
-          frameUrl: 
-"",
-          frameScale: 1,
-          frameX: 0,
-          frameY: 0,
-          showFrameInChat: true,
-          showFrameInHeader: true,
-          statusText: "在线中",
-          statusColor: "#37d05f",
-          lastTime: "昨天",
-          messages: []
+        fontSettings: {
+          currentPresetId: "default",
+          url: "",
+          size: 15
+        },
+        fontPresets: [
+          { id: "default", name: "默认预设", url: "", size: 15 }
+        ],
+        currentTab: "friends",
+        activeContactId: null,
+        uploadedFrames: [],
+        wallet: {
+          balance: 100.00,
+          transactions: []
+        },
+        lorebooks: [],
+        moments: [],
+        imgGenSettings: {
+          enabled: false,
+          pollinationsKey: ""
+        },
+        bubblePresets: [
+          { id: "default", name: "默认", aiBg: "#F2F4F8", aiText: "#111111", meBg: "#111111", meText: "#ffffff" }
+        ],
+        emojiCategories: [],
+        momentsCoverBg: "",
+        momentsSubTitle: "moments",
+        walletCardBg: "",
+        contacts: [
+          {
+            id: "default_contact_1",
+            remark: "哥",
+            realName: "",
+            persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
+            myPersona: "",
+            avatar: "",
+            frameUrl: "",
+            frameScale: 1,
+            frameX: 0,
+            frameY: 0,
+            showFrameInChat: true,
+            showFrameInHeader: true,
+            statusText: "在线中",
+            statusColor: "#37d05f",
+            lastTime: "22:36",
+            messages: []
+          },
+          {
+            id: "default_contact_2",
+            remark: "()",
+            realName: "",
+            persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
+            myPersona: "",
+            avatar: "",
+            frameUrl: "",
+            frameScale: 1,
+            frameX: 0,
+            frameY: 0,
+            showFrameInChat: true,
+            showFrameInHeader: true,
+            statusText: "在线中",
+            statusColor: "#37d05f",
+            lastTime: "昨天",
+            messages: []
+          }
+        ]
+      };
+    }
+
+    function applyLoadedState(parsed) {
+      const def = getDefaultState();
+      for (const key in def) {
+        if (!(key in parsed)) parsed[key] = def[key];
+      }
+      parsed.selectedMsgs = new Set(parsed.selectedMsgs || []);
+      parsed.isMultiSelecting = false;
+      if (parsed.contacts) {
+        parsed.contacts.forEach(c => {
+          if (!c.messages) c.messages = [];
+          if (!c.memoryList) c.memoryList = [];if (!c.linkedLorebooks) c.linkedLorebooks = [];
+          if (c.showFrameInChat === undefined) c.showFrameInChat = true;
+          if (c.showFrameInHeader === undefined) c.showFrameInHeader = true;
+        });
+      }
+      if (!parsed.emojiCategories) parsed.emojiCategories = [];
+      if (!parsed.bubblePresets) parsed.bubblePresets = def.bubblePresets;
+      if (!parsed.lorebooks) parsed.lorebooks = [];
+      if (!parsed.moments) parsed.moments = [];
+      if (!parsed.imgGenSettings) parsed.imgGenSettings = def.imgGenSettings;
+      return parsed;
+    }
+
+    //先用默认值初始化 state，等IndexedDB 异步加载完成后覆盖
+    const state = applyLoadedState(getDefaultState());
+    //暂存恢复的支付密码
+    var _restoredPayPassword = "";
+
+    // 异步加载存档并覆盖 state + 恢复UI
+    async function initFromDB() {
+      const saved = await loadStateFromDB();
+      if (saved) {
+        const parsed = applyLoadedState(saved);
+        // 把 parsed 的所有属性覆盖到全局 state 上
+        for (const key in parsed) {
+          if (key === 'selectedMsgs') {
+            state.selectedMsgs = new Set(parsed.selectedMsgs || []);
+          } else {
+            state[key] = parsed[key];
+          }
         }
-      ]
-    };
+        // 恢复支付密码
+        if (state._globalPayPassword) {
+          _restoredPayPassword = state._globalPayPassword;
+          delete state._globalPayPassword;
+        }
+      }
+      // 恢复完毕后刷新所有 UI
+      restoreAllUI();
+    }
+
+    function restoreAllUI() {
+      // 恢复用户头像
+      if (state.userAvatar) {
+        updateUserAvatar(state.userAvatar);
+      }
+      // 恢复名字签名心情
+      syncMePageText();
+      // 恢复朋友圈封面背景
+      if (state.momentsCoverBg) {
+        const _coverEl = document.getElementById('momentsCover');
+        if (_coverEl && state.momentsCoverBg.includes('url(')) {
+          _coverEl.style.backgroundImage = state.momentsCoverBg;
+          _coverEl.style.backgroundSize = "cover";
+          _coverEl.style.backgroundPosition = "center";
+        }
+      }
+      // 恢复朋友圈副标题
+      if (state.momentsSubTitle) {
+        const _subEl = document.getElementById('momentsSubTitle');
+        if (_subEl) _subEl.textContent = state.momentsSubTitle;
+      }
+      // 恢复钱包卡面背景
+      if (state.walletCardBg) {
+        const _walletEl = document.getElementById('walletCardBg');
+        if (_walletEl && state.walletCardBg.includes('url(')) {
+          _walletEl.style.backgroundImage = state.walletCardBg;
+        }
+      }
+      // 恢复支付密码
+      globalPayPassword = _restoredPayPassword || "";
+      // 恢复朋友圈动态列表
+      if (state.moments && state.moments.length > 0&& typeof renderMoments === "function") {
+        renderMoments();
+      }
+      // 刷新好友列表
+      renderContacts();
+      // 刷新字体
+      applyGlobalFontAndSize();
+      // 刷新气泡预设
+      renderBubblePresets();
+      updateBubblePreview();
+    }
+
+    //====== 自动保存：每 3秒保存一次 + 页面关闭/隐藏时保存 ======
+    setInterval(saveStateToDB, 3000);
+    window.addEventListener('beforeunload', () => { saveStateToDB(); });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') saveStateToDB();
+    });
 
     const screens = {
       friends: document.getElementById("screen-friends"),
@@ -5806,7 +5985,7 @@ TimeChecklist:
       }
     });
 
-    // 暂时不使用本地存储持久化密码，每次刷新页面后重置
+    // 支付密码（从 IndexedDB 存档恢复）
     let globalPayPassword = "";
 
     // 点击弹窗里的各个选项后，自动收起弹窗
@@ -10671,13 +10850,13 @@ ${imagePromptInstruction}`;
       });
 
     })();
-    //初始化预设
+    //初始化预设（先用默认值渲染，等DB加载完会再刷一次）
     renderBubblePresets();
     updateBubblePreview();
-    // 初始化运行一次动态样式
     applyGlobalFontAndSize();
     renderContacts();
     switchTab("friends");
+
     // moments 副标题点击修改
     const momentsSubEl = document.getElementById('momentsSubTitle');
     if (momentsSubEl) {
@@ -10687,9 +10866,16 @@ ${imagePromptInstruction}`;
         const newVal = await sysPrompt("修改副标题文字：", momentsSubEl.textContent.trim());
         if (newVal !== null && newVal.trim() !== "") {
           momentsSubEl.textContent = newVal.trim();
+          saveStateToDB(); // 修改后立即保存
         }
       });
     }
+
+    // ====== 核心：启动时异步从 IndexedDB 加载存档并覆盖默认数据 ======
+    initFromDB().then(() => {
+      console.log("IndexedDB 存档加载完毕，所有数据已恢复");
+    }).catch(err => {
+      console.error("IndexedDB 加载失败，使用默认数据:", err);});
   </script>
 </body>
 </html>

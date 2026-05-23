@@ -8096,6 +8096,21 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         await sysAlert("请先填写反代地址和密钥");
         return;
       }
+
+      // ====== 黑名单拦截 ======
+      const urlLower = url.toLowerCase().replace(/\/+$/, '');
+      //肖恩站点
+      if (urlLower.includes("api.supxh.xin")) {
+        await sysAlert(" 创作者已将该 API 站点（肖恩）列入黑名单。\n\n该站点提供的模型存在严重掺水造假行为(蛙趣了宝宝们 这个肖恩简直是大量的水里掺了少量的模型 坑人的!)，创作者拒绝此类行为。\n\n请更换其他可信赖的 API 站点。", "🚫 站点已被拉黑");
+        return;
+      }
+      // 熊猫站点
+      if (urlLower.includes("api520.pro") || urlLower.includes("api521.pro") || urlLower.includes("api522.pro")) {
+        await sysAlert(" 创作者已将该 API 站点（熊猫）列入黑名单。\n\n该站点提供的模型存在掺水行为，且涉及有关二传小手机的瓜条传播(酒馆的瓜也有 我没详细了解是因为啥 反正我拒绝这个站子òᆺó)，创作者拒绝此类行为。\n\n请更换其他可信赖的 API 站点。", "🚫 站点已被拉黑");
+        return;
+      }
+      // ====== 黑名单拦截结束 ======
+
       fetchModelsBtn.textContent = "拉取中...";
       try {
         const endpoint = url.endsWith('/') ? url + 'models' : url + '/models';
@@ -11329,7 +11344,7 @@ ${imagePromptInstruction}`;
     document.getElementById("testPushBtn").addEventListener("click", async () => {
       const perm = await requestNotificationPermission();
       if (perm === "denied") {
-        await sysAlert("系统通知权限被拒绝了！请前往手机设置 →浏览器 → 通知，手动开启通知权限。");
+        await sysAlert("宝宝 系统通知权限弹窗弹出时被你拒绝了！请重新添加到桌面 在弹出https://i.postimg.cc/7P7FC9fj/jie-ping-2026-05-24-03-50-38.png 如图所示的弹窗时点击允许");
         return;
       }
 

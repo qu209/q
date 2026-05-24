@@ -1092,6 +1092,28 @@
     .message-row.me.last .bubble { background: #111111; color: #fff; border-radius: 22px 4px 22px 22px; }
 
     .message-time { font-size: 11px; color: #b2b2b2; margin-top: 6px; margin-left: 4px; margin-right: 4px; }
+    /* 消息时间分割线 */
+    .msg-date-divider {
+      width: 100%;
+      text-align: center;
+      padding: 12px 0 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+    .msg-date-divider-line {
+      flex: 1;
+      max-width: 60px;
+      height: 0.5px;
+      background: #e0e0e0;}
+    .msg-date-divider-text {
+      font-size: 11px;
+      color: #b2b2b2;
+      font-weight: 400;
+      letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
 
     /* 聊天框布局升级 (支持引用栏插入) */
     .chatbar {
@@ -3886,10 +3908,31 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
           </div>
         </div>
 
+        <!--数据导入导出卡片 -->
         <div class="details-section-card">
+          <div class="details-section-title">聊天数据管理</div>
+          <div style="display:flex; gap:10px; margin-bottom:12px;">
+            <button id="exportDataBtn" class="btn btn-light" style="flex:1; height:40px; font-size:14px; border-radius:10px;">📦 导出全部存档</button>
+            <button id="importDataBtn" class="btn btn-light" style="flex:1; height:40px; font-size:14px; border-radius:10px; position:relative;">📥 导入存档
+              <input type="file" id="importDataFileInput" accept=".json" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
+            </button>
+          </div>
+          <div style="font-size:12px; color:#aaa; line-height:1.6;">导出会把所有好友、聊天记录、设置等数据打包成JSON文件下载。导入会覆盖当前所有数据，请谨慎操作。</div>
+        </div>
+
+        <!-- 聊天记录搜索卡片 -->
+        <div class="details-section-card">
+          <div class="details-section-title">搜索聊天记录</div>
+          <div style="display:flex; gap:8px; margin-bottom:10px;">
+            <input type="text" id="chatSearchInput" class="input" placeholder="输入关键词搜索..." style="flex:1; height:40px; border-radius:10px; background:#f7f7f8; border:none; padding:0 14px; font-size:14px;" />
+            <button id="chatSearchBtn" class="btn btn-dark" style="flex:none; width:60px; height:40px; border-radius:10px; font-size:14px; background:#C1D0DC;">搜索</button>
+          </div>
+          <div id="chatSearchResults" style="max-height:200px; overflow-y:auto;"></div>
+        </div><div class="details-section-card">
           <div class="details-section-title">AI 记忆总结</div>
           
-          <div style="font-size:13px; color:#666; margin-bottom:12px;">当前聊天条数：<span id="memoryMsgCount" style="font-weight:700; color:#111;">0</span> 条</div>
+          <div style="font-size:13px; color:#666; margin-bottom:6px;">当前聊天条数：<span id="memoryMsgCount" style="font-weight:700; color:#111;">0</span> 条</div>
+          <div style="font-size:13px; color:#666; margin-bottom:12px;">预估上下文 Tokens：<span id="estimatedTokensDisplay" style="font-weight:700; color:#111;">0</span> <span style="font-size:11px; color:#aaa;">(含人设+记忆+世界书+最近30条消息)</span></div>
           
           <div class="toggle-row" style="margin-bottom: 12px;">
             <label>开启自动总结记忆</label>
@@ -4492,6 +4535,53 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
   </div>
 
   <script>
+  // ====== 全局图片压缩工具函数 ======
+function compressImageBase64(base64, maxWidth = 1024, quality = 0.8) {
+  return new Promise((resolve) => {
+    // 如果是GIF动图，不压缩直接返回
+    if (base64.startsWith("data:image/gif")) {
+      resolve(base64);
+      return;
+    }
+    const img = new Image();
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth) {
+        height = Math.round((height * maxWidth) / width);
+        width = maxWidth;
+      }
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL("image/jpeg", quality);
+      resolve(compressed);
+    };
+    img.onerror = () => resolve(base64); // 压缩失败返回原图
+    img.src = base64;
+  });
+}
+
+// ====== 简易Token估算函数 ======
+function estimateTokens(text) {
+  if (!text) return 0;
+  // 中文大约1.5-2 token/字，英文大约0.25token/word，这里用混合估算
+  let count = 0;
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    if (code > 0x4e00 && code < 0x9fff) {
+      count += 1.8; // 中文字符
+    } else if (code > 127) {
+      count += 1.5; // 其他非ASCII
+    } else {
+      count += 0.35; // ASCII字符
+    }
+  }
+  return Math.round(count);
+}
+
       // ====== 替代系统弹窗的三个工具函数 ======
     function sysAlert(msg, title = "提示") {
       return new Promise(resolve => {
@@ -4895,11 +4985,14 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
 
       emptyList.classList.add("hidden");
       
-      // 置顶好友排序逻辑：置顶的排在前面
+      // 置顶好友排序逻辑：置顶的排在前面，非置顶的按最后聊天时间倒序
       const sortedContacts = [...state.contacts].sort((a, b) => {
           if (a.isPinned && !b.isPinned) return -1;
           if (!a.isPinned && b.isPinned) return 1;
-          return 0;
+          // 同级别内按最后消息时间倒序排列
+          const aTime = a.lastMsgTimestamp || 0;
+          const bTime = b.lastMsgTimestamp || 0;
+          return bTime - aTime;
       });
 
       sortedContacts.forEach(contact => {
@@ -5197,7 +5290,88 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
       chatEmpty.classList.add("hidden");
       messagesEl.classList.remove("hidden");
 
+            //====== 时间分割线辅助函数 ======
+      function formatDateDivider(timestamp) {
+        if (!timestamp) return null;
+        const now = new Date();
+        const date = new Date(timestamp);
+        const diffMs = now.getTime() - date.getTime();
+        const diffDays = diffMs / (1000 * 60 * 60 * 24);
+        
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        const h = String(date.getHours()).padStart(2, '0');
+        const min = String(date.getMinutes()).padStart(2, '0');
+        
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const yesterdayStart = todayStart - 86400000;
+        const dateStart = new Date(y, date.getMonth(), date.getDate()).getTime();
+        
+        if (diffDays > 200) {
+          return `${y}年${m}月${d}日`;
+        } else if (diffMs > 48 * 60 * 60 * 1000) {
+          return `${parseInt(m)}月${parseInt(d)}日 ${h}:${min}`;
+        } else if (dateStart >= todayStart) {
+          return `今天 ${h}:${min}`;
+        } else if (dateStart >= yesterdayStart) {
+          return `昨天 ${h}:${min}`;
+        } else {
+          return `${parseInt(m)}月${parseInt(d)}日 ${h}:${min}`;
+        }
+      }
+      
+      function shouldShowDivider(curMsg, prevMsg) {
+        if (!curMsg.msgTimestamp) return false;
+        if (!prevMsg || !prevMsg.msgTimestamp) return true; // 第一条消息总是显示
+        const diff = curMsg.msgTimestamp - prevMsg.msgTimestamp;
+        return diff >= 10 * 60 * 1000; // 10分钟间隔
+      }
+      
+      // 构建带分割线的渲染列表
+      let renderItems = []; // { type: 'divider', text } 或 { type: 'msg', index, msg }
       contact.messages.forEach((msg, index) => {
+        // 自动补充msgTimestamp（兼容旧数据）
+        if (!msg.msgTimestamp && msg.time) {
+          //尝试从 HH:MM 格式推算（不精确，但兼容旧数据）
+          const parts = msg.time.match(/^(\d{1,2}):(\d{2})$/);
+          if (parts) {
+            const d = new Date();
+            d.setHours(parseInt(parts[1]), parseInt(parts[2]), 0, 0);
+            msg.msgTimestamp = d.getTime();
+          }
+        }
+        
+        const prevMsg = index > 0 ? contact.messages[index - 1] : null;
+        if (shouldShowDivider(msg, prevMsg)) {
+          const dividerText = formatDateDivider(msg.msgTimestamp);
+          if (dividerText) {
+            renderItems.push({ type: 'divider', text: dividerText });
+          }
+        }
+        renderItems.push({ type: 'msg', index, msg });
+      });
+      
+      // 用renderItems 替代原来的 contact.messages.forEach
+      let domIndex = 0;
+      renderItems.forEach((item) => {
+        if (item.type === 'divider') {
+          let dividerEl = messagesEl.children[domIndex];
+          const dividerSig = "divider:" + item.text;
+          if (!dividerEl || dividerEl.dataset.signature !== dividerSig) {
+            if (!dividerEl) {
+              dividerEl = document.createElement("div");
+              messagesEl.appendChild(dividerEl);
+            }
+            dividerEl.className = "msg-date-divider";
+            dividerEl.dataset.signature = dividerSig;dividerEl.innerHTML = `<div class="msg-date-divider-line"></div><span class="msg-date-divider-text">${item.text}</span><div class="msg-date-divider-line"></div>`;
+          }
+          domIndex++;
+          return;
+        }
+        
+        const msg = item.msg;
+        const index = item.index;
         const prevMsg = contact.messages[index - 1];
         const nextMsg = contact.messages[index + 1];
 
@@ -5212,7 +5386,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         else if (isSamePrev && !isSameNext) positionClass = "last";
 
         // 获取现有的消息节点，如果没有就新建（复用现有节点防止闪屏）
-        let row = messagesEl.children[index];
+        let row = messagesEl.children[domIndex];
         if (!row) {
           row = document.createElement("div");
           messagesEl.appendChild(row);
@@ -5599,10 +5773,11 @@ if (msg.isTyping) {
              timeEl.remove();
           }
         }
+        domIndex++;
       });
 
       // 如果有撤回/删除的情况，清理掉末尾多余的 DOM
-      while (messagesEl.children.length > contact.messages.length) {
+      while (messagesEl.children.length > domIndex) {
         messagesEl.removeChild(messagesEl.lastChild);
       }
 
@@ -5769,6 +5944,7 @@ if (msg.isTyping) {
         from: "me",
         text,
         time: getCurrentTime(),
+        msgTimestamp: Date.now(),
         hasAnimated: false 
       };
       // 如果处于引用状态，就把引用内容挂载到消息体里
@@ -5780,8 +5956,8 @@ if (msg.isTyping) {
         document.getElementById("replyPreview").classList.remove("show");
       }
 
-      contact.messages.push(newMsg);
-      contact.lastTime = getCurrentTime();
+            contact.messages.push(newMsg);
+      contact.lastTime = getCurrentTime();contact.lastMsgTimestamp = Date.now();
       
       // 清空输入框内容
       chatInput.value = "";
@@ -6259,6 +6435,7 @@ TimeChecklist:
                 image: "placeholder",
                 imageDesc: photoMatch[1].trim(),
                 time: getCurrentTime(),
+                msgTimestamp: Date.now(),
                 hasAnimated: false
               });
             } else {
@@ -6266,10 +6443,12 @@ TimeChecklist:
                 from: "ai",
                 text: lines[i],
                 time: getCurrentTime(),
+                msgTimestamp: Date.now(),
                 hasAnimated: false
               });
             }
             contact.lastTime = getCurrentTime();
+            contact.lastMsgTimestamp = Date.now();
             
             // 发送一条就立刻刷新一次界面
             if (state.activeContactId === contact.id) renderChat();
@@ -7272,24 +7451,27 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         chatImageInput.click(); 
       });
 
-      chatImageInput.addEventListener("change", (e) => {
+            chatImageInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(event) {
+        reader.onload = async function(event) {
           const base64Image = event.target.result;
+          // 压缩图片到1024px宽度、质量0.8
+          const compressed = await compressImageBase64(base64Image, 1024, 0.8);
           const contact = getContact(state.activeContactId);
           if (!contact) return;
 
           contact.messages.push({
             from: "me",
             text: "", 
-            image: base64Image,
+            image: compressed,
             time: getCurrentTime(),
             hasAnimated: false 
           });
           contact.lastTime = getCurrentTime();
+          contact.lastMsgTimestamp = Date.now();
           
           renderChat();
         };
@@ -7788,9 +7970,11 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         from: "me",
         text: `[EMOJI_STICKER|${url}|${label||""}]`,
         time: getCurrentTime(),
+        msgTimestamp: Date.now(),
         hasAnimated: false
       });
       contact.lastTime = getCurrentTime();
+      contact.lastMsgTimestamp = Date.now();
       renderChat();
     }
 
@@ -7951,9 +8135,11 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         from: "me",
         text: voiceMsg,
         time: getCurrentTime(),
+        msgTimestamp: Date.now(),
         hasAnimated: false
       });
       contact.lastTime = getCurrentTime();
+      contact.lastMsgTimestamp = Date.now();
       voicePreviewMask.classList.remove("show");
       renderChat();
     });//========== 语音录入功能结束 ==========
@@ -8317,12 +8503,13 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     avatarInput.style.display = "none";
     document.body.appendChild(avatarInput);
 
-        avatarInput.addEventListener("change", (e) => {
+            avatarInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (ev) => {
-          updateUserAvatar(ev.target.result);
+        reader.onload = async (ev) => {
+          const compressed = await compressImageBase64(ev.target.result, 512, 0.8);
+          updateUserAvatar(compressed);
         };
         reader.readAsDataURL(file);
       }
@@ -8416,13 +8603,13 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       momentsCoverInput.click();
     });
 
-    momentsCoverInput.addEventListener("change", (e) => {
+        momentsCoverInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        const url = ev.target.result;
-        momentsCover.style.backgroundImage = `url(${url})`;
+      reader.onload = async (ev) => {
+        const compressed = await compressImageBase64(ev.target.result, 1024, 0.8);
+        momentsCover.style.backgroundImage = `url(${compressed})`;
         momentsCover.style.backgroundSize = "cover";
         momentsCover.style.backgroundPosition = "center";
       };
@@ -8486,6 +8673,30 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     
  
       document.getElementById("memoryMsgCount").textContent = contact.messages.length;
+            // 估算Token数量
+      (function updateTokenEstimate() {
+        let totalText = "";
+        // 人设
+        if (contact.persona) totalText += contact.persona;
+        if (contact.myPersona) totalText += contact.myPersona;
+        // 记忆
+        if (contact.memoryList) totalText += contact.memoryList.join("\n");
+        // 世界书
+        if (contact.linkedLorebooks && state.lorebooks) {
+          state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).forEach(l => {
+            totalText += l.content || "";
+          });
+        }
+        // 最近30条消息
+        const recentMsgs = contact.messages.slice(-30);
+        recentMsgs.forEach(m => {
+          if (m.text) totalText += m.text;
+        });
+        // 系统prompt基础模板（大约固定的部分）
+        totalText += "系统指令模板约3000字"; // 粗略估算固定prompt
+        const tokens = estimateTokens(totalText) + 2500; // 加上固定prompt的token估算
+        document.getElementById("estimatedTokensDisplay").textContent = tokens.toLocaleString();
+      })();
       document.getElementById("autoSummarySwitch").checked = contact.autoSummary || false;
       document.getElementById("autoSummaryThreshold").value = contact.summaryThreshold || 20;
       document.getElementById("manualSummaryStart").value = 1;
@@ -8527,14 +8738,15 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     changeAvatarBtn.addEventListener("click", () => {
       contactAvatarInput.click();
     });
-        contactAvatarInput.addEventListener("change", (e) => {
+            contactAvatarInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (file) {
         const reader = new FileReader();
-        reader.onload = (ev) => {
+        reader.onload = async (ev) => {
           const base64 = ev.target.result;
-          detailsAvatarPreview.style.backgroundImage = `url(${base64})`;
-          detailsAvatarPreview.dataset.tempAvatar = base64;
+          const compressed = await compressImageBase64(base64, 512, 0.8);
+          detailsAvatarPreview.style.backgroundImage = `url(${compressed})`;
+          detailsAvatarPreview.dataset.tempAvatar = compressed;
         };
         reader.readAsDataURL(file);
       }
@@ -8999,6 +9211,189 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         applyBubbleStyleToChat(contact);
       }
     });
+        // ================== 数据导入导出逻辑 ==================
+    document.getElementById("exportDataBtn").addEventListener("click", async () => {
+      try {
+        // 触发一次保存确保最新
+        await saveStateToDB();
+        const saved = await loadStateFromDB();
+        if (!saved) {
+          await sysAlert("没有找到可导出的数据！");
+          return;
+        }
+        const jsonStr = JSON.stringify(saved, null, 2);
+        const blob = new Blob([jsonStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
+        a.download = `Tacenda_backup_${dateStr}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        await sysAlert("存档已导出！请妥善保管下载的JSON文件。");
+      } catch(e) {
+        await sysAlert("导出失败：" + e.message);
+      }
+    });
+
+    document.getElementById("importDataFileInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const confirmed = await sysConfirm("导入存档将覆盖当前所有数据（包括所有好友、聊天记录、设置等），此操作不可撤销！\n\n确定要继续吗？", "导入存档", true);
+      if (!confirmed) {
+        e.target.value = "";
+        return;
+      }
+      
+      try {
+        const text = await file.text();
+        const parsed = JSON.parse(text);
+        
+        // 基本验证
+        if (!parsed.contacts || !Array.isArray(parsed.contacts)) {
+          await sysAlert("文件格式不正确，不是有效的Tacenda存档文件！");
+          e.target.value = "";
+          return;
+        }
+        
+        const restored = applyLoadedState(parsed);
+        
+        // 覆盖全局state
+        for (const key in restored) {
+          if (key ==='selectedMsgs') {
+            state.selectedMsgs = new Set(restored.selectedMsgs || []);
+          } else {
+            state[key] = restored[key];
+          }
+        }
+        
+        //恢复支付密码
+        if (state._globalPayPassword) {
+          globalPayPassword = state._globalPayPassword;
+          delete state._globalPayPassword;
+        }
+        
+        // 保存到IndexedDB
+        await saveStateToDB();
+        
+        //刷新所有UI
+        restoreAllUI();
+        
+        // 退回好友列表
+        screenChatDetails.classList.remove("active");
+        screens.chat.classList.remove("active");
+        switchTab("friends");
+        
+        await sysAlert("存档导入成功！所有数据已恢复。");
+      } catch(err) {
+        await sysAlert("导入失败：" + err.message);
+      }e.target.value = "";
+    });
+
+    // ==================聊天记录搜索逻辑 ==================
+    document.getElementById("chatSearchBtn").addEventListener("click", () => {
+      const keyword = document.getElementById("chatSearchInput").value.trim();
+      const resultsContainer = document.getElementById("chatSearchResults");
+      resultsContainer.innerHTML = "";
+      
+      if (!keyword) {
+        resultsContainer.innerHTML = '<div style="font-size:13px; color:#aaa; text-align:center; padding:12px;">请输入搜索关键词</div>';
+        return;
+      }
+      
+      const contact = getContact(state.activeContactId);
+      if (!contact || !contact.messages || contact.messages.length === 0) {
+        resultsContainer.innerHTML = '<div style="font-size:13px; color:#aaa; text-align:center; padding:12px;">没有聊天记录</div>';
+        return;
+      }
+      
+      const matches = [];
+      contact.messages.forEach((msg, idx) => {
+        if (msg.isTyping) return;
+        let plainText = msg.text || "";
+        // 过滤掉特殊消息标签
+        plainText = plainText.replace(/<[^>]*>?/gm, '');
+        if (plainText.toLowerCase().includes(keyword.toLowerCase())) {
+          matches.push({ index: idx, msg, plainText });
+        }
+      });
+      
+      if (matches.length === 0) {
+        resultsContainer.innerHTML = '<div style="font-size:13px; color:#aaa; text-align:center; padding:12px;">未找到匹配的消息</div>';
+        return;
+      }
+      
+      resultsContainer.innerHTML = `<div style="font-size:12px; color:#888; margin-bottom:8px;">找到 ${matches.length} 条结果：</div>`;
+      
+      matches.forEach(match => {
+        const item = document.createElement("div");
+        item.style.cssText = "padding:10px 12px; background:#f7f7f8; border-radius:10px; margin-bottom:6px; cursor:pointer; font-size:13px; line-height:1.5;";
+        
+        // 高亮关键词
+        const escapedKeyword = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp(`(${escapedKeyword})`, 'gi');
+        let displayText = match.plainText;
+        if (displayText.length > 80) {
+          const keyIdx = displayText.toLowerCase().indexOf(keyword.toLowerCase());
+          const start = Math.max(0, keyIdx - 30);
+          const end = Math.min(displayText.length, keyIdx + keyword.length + 30);
+          displayText = (start > 0 ? "..." : "") + displayText.slice(start, end) + (end < match.plainText.length ? "..." : "");
+        }
+        const highlighted = displayText.replace(regex, '<mark style="background:#ffe082;border-radius:2px;padding:0 1px;">$1</mark>');
+        
+        const sender = match.msg.from === "me" ? "我" : (contact.remark || contact.realName || "AI");
+        const time = match.msg.time || "";
+        
+        item.innerHTML = `<div style="font-size:11px; color:#999; margin-bottom:3px;">${sender} · ${time} · 第${match.index + 1}条</div><div>${highlighted}</div>`;
+        
+        // 点击跳转到对应消息
+        item.addEventListener("click", () => {
+          // 关闭详情页，回到聊天界面
+          screenChatDetails.classList.remove("active");
+          screens.chat.classList.add("active");
+          
+          // 等渲染完成后滚动到目标消息
+          setTimeout(() => {
+            // 需要计算分割线偏移量
+            const allChildren = messagesEl.children;
+            let targetDomIdx = -1;
+            let msgCounter = 0;
+            for (let i = 0; i < allChildren.length; i++) {
+              if (allChildren[i].classList.contains("msg-date-divider")) continue;
+              if (msgCounter === match.index) {
+                targetDomIdx = i;
+                break;
+              }
+              msgCounter++;
+            }
+            
+            if (targetDomIdx >= 0 && allChildren[targetDomIdx]) {
+              allChildren[targetDomIdx].scrollIntoView({ behavior: "smooth", block: "center" });
+              // 高亮闪烁效果
+              allChildren[targetDomIdx].style.transition = "background0.3s";
+              allChildren[targetDomIdx].style.background = "rgba(193,208,220,0.3)";
+              setTimeout(() => {
+                allChildren[targetDomIdx].style.background = "";
+              }, 1500);
+            }
+          }, 100);
+        });
+        
+        resultsContainer.appendChild(item);
+      });
+    });
+    // 搜索框回车触发搜索
+    document.getElementById("chatSearchInput").addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        document.getElementById("chatSearchBtn").click();
+      }
+    });
+
     // ================== 清除聊天记录逻辑 ==================
     const clearChatHistoryBtn = document.getElementById("clearChatHistoryBtn");
     const clearChatStep1Mask = document.getElementById("clearChatStep1Mask");
@@ -9035,20 +9430,20 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     });
 
     // 背景图更换
-    chatBgInput.addEventListener("change", (e) => {
+        chatBgInput.addEventListener("change", (e) => {
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        const base64 = ev.target.result;
+      reader.onload = async (ev) => {
+        const compressed = await compressImageBase64(ev.target.result, 1280, 0.8);
         const contact = getContact(state.activeContactId);
         if (contact) {
-          contact.chatBg = base64;
-          detailsBgPreviewBox.style.backgroundImage = `url(${base64})`;
+          contact.chatBg = compressed;
+          detailsBgPreviewBox.style.backgroundImage = `url(${compressed})`;
           if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "none";
           const chatBody = document.getElementById("chatBody");
           if (chatBody) {
-            chatBody.style.backgroundImage = `url(${base64})`;
+            chatBody.style.backgroundImage = `url(${compressed})`;
             chatBody.classList.add("chat-bg-customizable");
           }
         }
@@ -9083,12 +9478,12 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = (ev) => {
-          const base64 = ev.target.result;
+        reader.onload = async (ev) => {
+          const compressed = await compressImageBase64(ev.target.result, 1280, 0.8);
           const contact = getContact(state.activeContactId);
           if (contact) {
-            contact.voiceCallBg = base64;
-            if (detailsVcBgPreviewBox) detailsVcBgPreviewBox.style.backgroundImage = `url(${base64})`;
+            contact.voiceCallBg = compressed;
+            if (detailsVcBgPreviewBox) detailsVcBgPreviewBox.style.backgroundImage = `url(${compressed})`;
             if (detailsVcBgPreviewHint) detailsVcBgPreviewHint.style.display = "none";
           }
         };
@@ -9289,14 +9684,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         walletBgInput.click();
       });
 
-            walletBgInput.addEventListener("change", (e) => {
+                  walletBgInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if (file) {
           const reader = new FileReader();
-          reader.onload = (ev) => {
-            const base64 = ev.target.result;
-            walletCardBg.style.backgroundImage = `url(${base64})`;
-            state.wallet.bg = base64;
+          reader.onload = async (ev) => {
+            const compressed = await compressImageBase64(ev.target.result, 800, 0.8);
+            walletCardBg.style.backgroundImage = `url(${compressed})`;
+            state.wallet.bg = compressed;
           };
           reader.readAsDataURL(file);
         }
@@ -9746,12 +10141,13 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
 
     // 3. 上传图片预览逻辑
     addPublishImgBtn.addEventListener("click", () => publishImgInput.click());
-    publishImgInput.addEventListener("change", (e) => {
+        publishImgInput.addEventListener("change", (e) => {
         const file = e.target.files[0];
         if(file) {
             const reader = new FileReader();
-            reader.onload = (ev) => {
-                tempPublishImgBase64 = ev.target.result;
+            reader.onload = async (ev) => {
+                const compressed = await compressImageBase64(ev.target.result, 1024, 0.8);
+                tempPublishImgBase64 = compressed;
                 publishImgPreview.src = tempPublishImgBase64;
                 publishImgPreviewWrap.style.display = "block";
                 addPublishImgBtn.style.display = "none";
@@ -10336,13 +10732,15 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                     const lines = rawText.split('\n').map(l => l.trim()).filter(l => l !== "");
                     const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
                     for (let i = 0; i < lines.length; i++) {
-                        contact.messages.push({
+                                                contact.messages.push({
                             from: "ai",
                             text: lines[i],
                             time: getCurrentTime(),
+                            msgTimestamp: Date.now(),
                             hasAnimated: false
                         });
                         contact.lastTime = getCurrentTime();
+                        contact.lastMsgTimestamp = Date.now();
                         if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
                             renderChat();
                         } else {

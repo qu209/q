@@ -3979,6 +3979,19 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             <input class="input" id="detailsAutoMomentInput" type="number" placeholder="每隔X分钟发一次" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0;" />
           </div>
         </div>
+        <div class="details-section-card">
+          <div class="details-section-title">📬 Bark定时推送</div>
+          <div style="font-size:13px; color:#666; margin-bottom:12px;">设置后，到达指定时间时，AI会生成消息内容并通过Bark推送到你的iPhone/iPad。需先安装Bark App并填入你的Key。</div>
+          
+          <div class="field" style="display: flex; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #f2f2f7; padding-bottom: 12px;">
+            <label style="width: 100px; font-size: 14px; font-weight: 600; color: #222; margin: 0;">Bark Key</label>
+            <input class="input" id="detailsBarkKeyInput" type="text" placeholder="PSxzaUyKr73eFWDtSQHaJJ" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0; font-size: 13px;" />
+          </div>
+
+          <div style="font-size:13px; font-weight:600; color:#222; margin-bottom:8px;">定时时间段</div>
+          <div id="barkTimeList" style="display:flex; flex-direction:column; gap:8px; margin-bottom:10px;"></div>
+          <button id="addBarkTimeBtn" style="appearance:none; border:1px dashed #bbb; background:transparent; color:#666; width:100%; height:36px; border-radius:8px; font-size:14px; cursor:pointer;">＋ 添加时间</button>
+        </div>
 
         <div class="details-section-card">
           <div class="details-section-title">挂载世界书</div>
@@ -8665,8 +8678,12 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       detailsMyPersonaInput.value = contact.myPersona || "";
       
       // 回显后台活动设置
-      document.getElementById("detailsAutoMsgInput").value = contact.autoMsgInterval || "";
+            document.getElementById("detailsAutoMsgInput").value = contact.autoMsgInterval || "";
       document.getElementById("detailsAutoMomentInput").value = contact.autoMomentInterval || "";
+
+      // 回显Bark设置
+      document.getElementById("detailsBarkKeyInput").value = contact.barkKey || "";
+      renderBarkTimeList(contact.barkTimes || []);
 
       // 初始化和渲染记忆面板
       contact.memoryList = contact.memoryList || [];
@@ -8790,6 +8807,10 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (contact.autoMomentInterval === 0) {
           contact.lastAutoMomentTimeMs = null;
       }
+
+      // 保存Bark设置
+      contact.barkKey = document.getElementById("detailsBarkKeyInput").value.trim();
+      contact.barkTimes = getCurrentBarkTimes();
 
       if (detailsAvatarPreview.dataset.tempAvatar) {
         contact.avatar = detailsAvatarPreview.dataset.tempAvatar;
@@ -11007,16 +11028,70 @@ ${imagePromptInstruction}`;
         }
     }
 
+    // ====== Bark定时推送辅助函数 ======
+    // 渲染详情页里的时间列表
+    function renderBarkTimeList(times) {
+      const list = document.getElementById("barkTimeList");
+      if (!list) return;
+      list.innerHTML = "";
+      (times || []).forEach((t, i) => {
+        const row = document.createElement("div");
+        row.style.cssText = "display:flex; align-items:center; gap:8px;";
+        row.innerHTML = `
+          <input type="time" value="${t}" data-index="${i}" style="flex:1; border:1px solid #e0e0e0; border-radius:8px; padding:6px 10px; font-size:15px; background:#f7f7f8;" />
+          <button data-index="${i}" style="appearance:none; border:none; background:#ffeaea; color:#df3b3b; border-radius:8px; width:34px; height:34px; font-size:18px; cursor:pointer; flex-shrink:0;">×</button>
+        `;
+        // 删除按钮
+        row.querySelector("button").addEventListener("click", function() {
+          const idx = parseInt(this.dataset.index);
+          const cur = getCurrentBarkTimes();
+          cur.splice(idx, 1);
+          renderBarkTimeList(cur);
+        });
+        list.appendChild(row);
+      });
+    }
+
+    // 从详情页DOM里读取当前所有时间值
+    function getCurrentBarkTimes() {
+      const inputs = document.querySelectorAll("#barkTimeList input[type='time']");
+      return Array.from(inputs).map(inp => inp.value).filter(v => v);
+    }
+
+    // 添加时间按钮
+    document.getElementById("addBarkTimeBtn") && document.getElementById("addBarkTimeBtn").addEventListener("click", () => {
+      const cur = getCurrentBarkTimes();
+      cur.push("08:00");
+      renderBarkTimeList(cur);
+    });
+
+    // 发送Bark通知
+    async function sendBarkNotification(contact, msgContent) {
+      const key = contact.barkKey;
+      if (!key) return;
+      const title = encodeURIComponent(getDisplayName(contact));
+      const body = encodeURIComponent(msgContent);
+      const icon = encodeURIComponent("https://i.postimg.cc/8Pgm5B6w/IMG-5211.png");
+      const url = `https://api.day.app/${key}/${title}/${body}?icon=${icon}&sound=minuet`;
+      try {
+        await fetch(url);
+      } catch(e) {
+        console.error("Bark推送失败", e);
+      }
+    }
+
     // 后台心跳守护循环（每隔 30 秒检查一次所有的触发条件）
     setInterval(() => {
         const now = Date.now();
+        const currentTime = String(new Date().getHours()).padStart(2,'0') + ':' + String(new Date().getMinutes()).padStart(2,'0');
+
         state.contacts.forEach(c => {
             // 1. 检查主动发消息
             // lastInteractTimeMs 必须已被初始化（在保存详情时赋值）才开始计时
             if (c.autoMsgInterval && c.autoMsgInterval > 0 && c.lastInteractTimeMs) {
                 const diffMinutes = (now - c.lastInteractTimeMs) / 60000;
                 if (diffMinutes >= c.autoMsgInterval) {
-                    c.lastInteractTimeMs = now; // 重置为当前时间，角色发完消息后再从现在开始算
+                    c.lastInteractTimeMs = now;
                     executeAutoMessage(c);
                 }
             }
@@ -11029,8 +11104,60 @@ ${imagePromptInstruction}`;
                     executeAutoMoment(c);
                 }
             }
+
+            // 3. 检查Bark定时推送
+            if (c.barkKey && c.barkTimes && c.barkTimes.length > 0) {
+                if (c.barkTimes.includes(currentTime)) {
+                    // 防止同一分钟重复发（记录上次发送时间）
+                    const lastSentKey = `barkLastSent_${c.id}`;
+                    if (c[lastSentKey] !== currentTime) {
+                        c[lastSentKey] = currentTime;
+                        // 先用AI生成消息内容，再发Bark
+                        executeBarkPush(c);
+                    }
+                }
+            }
         });
     }, 30000);
+
+    // Bark推送：调AI生成内容后发通知
+    async function executeBarkPush(contact) {
+      const api = state.apiSettings;
+      if (!api.url || !api.key) {
+        // 没有配API就直接发一条默认通知
+        await sendBarkNotification(contact, "来找我聊天吧～");
+        return;
+      }
+      try {
+        const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
+        let loreText = "";
+        if (contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
+          loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\n");
+        }
+        let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\n") : "无";
+        const sysPromptText = `你现在是${getDisplayName(contact)}。你的设定：${contact.persona}\n${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}\n【世界书】：${loreText || '无'}\n【记忆】：${memText}\n\n任务：现在你想主动给用户发一条消息，请以符合你人设的方式，写一句简短的话（不超过30字），像发微信一样自然，不要解释，直接输出这句话本身。`;
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
+          body: JSON.stringify({
+            model: api.model || "gpt-3.5-turbo",
+            messages: [{ role: "system", content: sysPromptText }],
+            max_tokens: 100,
+            temperature: api.temperature
+          })
+        });
+        if (!res.ok) {
+          await sendBarkNotification(contact, "来找我聊天吧～");
+          return;
+        }
+        const data = await res.json();
+        const content = data.choices[0].message.content.trim();
+        await sendBarkNotification(contact, content);
+      } catch(e) {
+        console.error("Bark推送AI生成失败", e);
+        await sendBarkNotification(contact, "来找我聊天吧～");
+      }
+    }
 
     // 用户自己发消息 或 AI回复 时，都重置"上次交互时间"，让计时从头开始
     const origSendMessage = sendMessage;

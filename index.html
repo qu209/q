@@ -11239,18 +11239,26 @@ ${imagePromptInstruction}`;
 
     // ====== Bark推送任务系统（全新重构版）======
 
-    // 发送Bark通知（基础函数）
+    // 发送Bark通知（基础函数）—— 多行消息逐条推送，每句话一个弹窗
     async function sendBarkNotification(contact, msgContent) {
       const key = contact.barkKey;
       if (!key) return;
       const title = encodeURIComponent(getDisplayName(contact));
-      const body = encodeURIComponent(msgContent);
       const icon = encodeURIComponent("https://i.postimg.cc/8Pgm5B6w/IMG-5211.png");
-      const url = `https://api.day.app/${key}/${title}/${body}?icon=${icon}&sound=minuet`;
-      try {
-        await fetch(url);
-      } catch(e) {
-        console.error("Bark推送失败", e);
+      // 按换行拆分成多条，每条单独推送一个Bark弹窗
+      const lines = msgContent.split('\n').map(l => l.trim()).filter(l => l !== "");
+      for (let i = 0; i < lines.length; i++) {
+        const body = encodeURIComponent(lines[i]);
+        const url = `https://api.day.app/${key}/${title}/${body}?icon=${icon}&sound=minuet`;
+        try {
+          await fetch(url);
+        } catch(e) {
+          console.error("Bark推送失败", e);
+        }
+        // 每条之间间隔1.5秒，防止Bark合并通知
+        if (i < lines.length - 1) {
+          await new Promise(r => setTimeout(r, 1500));
+        }
       }
     }
 
@@ -11271,23 +11279,40 @@ ${imagePromptInstruction}`;
         return;
       }
 
-      // 按时间排序（未发送的在前，已发送的在后）
+      // 按时间排序
       const sorted = [...contact.barkTasks].sort((a, b) => {
-        if (a.status === 'pending' && b.status !== 'pending') return -1;
-        if (a.status !== 'pending' && b.status === 'pending') return 1;
+        const orderMap = { 'scheduled': 0, 'pending': 1, 'sent': 2 };
+        const aOrder = orderMap[a.status] !== undefined ? orderMap[a.status] : 1;
+        const bOrder = orderMap[b.status] !== undefined ? orderMap[b.status] : 1;
+        if (aOrder !== bOrder) return aOrder - bOrder;
         return (a.scheduledTime || '').localeCompare(b.scheduledTime || '');
       });
 
       sorted.forEach((task, idx) => {
         const card = document.createElement("div");
-        card.className = `bark-task-card ${task.status || 'pending'}`;
+        // 根据状态设置样式
+        let statusText, statusDotClass, previewText, cardStatusClass;
+        if (task.status === 'scheduled') {
+          statusText = '已发送到Bark · 等待推送';
+          statusDotClass = 'pending';
+          previewText = '（消息已发送到Bark服务器，到时间自动推送，关闭网页也能收到）';
+          cardStatusClass = 'pending';
+        } else if (task.status === 'sent') {
+          statusText = '已推送';
+          statusDotClass = 'sent';
+          previewText = '（已完成推送）';
+          cardStatusClass = 'sent';
+        } else {
+          statusText = '等待中（需保持网页打开）';
+          statusDotClass = 'pending';
+          previewText = '（旧版任务，需保持网页在后台）';
+          cardStatusClass = 'pending';
+        }
+
+        card.className = `bark-task-card ${cardStatusClass}`;
 
         const typeLabel = task.type === 'instant' ? '即时' : '定时';
         const typeClass = task.type === 'instant' ? 'instant' : 'delayed';
-        const statusText = task.status === 'sent' ? '已推送' : '等待中';
-        const statusDotClass = task.status === 'sent' ? 'sent' : 'pending';
-
-        let previewText = '（消息已缓存，到时间自动推送）';
 
         let hintHtml = '';
         if (task.hint) {
@@ -11320,7 +11345,6 @@ ${imagePromptInstruction}`;
         container.appendChild(card);
       });
     }
-
     // AI生成Bark推送消息内容（完整版：和正常聊天一样的全套prompt）
     async function generateBarkMessage(contact, hint) {
       const api = state.apiSettings;
@@ -11431,6 +11455,47 @@ ${chatContext}
       return lines;
     }
 
+    // 工具函数：把HH:MM 转为今天或明天的 Unix 时间戳（秒）
+    function scheduledTimeToUnix(timeStr) {
+      const parts = timeStr.split(':');
+      const h = parseInt(parts[0]);
+      const m = parseInt(parts[1]);
+      const now = new Date();
+      const target = new Date(now.getFullYear(), now.getMonth(), now.getDate(), h, m, 0);
+      // 如果目标时间已过，设为明天
+      if (target.getTime() <= now.getTime()) {
+        target.setDate(target.getDate() + 1);
+      }
+      return Math.floor(target.getTime() / 1000);
+    }
+
+    // 立即把消息发给Bark服务器，带上定时参数，让Bark在指定时间推送
+    // 每句话一个弹窗，间隔递增1秒（防止Bark合并）
+    async function sendScheduledBarkNotification(contact, msgContent, scheduledTime) {
+      const key = contact.barkKey;
+      if (!key) return;
+      const title = encodeURIComponent(getDisplayName(contact));
+      const icon = encodeURIComponent("https://i.postimg.cc/8Pgm5B6w/IMG-5211.png");
+      const lines = msgContent.split('\n').map(l => l.trim()).filter(l => l !== "");
+      const baseUnix = scheduledTimeToUnix(scheduledTime);
+
+      for (let i = 0; i < lines.length; i++) {
+        const body = encodeURIComponent(lines[i]);
+        // 每条消息的推送时间递增i秒，确保不被合并且按顺序弹出
+        const pushUnix = baseUnix + i;
+        const url = `https://api.day.app/${key}/${title}/${body}?icon=${icon}&sound=minuet&schedule=${pushUnix}`;
+        try {
+          await fetch(url);
+        } catch(e) {
+          console.error("Bark定时推送发送失败", e);
+        }
+        // 请求之间稍微间隔，防止服务器限流
+        if (i < lines.length - 1) {
+          await new Promise(r => setTimeout(r, 300));
+        }
+      }
+    }
+
     // 创建即时推送任务
     async function createInstantBarkTask(contact) {
       const timeInput = document.getElementById("barkInstantTime");
@@ -11468,13 +11533,17 @@ ${chatContext}
       const msgLines = parseBarkAIResponse(rawMsg, contact);
       const generatedMsg = msgLines.join('\n');
 
+      // 立即把消息发给Bark服务器，带上定时参数
+      btn.innerHTML = "正在发送到Bark服务器...";
+      await sendScheduledBarkNotification(contact, generatedMsg, scheduledTime);
+
       const task = {
         id: "bark_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
         type: "instant",
         scheduledTime: scheduledTime,
         generatedMsg: generatedMsg,
         hint: "",
-        status: "pending",
+        status: "scheduled",
         createdAt: getCurrentTime(),
         contactId: contact.id
       };
@@ -11486,7 +11555,7 @@ ${chatContext}
       btn.innerHTML = "⚡ 创建即时推送任务";
 
       renderBarkTaskList(contact);
-      await sysAlert(`✅ 创建成功！\n\n将在 ${scheduledTime} 推送到你的手机。`);
+      await sysAlert(`✅ 创建成功！消息已发送到Bark服务器。\n\n即使关闭网页，Bark也会在 ${scheduledTime} 准时推送到你的手机。`);
     }
 
     // 创建延迟推送任务
@@ -11533,13 +11602,17 @@ ${chatContext}
       const msgLines = parseBarkAIResponse(rawMsg, contact);
       const generatedMsg = msgLines.join('\n');
 
+      // 立即把消息发给Bark服务器，带上定时参数
+      btn.innerHTML = "正在发送到Bark服务器...";
+      await sendScheduledBarkNotification(contact, generatedMsg, scheduledTime);
+
       const task = {
         id: "bark_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
         type: "delayed",
         scheduledTime: scheduledTime,
         generatedMsg: generatedMsg,
         hint: hint,
-        status: "pending",
+        status: "scheduled",
         createdAt: getCurrentTime(),
         contactId: contact.id
       };
@@ -11554,9 +11627,9 @@ ${chatContext}
       if (hintInput) hintInput.value = "";
 
       renderBarkTaskList(contact);
-      await sysAlert(`✅ 创建成功！\n\n将在 ${scheduledTime} 推送到你的手机。`);
+      await sysAlert(`✅ 创建成功！消息已发送到Bark服务器。\n\n即使关闭网页，Bark也会在 ${scheduledTime} 准时推送到你的手机。`);
     }
-  //绑定创建按钮事件
+//绑定创建按钮事件
     document.getElementById("barkCreateInstantBtn") && document.getElementById("barkCreateInstantBtn").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       if (contact) createInstantBarkTask(contact);
@@ -11595,19 +11668,24 @@ ${chatContext}
                 }
             }
 
-            // 3. 检查Bark推送任务队列
-            if (c.barkKey && c.barkTasks && c.barkTasks.length > 0) {
+            // 3. 检查Bark推送任务队列（消息已在创建时发给Bark服务器，这里只负责到点时插入聊天记录）
+            if (c.barkTasks && c.barkTasks.length > 0) {
                 c.barkTasks.forEach(task => {
-                    if (task.status === 'pending' && task.scheduledTime === currentTime) {
-                        // 防止同一分钟重复发
+                    //兼容旧版pending任务（未升级前创建的）和新版scheduled任务
+                    const shouldProcess = (task.status === 'pending' || task.status === 'scheduled') && task.scheduledTime === currentTime;
+                    if (shouldProcess) {
+                        // 防止同一分钟重复处理
                         const sentKey = `_barkSent_${task.id}`;
                         if (!c[sentKey]) {
                             c[sentKey] = true;
+                            
+                            // 如果是旧版pending任务（未在创建时发给Bark），现在补发
+                            if (task.status === 'pending' && c.barkKey) {
+                                sendBarkNotification(c, task.generatedMsg);
+                            }
+                            
                             task.status = 'sent';
                             task.sentAt = currentTime;
-
-                            // 发送Bark通知
-                            sendBarkNotification(c, task.generatedMsg);
 
                             // 将消息插入聊天记录（按设定时间显示）
                             const msgLines = task.generatedMsg.split('\n').map(l => l.trim()).filter(l => l);
@@ -11651,7 +11729,7 @@ ${chatContext}
         });
     }, 30000);
 
-    // 页面重新打开时，检查是否有已过时间但未发送的Bark任务（补发+插入聊天记录）
+    // 页面重新打开时，检查是否有已过时间但未插入聊天记录的Bark任务
     function checkMissedBarkTasks() {
         const currentTime = String(new Date().getHours()).padStart(2,'0') + ':' + String(new Date().getMinutes()).padStart(2,'0');
         const now = Date.now();
@@ -11660,24 +11738,23 @@ ${chatContext}
             if (!c.barkTasks || c.barkTasks.length === 0) return;
 
             c.barkTasks.forEach(task => {
-                if (task.status !== 'pending') return;
+                //跳过已完成的任务
+                if (task.status === 'sent') return;
 
-                // 判断任务时间是否已过（简单比较 HH:MM 字符串）
-                // 注意：跨天的情况（如设置23:00，现在是01:00）需要特殊处理
-                // 这里用一个简单的逻辑：如果任务创建时间距今超过24小时，视为已过期
-                // 否则，比较 HH:MM
+                // 判断任务时间是否已过
                 if (task.scheduledTime <= currentTime) {
-                    // 时间已过，补发
+                    // 如果是旧版pending任务（未在创建时发给Bark），补发Bark通知
+                    if (task.status === 'pending' && c.barkKey) {
+                        sendBarkNotification(c, task.generatedMsg);
+                    }
+                    // scheduled状态的任务已经在创建时发给了Bark，不需要再发
                     task.status = 'sent';
                     task.sentAt = task.scheduledTime;
-
-                    // 发送Bark通知（虽然可能已过时间，但还是推一下）
-                    sendBarkNotification(c, task.generatedMsg);
 
                     // 插入聊天记录
                     const msgLines = task.generatedMsg.split('\n').map(l => l.trim()).filter(l => l);
 
-                    // 计算消息应该显示的时间戳（基于今天的scheduledTime）
+                    // 计算消息应该显示的时间戳
                     const timeParts = task.scheduledTime.split(':');
                     const scheduledDate = new Date();
                     scheduledDate.setHours(parseInt(timeParts[0]), parseInt(timeParts[1]), 0, 0);

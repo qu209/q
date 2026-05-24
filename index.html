@@ -6754,8 +6754,17 @@ TimeChecklist:
 
     sendBtn.addEventListener("click", sendMessage);
     
-    // 监听键盘按键
+    // 监听键盘按键（修复中文输入法回车误发"1"的问题）
+    let isComposing = false;
+    chatInput.addEventListener("compositionstart", () => {
+      isComposing = true;
+    });
+    chatInput.addEventListener("compositionend", () => {
+      isComposing = false;
+    });
     chatInput.addEventListener("keydown", (e) => {
+      // 如果正在使用输入法组合（如中文拼音选词），不触发发送
+      if (e.isComposing || isComposing) return;
       // 移动端或电脑端按下回车发送（按住 Shift 加回车则是换行）
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();

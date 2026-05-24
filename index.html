@@ -31,6 +31,16 @@
     const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
     document.getElementById('manifestLink').href = URL.createObjectURL(blob);
   </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').then(reg => {
+        console.log('SW注册成功', reg);
+      }).catch(err => {
+        console.error('SW注册失败', err);
+      });
+    }
+  </script>
+
   <style>
     :root {
       --bg: #ffffff;

@@ -3635,7 +3635,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       </div>
 
       <div class="chat-body" id="chatBody">
-        <div class="chat-empty" id="chatEmpty">开始与 AI 好友聊天吧</div>
+        <div class="chat-empty" id="chatEmpty"></div>
         <div class="messages hidden" id="messages"></div>
       </div>
       <div class="inventory-popup" id="inventoryPopup">
@@ -4554,16 +4554,12 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
     }
     // ====== 工具函数结束 ======
 
-    // 辅助函数：获取当前时间格式 (例如 "PM 09:04")
+    // 辅助函数：获取当前时间格式（24小时制，例如 "21:04"）
     function getCurrentTime() {
       const now = new Date();
-      let h = now.getHours();
+      const h = String(now.getHours()).padStart(2, '0');
       const m = String(now.getMinutes()).padStart(2, '0');
-      const ampm = h >= 12 ? 'PM' : 'AM';
-      h = h % 12;
-      h = h ? h : 12; // 0点转为12点
-      const hStr = String(h).padStart(2, '0');
-      return `${ampm} ${hStr}:${m}`;
+      return `${h}:${m}`;
     }
 
     let longPressTimer = null;
@@ -4961,7 +4957,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
 
         const sub = document.createElement("div");
         sub.className = "friend-sub";
-        let previewText = "[系统消息：开始与 AI 好友聊天吧]";
+        let previewText = "暂无记录";
         if (contact.messages.length) {
           const lastMsg = contact.messages[contact.messages.length - 1];
           if (lastMsg.image) {
@@ -5685,11 +5681,14 @@ if (msg.isTyping) {
       document.getElementById("msgMenuMask").classList.remove("show");
     });
 
-    // 指令3：单条彻底删除
+    // 指令3：单条彻底删除（强制清空所有DOM签名缓存，确保完全重绘）
     document.getElementById("menuDelete").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       contact.messages.splice(targetMsgIndex, 1);
       document.getElementById("msgMenuMask").classList.remove("show");
+      // 强制清空所有消息节点的签名缓存，迫使renderChat完全重绘
+      const allRows = messagesEl.querySelectorAll("[data-signature]");
+      allRows.forEach(r => r.dataset.signature = "");
       renderChat();
     });
 
@@ -5739,7 +5738,7 @@ if (msg.isTyping) {
       renderChat();
     });
 
-        document.getElementById("multiSelectDelete").addEventListener("click", async () => {
+                document.getElementById("multiSelectDelete").addEventListener("click", async () => {
       if(state.selectedMsgs.size === 0) return;
       const _delOk = await sysConfirm(`确定要删除选定的 ${state.selectedMsgs.size} 条消息吗？`, "删除消息", true);
       if(!_delOk) return;
@@ -5755,6 +5754,8 @@ if (msg.isTyping) {
       state.selectedMsgs.clear();
       document.getElementById("chatbar").classList.remove("hidden");
       document.getElementById("multiSelectBar").classList.remove("show");
+      // 强制清空所有消息节点的签名缓存 + 清除多余DOM
+      messagesEl.innerHTML = "";
       renderChat();
     });
 
@@ -8187,9 +8188,17 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     });
 
     // 字体链接输入
+        // 字体链接输入（防抖延迟应用，避免输入过程中频繁触发）
+    let _fontInputTimer = null;
     fontUrlInput.addEventListener("input", (e) => {
-      state.fontSettings.url = e.target.value.trim();
-      applyGlobalFontAndSize();
+      const val = e.target.value.trim();
+      // 如果输入框显示的是"(已加载本地字体文件)"提示文字，不覆盖已保存的base64
+      if (val === "(已加载本地字体文件)") return;
+      clearTimeout(_fontInputTimer);
+      _fontInputTimer = setTimeout(() => {
+        state.fontSettings.url = val;
+        applyGlobalFontAndSize();
+      }, 600);
     });
 
     // 选择本地字体文件

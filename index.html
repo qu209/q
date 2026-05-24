@@ -6457,47 +6457,71 @@ TimeChecklist:
       // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
       const history = contact.messages.slice(-30);
       history.forEach(msg => {
-        let messageContent = msg.text;
+        //跳过正在打字的占位消息
+        if (msg.isTyping) return;
+        
+        // 安全获取文本，防止 undefined/null
+        let rawText = (msg.text && typeof msg.text === 'string') ? msg.text : '';
+        let messageContent = rawText;
+        
+        // 跳过系统消息（不需要让AI看到）
+        if (rawText.startsWith("【系统消息】")) return;
         
         // 把各种卡片状态转译成文字让AI能够理解当前情况
-        const transferMatch = msg.text.match(/\[TRANSFER\|([\d\.]+)\|([^|]*)\|([^|]+)\|([^\]]+)\]/);
-        const replyMatch = msg.text.match(/\[TRANSFER_REPLY\|([\d\.]+)\|([^|]+)\|([^\]]+)\]/);
+        const transferMatch = rawText.match(/\[TRANSFER\|([\d\.]+)\|([^|]*)\|([^|]+)\|([^\]]+)\]/);
+        const replyMatch = rawText.match(/\[TRANSFER_REPLY\|([\d\.]+)\|([^|]+)\|([^\]]+)\]/);
         
         if (transferMatch) {
            const amt = transferMatch[1], note = transferMatch[2], status = transferMatch[3], dir = transferMatch[4];
            if (dir === "me") {
              if(status === "pending") messageContent = `[我向你发起了一笔转账：¥${amt}，备注：${note}。请你决定是否接受]`;
-             if(status === "accepted") messageContent = `[我向你发起的转账 ¥${amt}，你已收款]`;
-             if(status === "returned") messageContent = `[我向你发起的转账 ¥${amt}，你已退回]`;
+             else if(status === "accepted") messageContent = `[我向你发起的转账 ¥${amt}，你已收款]`;
+             else if(status === "returned") messageContent = `[我向你发起的转账 ¥${amt}，你已退回]`;
            } else {
              if(status === "pending") messageContent = `[你向我发起了一笔转账：¥${amt}，备注：${note}]`;
-             if(status === "accepted") messageContent = `[你向我发起的转账 ¥${amt}，我已收款]`;
-             if(status === "returned") messageContent = `[你向我发起的转账 ¥${amt}，我已退回]`;
+             else if(status === "accepted") messageContent = `[你向我发起的转账 ¥${amt}，我已收款]`;
+             else if(status === "returned") messageContent = `[你向我发起的转账 ¥${amt}，我已退回]`;
            }
         } else if (replyMatch) {
            const amt = replyMatch[1], status = replyMatch[2], dir = replyMatch[3];
            if (dir === "me") {
              if(status === "accepted") messageContent = `[我接收了你的转账 ¥${amt}]`;
-             if(status === "returned") messageContent = `[我退回了你的转账 ¥${amt}]`;
+             else if(status === "returned") messageContent = `[我退回了你的转账 ¥${amt}]`;
            } else {
              if(status === "accepted") messageContent = `[你接收了我的转账 ¥${amt}]`;
-             if(status === "returned") messageContent = `[你退回了我的转账 ¥${amt}]`;
+             else if(status === "returned") messageContent = `[你退回了我的转账 ¥${amt}]`;
            }
+        } else if (rawText.startsWith("[VOICE_CALL|")) {
+           messageContent = "[语音通话记录]";
+        } else if (rawText.startsWith("[EMOJI_STICKER|")) {
+           const parts = rawText.slice(1, -1).split("|");
+           const label = parts[2] || "表情包";
+           messageContent = `[发送了一个表情包：${label}]`;
+        } else if (rawText.startsWith("[PHOTO_MSG|")) {
+           const desc = rawText.replace("[PHOTO_MSG|", "").replace("]", "");
+           messageContent = `[发送了一张图片：${desc}]`;
         }
         
         // 语音消息转译为可读文本给AI看（兼容竖线和冒号分隔符）
-        const voiceMsgMatch = messageContent && typeof messageContent ==='string' && messageContent.match(/\[VOICE_MSG[|:](\d+)[|:](.+)\]/);
-        if (voiceMsgMatch) {
-          messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
+        if (typeof messageContent === 'string') {
+          const voiceMsgMatch = messageContent.match(/\[VOICE_MSG[|:](\d+)[|:](.+)\]/);
+          if (voiceMsgMatch) {
+            messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
+          }
         }
 
-        // 新增：如果消息里包含图片，转为 Vision 模型支持的 Array 格式
+        // 如果消息里包含图片，转为 Vision 模型支持的 Array 格式
         if (msg.image) {
           messageContent = [];
-          if (msg.text) {
-             messageContent.push({ type: "text", text: msg.text });
+          if (rawText && !rawText.startsWith("[")) {
+             messageContent.push({ type: "text", text: rawText });
           }
           messageContent.push({ type: "image_url", image_url: { url: msg.image } });
+        }
+
+        // 最终安全检查：确保 content 不是空字符串
+        if (messageContent === '' || messageContent === null || messageContent === undefined) {
+          messageContent = "[发送了一条消息]";
         }
 
         messages.push({

@@ -3363,7 +3363,14 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       justify-content: center;
       gap: 6px;
       transition: opacity 0.15s;
-    }
+      -webkit-user-select: none;
+      user-select: none;
+      position: relative;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;line-height: 42px;
+      padding: 0 16px;
+      box-sizing: border-box;}
     .bark-create-btn:active { opacity: 0.75; }
     .bark-create-btn.instant-btn {
       background: #5b9bd5;
@@ -4165,7 +4172,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
               <label>推送时间</label>
               <input type="time" id="barkInstantTime" class="bark-create-input" />
             </div>
-            <button class="bark-create-btn instant-btn" id="barkCreateInstantBtn">⚡ 创建即时推送任务</button>
+            <button class="bark-create-btn instant-btn" id="barkCreateInstantBtn"><span>⚡</span> <span>创建即时推送任务</span></button>
           </div>
 
           <!-- 延迟型创建卡片 -->
@@ -4180,8 +4187,8 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
               <label style="margin-top:10px;">提示词</label>
               <textarea id="barkDelayedHint" class="bark-create-textarea" placeholder="例如：发一条温柔的早安问候 / 提醒我喝水 / 用撒娇的语气叫我起床"></textarea>
             </div>
-            <button class="bark-create-btn delayed-btn" id="barkCreateDelayedBtn">🌅 创建定时推送任务</button>
-          </div>
+            <button class="bark-create-btn delayed-btn" id="barkCreateDelayedBtn"><span>🌅</span> <span>创建定时推送任务</span></button>
+         </div>
 
           <!-- 任务列表 -->
           <div class="bark-task-list-title"><span style="font-size:14px;">📋</span> 推送任务队列</div>
@@ -11280,8 +11287,7 @@ ${imagePromptInstruction}`;
         const statusText = task.status === 'sent' ? '已推送' : '等待中';
         const statusDotClass = task.status === 'sent' ? 'sent' : 'pending';
 
-        let previewText = task.generatedMsg || '（消息生成中...）';
-        if (previewText.length > 60) previewText = previewText.slice(0, 60) + '...';
+        let previewText = '（消息已缓存，到时间自动推送）';
 
         let hintHtml = '';
         if (task.hint) {
@@ -11315,11 +11321,11 @@ ${imagePromptInstruction}`;
       });
     }
 
-    // AI生成Bark推送消息内容
+    // AI生成Bark推送消息内容（完整版：和正常聊天一样的全套prompt）
     async function generateBarkMessage(contact, hint) {
       const api = state.apiSettings;
       if (!api.url || !api.key) {
-        return hint ? `${hint}` : "来找我聊天吧～";
+        return null; // 返回null表示无API
       }
 
       const friendName = getDisplayName(contact);
@@ -11332,11 +11338,11 @@ ${imagePromptInstruction}`;
       // 提取最近聊天记录
       let chatContext = "无";
       if (contact.messages && contact.messages.length > 0) {
-        const recentMsgs = contact.messages.slice(-15).filter(m => !m.isTyping);
+        const recentMsgs = contact.messages.slice(-20).filter(m => !m.isTyping);
         if (recentMsgs.length > 0) {
           chatContext = recentMsgs.map(m => {
             const who = m.from === "me" ? "用户" : friendName;
-            const txt = m.text ? m.text.replace(/<[^>]*>?/gm, '').slice(0, 80) : '[图片/特殊消息]';
+            const txt = m.text ? m.text.replace(/<[^>]*>?/gm, '').slice(0, 100) : '[图片/特殊消息]';
             return `${who}：${txt}`;
           }).join("\n");
         }
@@ -11344,26 +11350,37 @@ ${imagePromptInstruction}`;
 
       let taskDescription = "";
       if (hint) {
-        taskDescription = `用户希望你发的消息类型/内容方向是：「${hint}」\n请严格按照用户的提示词方向来生成消息。`;
+        taskDescription = `用户希望你发的消息类型/内容方向是：「${hint}」\n请严格按照用户的提示词方向来生成消息，同时保持你的人设和性格。`;
       } else {
-        taskDescription = `请基于你们最近的聊天上下文，自然地生成一条主动发给用户的消息。`;
+        taskDescription = `请基于你们最近的聊天上下文，自然地生成主动发给用户的消息。像真人主动找人聊天一样。`;
       }
 
       const sysPromptText = `你现在是${friendName}。
-你的设定：${contact.persona}
+你的设定：${contact.persona || "一个自然、真实的朋友"}
 ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
 【世界书】：${loreText || '无'}
-【记忆】：${memText}
+【你们过去的记忆总结】：${memText}
 【你们最近的聊天记录】：
 ${chatContext}
 
 任务：${taskDescription}
-要求：
-1. 以符合你人设的方式写消息
-2. 像发微信一样自然、口语化
-3. 内容不超过50字
-4. 直接输出消息本身，不要加任何前缀、解释、引号
-5. 可以用多行表示多条消息（每行一条），但总共不超过3行`;
+
+【核心回复规则 - 极其重要】
+1. 你的回复必须拆分成多条独立的消息！用换行符（回车）分隔每条消息。
+2. 条数根据你的性格和情境动态调整：
+   · 性格热情、话痨、黏人 → 4~6条
+   · 性格普通、正常状态 → 3~4条
+   · 性格冷淡、高冷 → 2~3条
+3. 以符合你人设的方式写消息，像发微信一样自然、口语化
+4. 直接输出消息本身，绝对不要加任何前缀、解释、引号、序号！
+5. 当前时间是${getCurrentTime()}，请自然融入时间感知（不要机械报时）
+
+【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：
+[INNER_VOICE|你的颜文字|你的内心想法]
+例如：[INNER_VOICE|(*/ω＼*)|好想他啊，主动找他聊天好了]
+⚠️内心想法必须精简，字数严格控制在80字以内！
+
+【状态栏指令】：如果你决定改变状态，请在最后一行回复末尾附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#37d05f|想你了]。不改变就不加。`;
 
       try {
         const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
@@ -11373,19 +11390,45 @@ ${chatContext}
           body: JSON.stringify({
             model: api.model || "gpt-3.5-turbo",
             messages: [{ role: "system", content: sysPromptText }],
-            max_tokens: 200,
             temperature: api.temperature
           })
         });
         if (!res.ok) {
-          return hint ? hint : "来找我聊天吧～";
+          return null;
         }
         const data = await res.json();
         return data.choices[0].message.content.trim();
       } catch(e) {
         console.error("Bark消息生成失败", e);
-        return hint ? hint : "来找我聊天吧～";
+        return null;
       }
+    }
+
+    // 解析AI生成的Bark消息（提取心声、状态、清理指令）
+    function parseBarkAIResponse(rawText, contact) {
+      let text = rawText;
+      
+      // 解析心声
+      const innerVoiceRegex = /\[INNER_VOICE\|([^|]+)\|([^\]]+)\]/i;
+      const innerMatch = text.match(innerVoiceRegex);
+      if (innerMatch) {
+        contact.latestEmoticon = innerMatch[1];
+        contact.latestInnerVoice = innerMatch[2];
+        text = text.replace(innerVoiceRegex, "").trim();
+      }
+
+      // 解析状态
+      const statusRegex = /\[STATUS:([#a-zA-Z0-9]+)\|([^\]]+)\]/i;
+      const statusMatch = text.match(statusRegex);
+      if (statusMatch) {
+        contact.statusColor = statusMatch[1];
+        contact.statusText = statusMatch[2];
+        text = text.replace(statusRegex, "").trim();
+      }
+
+      // 按换行拆分成多条，过滤空行
+      const lines = text.split('\n').map(l => l.trim()).filter(l => l !== "");
+      return lines;
     }
 
     // 创建即时推送任务
@@ -11403,11 +11446,27 @@ ${chatContext}
         return;
       }
 
+      const api = state.apiSettings;
+      if (!api.url || !api.key) {
+        await sysAlert("请先前往设置填写api哦");
+        return;
+      }
+
       const btn = document.getElementById("barkCreateInstantBtn");
       btn.disabled = true;
-      btn.textContent = "🔄 AI正在生成消息...";
+      btn.innerHTML = "AI正在生成消息...";
 
-      const generatedMsg = await generateBarkMessage(contact, null);
+      const rawMsg = await generateBarkMessage(contact, null);
+
+      if (!rawMsg) {
+        btn.disabled = false;
+        btn.innerHTML = "⚡ 创建即时推送任务";
+        await sysAlert("消息生成失败，请检查API配置");
+        return;
+      }
+
+      const msgLines = parseBarkAIResponse(rawMsg, contact);
+      const generatedMsg = msgLines.join('\n');
 
       const task = {
         id: "bark_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
@@ -11424,9 +11483,10 @@ ${chatContext}
       contact.barkTasks.push(task);
 
       btn.disabled = false;
-      btn.textContent = "⚡ 创建即时推送任务";
+      btn.innerHTML = "⚡ 创建即时推送任务";
 
-      renderBarkTaskList(contact);await sysAlert(`✅ 创建成功！\n\n消息内容：「${generatedMsg}」\n\n将在${scheduledTime} 推送到你的手机。`);
+      renderBarkTaskList(contact);
+      await sysAlert(`✅ 创建成功！\n\n将在 ${scheduledTime} 推送到你的手机。`);
     }
 
     // 创建延迟推送任务
@@ -11451,11 +11511,27 @@ ${chatContext}
         return;
       }
 
+      const api = state.apiSettings;
+      if (!api.url || !api.key) {
+        await sysAlert("请先前往设置填写api哦");
+        return;
+      }
+
       const btn = document.getElementById("barkCreateDelayedBtn");
       btn.disabled = true;
-      btn.textContent = "🔄 AI正在生成消息...";
+      btn.innerHTML = "AI正在生成消息...";
 
-      const generatedMsg = await generateBarkMessage(contact, hint);
+      const rawMsg = await generateBarkMessage(contact, hint);
+
+      if (!rawMsg) {
+        btn.disabled = false;
+        btn.innerHTML = "🌅 创建定时推送任务";
+        await sysAlert("消息生成失败，请检查API配置");
+        return;
+      }
+
+      const msgLines = parseBarkAIResponse(rawMsg, contact);
+      const generatedMsg = msgLines.join('\n');
 
       const task = {
         id: "bark_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
@@ -11472,16 +11548,15 @@ ${chatContext}
       contact.barkTasks.push(task);
 
       btn.disabled = false;
-      btn.textContent = "🌅 创建定时推送任务";
+      btn.innerHTML = "🌅 创建定时推送任务";
 
       // 清空提示词输入框
       if (hintInput) hintInput.value = "";
 
       renderBarkTaskList(contact);
-      await sysAlert(`✅ 创建成功！\n\n提示词：「${hint}」\n消息内容：「${generatedMsg}」\n\n将在 ${scheduledTime} 推送到你的手机。`);
+      await sysAlert(`✅ 创建成功！\n\n将在 ${scheduledTime} 推送到你的手机。`);
     }
-
-    //绑定创建按钮事件
+  //绑定创建按钮事件
     document.getElementById("barkCreateInstantBtn") && document.getElementById("barkCreateInstantBtn").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
       if (contact) createInstantBarkTask(contact);

@@ -7394,9 +7394,9 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     // 绑定物品栏里的"语音通话"按钮
     (function() {
       const inventoryItems = document.querySelectorAll(".inventory-item");
-      // 第4个inventory-item是"语音通话"
-      if (inventoryItems.length >= 4) {
-        inventoryItems[3].addEventListener("click", () => {
+      // 第5个inventory-item是"语音通话"（index 4）
+      if (inventoryItems.length >= 5) {
+        inventoryItems[4].addEventListener("click", () => {
           const contact = getContact(state.activeContactId);
           if (contact) {
             // 标记这次通话是用户发起的

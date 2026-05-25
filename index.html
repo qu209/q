@@ -3219,6 +3219,151 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       display: flex;
       gap: 12px;
     }
+    /* ====== 分享链接卡片样式 ====== */
+    .link-card-bubble {
+      width: 230px;
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e5e5ea;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+    }
+    .link-card-cover {
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display: block;
+      background: #f2f2f7;
+    }
+    .link-card-cover-placeholder {
+      width: 100%;
+      height: 80px;
+      background: linear-gradient(135deg, #e8eaef, #d0d5dd);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+    }
+    .link-card-body {
+      padding: 10px 12px 12px;
+    }
+    .link-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .link-card-desc {
+      font-size: 12px;
+      color: #888;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      margin-bottom: 6px;
+    }
+    .link-card-url {
+      font-size: 11px;
+      color: #b0b0b0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bubble.is-link-card {
+      background: transparent !important;
+      padding: 0 !important;
+      border-radius: 12px !important;
+    }
+
+    /* 分享链接输入弹窗 */
+    .share-link-mask {
+      position: fixed;
+      inset: 0;
+      z-index: 400;
+      background: rgba(0,0,0,0.42);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 0;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+    .share-link-mask.show { display: flex; }
+    .share-link-sheet {
+      width: 100%;
+      background: #f2f2f7;
+      border-radius: 24px 24px 0 0;
+      padding: 0 0 calc(24px + env(safe-area-inset-bottom));
+      overflow: hidden;
+    }
+    .share-link-loading {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 12px 0 4px;
+      font-size: 13px;
+      color: #888;
+    }
+    .share-link-loading.show { display: flex; }
+    @keyframes shareLinkSpin {
+      to { transform: rotate(360deg); }
+    }
+    .share-link-spinner {
+      width: 16px;
+      height: 16px;
+      border: 2px solid #d0d5dd;
+      border-top-color: #C1D0DC;
+      border-radius: 50%;
+      animation: shareLinkSpin 0.7s linear infinite;
+    }
+    .share-link-preview {
+      margin: 0 16px 12px;
+      background: #fff;
+      border-radius: 14px;
+      overflow: hidden;
+      display: none;
+      border: 1px solid #e5e5ea;
+    }
+    .share-link-preview.show { display: block; }
+    .share-link-preview-cover {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      display: block;
+      background: #f2f2f7;
+    }
+    .share-link-preview-body {
+      padding: 10px 14px 12px;
+    }
+    .share-link-preview-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: #111;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+    .share-link-preview-desc {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      margin-bottom: 6px;
+    }
+    .share-link-preview-url {
+      font-size: 11px;
+      color: #aaa;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
   </style>
   
@@ -3662,6 +3807,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       </div>
       <div class="inventory-popup" id="inventoryPopup">
         <div class="inventory-item" id="photoUploadItem">照片</div>
+        <div class="inventory-item" id="shareLinkItem">分享社媒</div>
         <div class="inventory-item" id="transferItemBtn">转账</div>
         <div class="inventory-item" id="voiceRecordItem">语音</div>
         <div class="inventory-item">语音通话</div>
@@ -5540,6 +5686,65 @@ if (msg.isTyping) {
                   </div>
                 </div>
               `;
+                          } else if (msg.text.startsWith("[LINK_CARD|")) {
+              // 渲染链接卡片
+              bubble.classList.add("is-link-card");
+              try {
+                const rawJson = msg.text.slice("[LINK_CARD|".length, -1);
+                const linkData = JSON.parse(decodeURIComponent(rawJson));
+                
+                const card = document.createElement("div");
+                card.className = "link-card-bubble";
+                card.style.cursor = "pointer";
+                card.title = "点击打开链接";
+
+                if (linkData.image) {
+                  const coverImg = document.createElement("img");
+                  coverImg.className = "link-card-cover";
+                  coverImg.src = linkData.image;
+                  coverImg.alt = "";
+                  coverImg.onerror = () => { coverImg.style.display = "none"; };
+                  card.appendChild(coverImg);
+                } else {
+                  const placeholder = document.createElement("div");
+                  placeholder.className = "link-card-cover-placeholder";
+                  placeholder.textContent = "🔗";
+                  card.appendChild(placeholder);
+                }
+
+                const body = document.createElement("div");
+                body.className = "link-card-body";
+
+                const titleEl = document.createElement("div");
+                titleEl.className = "link-card-title";
+                titleEl.textContent = linkData.title || "查看链接";
+
+                const descEl = document.createElement("div");
+                descEl.className = "link-card-desc";
+                descEl.textContent = linkData.description || "";
+                if (!linkData.description) descEl.style.display = "none";
+
+                const urlEl = document.createElement("div");
+                urlEl.className = "link-card-url";
+                urlEl.textContent = linkData.publisher || linkData.url || "";
+
+                body.appendChild(titleEl);
+                body.appendChild(descEl);
+                body.appendChild(urlEl);
+                card.appendChild(body);
+
+                // 点击打开链接
+                card.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  if (state.isMultiSelecting) return;
+                  window.open(linkData.url, "_blank");
+                });
+
+                textSpan.appendChild(card);
+              } catch(e) {
+                textSpan.textContent = msg.text;
+              }
+
             } else if (msg.text.startsWith("[VOICE_CALL|")) {
               // 渲染语音通话气泡
               bubble.classList.add("is-transfer");
@@ -6166,7 +6371,7 @@ TimeChecklist:
         }
       }
       // ==========================
-
+      combinedPersona += `\n【分享链接卡片功能】\n用户可能会给你分享链接卡片（小红书/抖音/INS等），卡片内容包含：标题、描述文字、封面图URL。当你看到"[LINK_CARD|...]"格式的消息时，说明用户给你分享了一个链接。请结合卡片里的标题和描述来回应，表现得像真人看到对方发来的有趣内容一样自然反应。你可以说"我刚看了你发的那个帖子""这个博主说的挺对的"等贴合实际内容的话。\n`;
       combinedPersona += "\n【极其重要的状态栏指令】：你可以随时改变自己显示在聊天顶部的状态。如果你决定改变状态（例如生闷气、开心、思考中），请在你的最后一行回复末尾隐蔽地附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#df3b3b|生气了]。如果不改变就不加。\n";
       combinedPersona += "【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：\n[INNER_VOICE|你的颜文字|你的内心想法]。\n例如：[INNER_VOICE|(*/ω＼*)|他居然这么懂我，有点心动了！]。\n⚠️警告：内心想法（心声正文）必须精简，字数请严格控制在 80 字以内！这部分仅作心声记录，绝对不能让用户在聊天气泡中直接看到。\n";
 
@@ -6238,6 +6443,23 @@ TimeChecklist:
         const voiceMsgMatch = messageContent && typeof messageContent ==='string' && messageContent.match(/\[VOICE_MSG[|:](\d+)[|:](.+)\]/);
         if (voiceMsgMatch) {
           messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
+        }
+        // 链接卡片：转为可读文字让AI理解
+        if (messageContent && typeof messageContent === 'string' && messageContent.startsWith("[LINK_CARD|")) {
+          try {
+            const rawJson = messageContent.slice("[LINK_CARD|".length, -1);
+            const linkData = JSON.parse(decodeURIComponent(rawJson));
+            messageContent = `[用户分享了一个链接卡片]\n标题：${linkData.title || "无"}\n描述：${linkData.description || "无"}\n来源：${linkData.publisher || linkData.url || "未知"}\n封面图：${linkData.image || "无"}`;
+            // 如果有封面图，用Vision模式让AI真正看到图
+            if (linkData.image) {
+              messageContent = [
+                { type: "text", text: `[用户分享了一个链接卡片]\n标题：${linkData.title || "无"}\n描述：${linkData.description || "无"}\n来源：${linkData.publisher || linkData.url || "未知"}` },
+                { type: "image_url", image_url: { url: linkData.image } }
+              ];
+            }
+          } catch(e) {
+            // 解析失败保持原样
+          }
         }
 
         // 新增：如果消息里包含图片，转为 Vision 模型支持的 Array 格式
@@ -6477,7 +6699,210 @@ TimeChecklist:
 
     chatBackBtn.addEventListener("click", backToFriends);
 
-    sendBtn.addEventListener("click", sendMessage);
+        // ========== 分享链接功能（microlink.io方案）==========
+
+    // 创建弹窗DOM
+    (function() {
+      const sheetHTML = `
+        <div class="share-link-mask" id="shareLinkMask">
+          <div class="share-link-sheet">
+            <div style="width:40px;height:5px;background:#c7c7cc;border-radius:3px;margin:12px auto 0;"></div>
+            <div style="display:flex;align-items:center;justify-content:center;padding:14px 20px 10px;position:relative;">
+              <span style="font-size:16px;font-weight:700;color:#111;">分享链接给TA看</span>
+            </div>
+            <div style="padding:0 16px 12px;">
+              <div style="background:#fff;border-radius:14px;padding:4px 14px;display:flex;align-items:center;gap:8px;box-shadow:0 1px 3px rgba(0,0,0,0.06);">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#b0b0b0" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                <input type="url" id="shareLinkInput" placeholder="粘贴小红书/抖音/INS等链接" style="flex:1;border:none;outline:none;background:transparent;padding:12px 0;font-size:15px;color:#111;" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" />
+                <button id="shareLinkClearBtn" style="appearance:none;border:none;background:transparent;color:#b0b0b0;font-size:18px;padding:0 4px;cursor:pointer;display:none;">×</button>
+              </div>
+            </div>
+            <div class="share-link-loading" id="shareLinkLoading">
+              <div class="share-link-spinner"></div>
+              <span>正在抓取链接信息...</span>
+            </div>
+            <div class="share-link-preview" id="shareLinkPreview">
+              <img class="share-link-preview-cover" id="shareLinkPreviewCover" src="" alt="" style="display:none;" />
+              <div class="share-link-preview-body">
+                <div class="share-link-preview-title" id="shareLinkPreviewTitle"></div>
+                <div class="share-link-preview-desc" id="shareLinkPreviewDesc"></div>
+                <div class="share-link-preview-url" id="shareLinkPreviewUrl"></div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;margin:0 16px 0;">
+              <button class="btn btn-light" id="shareLinkCancelBtn" style="height:52px;border-radius:14px;font-size:16px;font-weight:600;">取消</button>
+              <button class="btn btn-dark" id="shareLinkSendBtn" style="height:52px;border-radius:14px;font-size:16px;font-weight:600;flex:1.6;opacity:0.4;pointer-events:none;">发送</button>
+            </div>
+          </div>
+        </div>
+      `;
+      document.querySelector('.app').insertAdjacentHTML('beforeend', sheetHTML);
+    })();
+
+    // 变量
+    let shareLinkData = null; // 抓取到的链接元数据
+    let shareLinkFetchTimer = null;
+
+    const shareLinkItem = document.getElementById("shareLinkItem");
+    const shareLinkMask = document.getElementById("shareLinkMask");
+    const shareLinkInput = document.getElementById("shareLinkInput");
+    const shareLinkClearBtn = document.getElementById("shareLinkClearBtn");
+    const shareLinkLoading = document.getElementById("shareLinkLoading");
+    const shareLinkPreview = document.getElementById("shareLinkPreview");
+    const shareLinkPreviewCover = document.getElementById("shareLinkPreviewCover");
+    const shareLinkPreviewTitle = document.getElementById("shareLinkPreviewTitle");
+    const shareLinkPreviewDesc = document.getElementById("shareLinkPreviewDesc");
+    const shareLinkPreviewUrl = document.getElementById("shareLinkPreviewUrl");
+    const shareLinkCancelBtn = document.getElementById("shareLinkCancelBtn");
+    const shareLinkSendBtn = document.getElementById("shareLinkSendBtn");
+
+    function openShareLinkSheet() {
+      shareLinkInput.value = "";
+      shareLinkData = null;
+      shareLinkLoading.classList.remove("show");
+      shareLinkPreview.classList.remove("show");
+      shareLinkClearBtn.style.display = "none";
+      shareLinkSendBtn.style.opacity = "0.4";
+      shareLinkSendBtn.style.pointerEvents = "none";
+      shareLinkMask.classList.add("show");
+      setTimeout(() => shareLinkInput.focus(), 120);
+    }
+
+    function closeShareLinkSheet() {
+      shareLinkMask.classList.remove("show");
+      if (shareLinkFetchTimer) clearTimeout(shareLinkFetchTimer);
+      shareLinkInput.blur();
+    }
+
+    function resetShareLinkPreview() {
+      shareLinkData = null;
+      shareLinkLoading.classList.remove("show");
+      shareLinkPreview.classList.remove("show");
+      shareLinkSendBtn.style.opacity = "0.4";
+      shareLinkSendBtn.style.pointerEvents = "none";
+    }
+
+    // 防抖自动抓取
+    shareLinkInput.addEventListener("input", () => {
+      const val = shareLinkInput.value.trim();
+      shareLinkClearBtn.style.display = val ? "block" : "none";
+      resetShareLinkPreview();
+      if (shareLinkFetchTimer) clearTimeout(shareLinkFetchTimer);
+      if (!val) return;
+      // 简单判断是否像链接
+      if (!/https?:\/\//i.test(val) && !/^[a-zA-Z0-9\-]+\.[a-zA-Z]{2,}/.test(val)) return;
+      shareLinkFetchTimer = setTimeout(() => fetchLinkPreview(val), 800);
+    });
+
+    shareLinkClearBtn.addEventListener("click", () => {
+      shareLinkInput.value = "";
+      shareLinkClearBtn.style.display = "none";
+      resetShareLinkPreview();
+      shareLinkInput.focus();
+    });
+
+    async function fetchLinkPreview(url) {
+      // 补全协议头
+      let fullUrl = url;
+      if (!/^https?:\/\//i.test(fullUrl)) fullUrl = "https://" + fullUrl;
+
+      shareLinkLoading.classList.add("show");
+      shareLinkPreview.classList.remove("show");
+      shareLinkData = null;
+
+      try {
+        const apiUrl = "https://api.microlink.io/?url=" + encodeURIComponent(fullUrl) + "&screenshot=false&meta=true&embed=false";
+        const res = await fetch(apiUrl);
+        if (!res.ok) throw new Error("抓取失败");
+        const json = await res.json();
+        if (json.status !== "success" || !json.data) throw new Error("无数据");
+
+        const d = json.data;
+        const title = d.title || d.og?.title || "";
+        const description = d.description || d.og?.description || "";
+        const image = d.image?.url || d.og?.image || "";
+        const publisher = d.publisher || "";
+
+        shareLinkData = {
+          url: fullUrl,
+          title: title,
+          description: description,
+          image: image,
+          publisher: publisher
+        };
+
+        // 更新预览
+        shareLinkPreviewTitle.textContent = title || "（无标题）";
+        shareLinkPreviewDesc.textContent = description || "";
+        shareLinkPreviewUrl.textContent = publisher || fullUrl;
+
+        if (image) {
+          shareLinkPreviewCover.src = image;
+          shareLinkPreviewCover.style.display = "block";
+          shareLinkPreviewCover.onerror = () => { shareLinkPreviewCover.style.display = "none"; };
+        } else {
+          shareLinkPreviewCover.style.display = "none";
+        }
+
+        shareLinkLoading.classList.remove("show");
+        shareLinkPreview.classList.add("show");
+        shareLinkSendBtn.style.opacity = "1";
+        shareLinkSendBtn.style.pointerEvents = "auto";
+
+      } catch(e) {
+        // 抓取失败，也允许直接发原始链接
+        shareLinkLoading.classList.remove("show");
+        shareLinkData = {
+          url: fullUrl,
+          title: fullUrl,
+          description: "",
+          image: "",
+          publisher: ""
+        };
+        shareLinkPreviewTitle.textContent = fullUrl;
+        shareLinkPreviewDesc.textContent = "（无法获取预览，将直接发送链接）";
+        shareLinkPreviewUrl.textContent = fullUrl;
+        shareLinkPreviewCover.style.display = "none";
+        shareLinkPreview.classList.add("show");
+        shareLinkSendBtn.style.opacity = "1";
+        shareLinkSendBtn.style.pointerEvents = "auto";
+      }
+    }
+
+    shareLinkSendBtn.addEventListener("click", () => {
+      if (!shareLinkData) return;
+      const contact = getContact(state.activeContactId);
+      if (!contact) return;
+
+      // 构造特殊文本标签存储链接卡片数据
+      const linkMsgText = "[LINK_CARD|" + encodeURIComponent(JSON.stringify(shareLinkData)) + "]";
+      contact.messages.push({
+        from: "me",
+        text: linkMsgText,
+        time: getCurrentTime(),
+        msgTimestamp: Date.now(),
+        hasAnimated: false
+      });
+      contact.lastTime = getCurrentTime();
+      contact.lastMsgTimestamp = Date.now();
+
+      closeShareLinkSheet();
+      renderChat();
+    });
+
+    shareLinkCancelBtn.addEventListener("click", closeShareLinkSheet);
+    shareLinkMask.addEventListener("click", (e) => {
+      if (e.target === shareLinkMask) closeShareLinkSheet();
+    });
+
+    if (shareLinkItem) {
+      shareLinkItem.addEventListener("click", () => {
+        inventoryPopup.classList.remove("show");
+        openShareLinkSheet();
+      });
+    }
+    // ========== 分享链接功能结束 ==========
+sendBtn.addEventListener("click", sendMessage);
     
     // 监听键盘按键
     chatInput.addEventListener("keydown", (e) => {

@@ -31,16 +31,6 @@
     const blob = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
     document.getElementById('manifestLink').href = URL.createObjectURL(blob);
   </script>
-    <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/service-worker.js').then(reg => {
-        console.log('SW注册成功', reg);
-      }).catch(err => {
-        console.error('SW注册失败', err);
-      });
-    }
-  </script>
-
   <style>
     :root {
       --bg: #ffffff;
@@ -3229,41 +3219,6 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       display: flex;
       gap: 12px;
     }
-    /*====== Web Push定时推送任务卡片样式 ====== */
-    .bark-task-card {
-      background: #fff;
-      border-radius: 14px;
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      border: 1px solid #e8e8e8;
-      position: relative;
-    }
-    .bark-task-card.pending { border-left: 3px solid #f0ad4e; }
-    .bark-task-card.sent { border-left: 3px solid #37d05f; opacity: 0.7; }
-    .bark-task-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-    .bark-task-type { font-size: 12px; font-weight: 600; padding: 2px 8px; border-radius: 6px; color: #fff; }
-    .bark-task-type.instant { background: #5b9bd5; }
-    .bark-task-type.delayed { background: #f0ad4e; }
-    .bark-task-time { font-size: 12px; color: #999; }
-    .bark-task-preview { font-size: 14px; color: #333; line-height: 1.5; word-break: break-word; margin-bottom: 6px; }
-    .bark-task-status { font-size: 11px; color: #aaa; display: flex; align-items: center; gap: 4px; }
-    .bark-task-status .dot { width: 6px; height: 6px; border-radius: 50%; }
-    .bark-task-status .dot.pending { background: #f0ad4e; }
-    .bark-task-status .dot.sent { background: #37d05f; }
-    .bark-task-delete { position: absolute; top: 10px; right: 10px; width: 22px; height: 22px; border-radius: 50%; border: none; background: #f5f5f5; color: #999; font-size: 14px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
-    .bark-task-delete:active { background: #eee; }
-    .bark-create-section { background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 12px; }
-    .bark-create-section-title { font-size: 14px; font-weight: 700; color: #222; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-    .bark-create-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
-    .bark-create-row label { font-size: 13px; font-weight: 500; color: #555; white-space: nowrap; min-width: 65px; }
-    .bark-create-input { flex: 1; height: 38px; border: 1px solid #e0e0e0; border-radius: 10px; padding: 0 12px; font-size: 14px; outline: none; background: #f7f7f8; color: #111; box-sizing: border-box; }
-    .bark-create-textarea { flex: 1; min-height: 60px; border: 1px solid #e0e0e0; border-radius: 10px; padding: 10px 12px; font-size: 14px; outline: none; background: #f7f7f8; color: #111; resize: none; line-height: 1.5; box-sizing: border-box; }
-    .bark-create-btn { width: 100%; height: 42px; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: opacity 0.15s; -webkit-user-select: none; user-select: none; position: relative; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; line-height: 42px; padding: 0 16px; box-sizing: border-box; }
-    .bark-create-btn:active { opacity: 0.75; }
-    .bark-create-btn.instant-btn { background: #5b9bd5; color: #fff; }
-    .bark-create-btn.delayed-btn { background: #f0ad4e; color: #fff; }
-    .bark-create-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    .bark-task-list-title { font-size: 14px; font-weight: 700; color: #222; margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
 
   </style>
   
@@ -4024,62 +3979,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
             <input class="input" id="detailsAutoMomentInput" type="number" placeholder="每隔X分钟发一次" style="flex: 1; background: transparent; border: none; text-align: right; padding: 0;" />
           </div>
         </div>
-        <div class="details-section-card">
-          <div class="details-section-title">🔔 系统定时推送</div>
-          <div style="font-size:13px; color:#666; margin-bottom:12px; line-height:1.6;">
-            创建任务后，AI立即生成消息并存到服务器。到达设定时间时，<strong>即使关闭网页</strong>也会通过系统通知推送到你的手机。<br>
-            首次使用请先点下方按钮开启通知权限。
-          </div>
 
-          <button id="webPushSubscribeBtn" class="bark-create-btn" style="background:#34c759; color:#fff; margin-bottom:16px;">🔔 开启系统推送权限</button>
-          <div id="webPushStatus" style="font-size:12px; color:#aaa; text-align:center; margin-bottom:12px;"></div>
-
-          <!-- 即时型 -->
-          <div class="bark-create-section" style="background:#f0f6fb; border:1px solid #d4e6f5;">
-            <div class="bark-create-section-title"><span style="font-size:16px;">⚡</span> 即时消息推送</div>
-            <div style="font-size:12px; color:#888; margin-bottom:10px;">基于最近聊天，AI自动生成消息，到时间推送。</div>
-            <div class="bark-create-row">
-              <label>推送时间</label>
-              <input type="time" id="barkInstantTime" class="bark-create-input" />
-            </div>
-            <div class="bark-create-row">
-              <label>重复</label>
-              <select id="barkInstantRecurrence" class="bark-create-input">
-                <option value="none">仅一次</option>
-                <option value="daily">每天</option>
-                <option value="weekly">每周</option>
-              </select>
-            </div>
-            <button class="bark-create-btn instant-btn" id="barkCreateInstantBtn"><span>⚡</span> <span>创建即时推送任务</span></button>
-          </div>
-
-          <!-- 定时型 -->
-          <div class="bark-create-section" style="background:#fef9f0; border:1px solid #f5e6c8;">
-            <div class="bark-create-section-title"><span style="font-size:16px;">🌅</span> 定时消息推送</div>
-            <div style="font-size:12px; color:#888; margin-bottom:10px;">告诉AI你想收到什么消息，到时间推送。</div>
-            <div class="bark-create-row">
-              <label>推送时间</label>
-              <input type="time" id="barkDelayedTime" class="bark-create-input" />
-            </div>
-            <div class="bark-create-row">
-              <label>重复</label>
-              <select id="barkDelayedRecurrence" class="bark-create-input">
-                <option value="none">仅一次</option>
-                <option value="daily">每天</option>
-                <option value="weekly">每周</option>
-              </select>
-            </div>
-            <div class="bark-create-row" style="align-items:flex-start;">
-              <label style="margin-top:10px;">提示词</label>
-              <textarea id="barkDelayedHint" class="bark-create-textarea" placeholder="例如：发一条温柔的早安问候 / 提醒我喝水 / 用撒娇的语气叫我起床"></textarea>
-            </div>
-            <button class="bark-create-btn delayed-btn" id="barkCreateDelayedBtn"><span>🌅</span> <span>创建定时推送任务</span></button>
-          </div>
-
-          <div class="bark-task-list-title"><span style="font-size:14px;">📋</span> 推送任务队列</div>
-          <div id="barkTaskListContainer" style="max-height:300px; overflow-y:auto;"></div>
-        </div>
-v>
         <div class="details-section-card">
           <div class="details-section-title">挂载世界书</div>
           <div style="font-size:13px;
@@ -4873,44 +4773,7 @@ function estimateTokens(text) {
         momentsCoverBg: "",
         momentsSubTitle: "moments",
         walletCardBg: "",
-        contacts: [
-          {
-            id: "default_contact_1",
-            remark: "哥",
-            realName: "",
-            persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
-            myPersona: "",
-            avatar: "",
-            frameUrl: "",
-            frameScale: 1,
-            frameX: 0,
-            frameY: 0,
-            showFrameInChat: true,
-            showFrameInHeader: true,
-            statusText: "在线中",
-            statusColor: "#37d05f",
-            lastTime: "22:36",
-            messages: []
-          },
-          {
-            id: "default_contact_2",
-            remark: "()",
-            realName: "",
-            persona: "你是一个简洁、自然、好相处的 AI 好友，说话不用太长。",
-            myPersona: "",
-            avatar: "",
-            frameUrl: "",
-            frameScale: 1,
-            frameX: 0,
-            frameY: 0,
-            showFrameInChat: true,
-            showFrameInHeader: true,
-            statusText: "在线中",
-            statusColor: "#37d05f",
-            lastTime: "昨天",
-            messages: []
-          }
-        ]
+        contacts: []
       };
     }
 
@@ -6343,71 +6206,47 @@ TimeChecklist:
       // 提取历史消息 (为了防止 token 超限，这里提取最近的 30 条)
       const history = contact.messages.slice(-30);
       history.forEach(msg => {
-        //跳过正在打字的占位消息
-        if (msg.isTyping) return;
-        
-        // 安全获取文本，防止 undefined/null
-        let rawText = (msg.text && typeof msg.text === 'string') ? msg.text : '';
-        let messageContent = rawText;
-        
-        // 跳过系统消息（不需要让AI看到）
-        if (rawText.startsWith("【系统消息】")) return;
+        let messageContent = msg.text;
         
         // 把各种卡片状态转译成文字让AI能够理解当前情况
-        const transferMatch = rawText.match(/\[TRANSFER\|([\d\.]+)\|([^|]*)\|([^|]+)\|([^\]]+)\]/);
-        const replyMatch = rawText.match(/\[TRANSFER_REPLY\|([\d\.]+)\|([^|]+)\|([^\]]+)\]/);
+        const transferMatch = msg.text.match(/\[TRANSFER\|([\d\.]+)\|([^|]*)\|([^|]+)\|([^\]]+)\]/);
+        const replyMatch = msg.text.match(/\[TRANSFER_REPLY\|([\d\.]+)\|([^|]+)\|([^\]]+)\]/);
         
         if (transferMatch) {
            const amt = transferMatch[1], note = transferMatch[2], status = transferMatch[3], dir = transferMatch[4];
            if (dir === "me") {
              if(status === "pending") messageContent = `[我向你发起了一笔转账：¥${amt}，备注：${note}。请你决定是否接受]`;
-             else if(status === "accepted") messageContent = `[我向你发起的转账 ¥${amt}，你已收款]`;
-             else if(status === "returned") messageContent = `[我向你发起的转账 ¥${amt}，你已退回]`;
+             if(status === "accepted") messageContent = `[我向你发起的转账 ¥${amt}，你已收款]`;
+             if(status === "returned") messageContent = `[我向你发起的转账 ¥${amt}，你已退回]`;
            } else {
              if(status === "pending") messageContent = `[你向我发起了一笔转账：¥${amt}，备注：${note}]`;
-             else if(status === "accepted") messageContent = `[你向我发起的转账 ¥${amt}，我已收款]`;
-             else if(status === "returned") messageContent = `[你向我发起的转账 ¥${amt}，我已退回]`;
+             if(status === "accepted") messageContent = `[你向我发起的转账 ¥${amt}，我已收款]`;
+             if(status === "returned") messageContent = `[你向我发起的转账 ¥${amt}，我已退回]`;
            }
         } else if (replyMatch) {
            const amt = replyMatch[1], status = replyMatch[2], dir = replyMatch[3];
            if (dir === "me") {
              if(status === "accepted") messageContent = `[我接收了你的转账 ¥${amt}]`;
-             else if(status === "returned") messageContent = `[我退回了你的转账 ¥${amt}]`;
+             if(status === "returned") messageContent = `[我退回了你的转账 ¥${amt}]`;
            } else {
              if(status === "accepted") messageContent = `[你接收了我的转账 ¥${amt}]`;
-             else if(status === "returned") messageContent = `[你退回了我的转账 ¥${amt}]`;
+             if(status === "returned") messageContent = `[你退回了我的转账 ¥${amt}]`;
            }
-        } else if (rawText.startsWith("[VOICE_CALL|")) {
-           messageContent = "[语音通话记录]";
-        } else if (rawText.startsWith("[EMOJI_STICKER|")) {
-           const parts = rawText.slice(1, -1).split("|");
-           const label = parts[2] || "表情包";
-           messageContent = `[发送了一个表情包：${label}]`;
-        } else if (rawText.startsWith("[PHOTO_MSG|")) {
-           const desc = rawText.replace("[PHOTO_MSG|", "").replace("]", "");
-           messageContent = `[发送了一张图片：${desc}]`;
         }
         
         // 语音消息转译为可读文本给AI看（兼容竖线和冒号分隔符）
-        if (typeof messageContent === 'string') {
-          const voiceMsgMatch = messageContent.match(/\[VOICE_MSG[|:](\d+)[|:](.+)\]/);
-          if (voiceMsgMatch) {
-            messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
-          }
+        const voiceMsgMatch = messageContent && typeof messageContent ==='string' && messageContent.match(/\[VOICE_MSG[|:](\d+)[|:](.+)\]/);
+        if (voiceMsgMatch) {
+          messageContent = `[语音消息，时长${voiceMsgMatch[1]}秒]: ${voiceMsgMatch[2]}`;
         }
 
-        // 如果消息里包含图片，转为 Vision 模型支持的 Array 格式
+        // 新增：如果消息里包含图片，转为 Vision 模型支持的 Array 格式
         if (msg.image) {
           messageContent = [];
-          if (rawText && !rawText.startsWith("[")) {
-             messageContent.push({ type: "text", text: rawText });
+          if (msg.text) {
+             messageContent.push({ type: "text", text: msg.text });
           }
           messageContent.push({ type: "image_url", image_url: { url: msg.image } });
-        }
-
-        // 最终安全检查：确保 content 不是空字符串
-        if (messageContent === '' || messageContent === null || messageContent === undefined) {
-          messageContent = "[发送了一条消息]";
         }
 
         messages.push({
@@ -6640,17 +6479,8 @@ TimeChecklist:
 
     sendBtn.addEventListener("click", sendMessage);
     
-    // 监听键盘按键（修复中文输入法回车误发"1"的问题）
-    let isComposing = false;
-    chatInput.addEventListener("compositionstart", () => {
-      isComposing = true;
-    });
-    chatInput.addEventListener("compositionend", () => {
-      isComposing = false;
-    });
+    // 监听键盘按键
     chatInput.addEventListener("keydown", (e) => {
-      // 如果正在使用输入法组合（如中文拼音选词），不触发发送
-      if (e.isComposing || isComposing) return;
       // 移动端或电脑端按下回车发送（按住 Shift 加回车则是换行）
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
@@ -8798,18 +8628,8 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       detailsMyPersonaInput.value = contact.myPersona || "";
       
       // 回显后台活动设置
-            document.getElementById("detailsAutoMsgInput").value = contact.autoMsgInterval || "";
+      document.getElementById("detailsAutoMsgInput").value = contact.autoMsgInterval || "";
       document.getElementById("detailsAutoMomentInput").value = contact.autoMomentInterval || "";
-
-      // 初始化Web Push任务列表
-      if (!contact.barkTasks) contact.barkTasks = [];
-      renderBarkTaskList(contact);
-      const defaultBarkTime = getTimeAfterMinutes(1);
-      const instantTimeInput = document.getElementById("barkInstantTime");
-      const delayedTimeInput = document.getElementById("barkDelayedTime");
-      if (instantTimeInput) instantTimeInput.value = defaultBarkTime;
-      if (delayedTimeInput) delayedTimeInput.value = getTimeAfterMinutes(60);
-      updateWebPushStatus();
 
       // 初始化和渲染记忆面板
       contact.memoryList = contact.memoryList || [];
@@ -8933,8 +8753,6 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (contact.autoMomentInterval === 0) {
           contact.lastAutoMomentTimeMs = null;
       }
-
-      // barkTasks已经在创建任务时实时保存到 contact 对象上了，无需额外操作
 
       if (detailsAvatarPreview.dataset.tempAvatar) {
         contact.avatar = detailsAvatarPreview.dataset.tempAvatar;
@@ -11152,346 +10970,16 @@ ${imagePromptInstruction}`;
         }
     }
 
-    // ====== Web Push 定时推送系统 ======
-    const VAPID_PUBLIC_KEY = 'BPiqrV1cSCLzhRZm9fpPF6SGLAZpY-_hyFSrTbZe34VkFDQ6qNplkrOvi0iTZ5d1w1hg56WMPyktDHjUHs9a1v0';
-    const PUSH_API_BASE = 'https://tacenda-push.vercel.app';
-    let webPushSubscription = null;
-
-    function urlBase64ToUint8Array(base64String) {
-      const padding = '='.repeat((4 - base64String.length % 4) % 4);
-      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const rawData = window.atob(base64);
-      const outputArray = new Uint8Array(rawData.length);
-      for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
-      return outputArray;
-    }
-
-    async function getOrCreatePushSubscription() {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
-      try {
-        const reg = await navigator.serviceWorker.ready;
-        let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-          });
-        }
-        webPushSubscription = sub;
-        return sub;
-      } catch(e) {
-        console.error('获取推送订阅失败', e);
-        return null;
-      }
-    }
-
-    async function updateWebPushStatus() {
-      const statusEl = document.getElementById('webPushStatus');
-      const btn = document.getElementById('webPushSubscribeBtn');
-      if (!statusEl || !btn) return;
-      if (!('Notification' in window)) {
-        statusEl.textContent = '⚠️ 当前浏览器不支持通知';
-        btn.style.display = 'none';
-        return;
-      }
-      if (Notification.permission === 'granted') {
-        statusEl.textContent = '✅ 推送权限已开启';
-        btn.textContent = '✅ 推送已开启';
-        btn.style.background = '#aaa';
-        const sub = await getOrCreatePushSubscription();
-        if (!sub) statusEl.textContent = '⚠️ 订阅失败，请重试';
-      } else if (Notification.permission === 'denied') {
-        statusEl.textContent = '❌ 通知权限被拒绝，请在系统设置中手动开启';
-        btn.style.display = 'none';
-      } else {
-        statusEl.textContent = '请先开启通知权限才能使用定时推送';
-      }
-    }
-
-    document.getElementById('webPushSubscribeBtn') && document.getElementById('webPushSubscribeBtn').addEventListener('click', async () => {
-      const perm = await Notification.requestPermission();
-      if (perm === 'granted') {
-        await getOrCreatePushSubscription();
-      }
-      updateWebPushStatus();
-    });
-
-    // 获取当前时间+N分钟后的 HH:MM 字符串
-    function getTimeAfterMinutes(minutes) {
-      const d = new Date(Date.now() + minutes * 60000);
-      return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
-    }
-
-    // 渲染任务列表
-    function renderBarkTaskList(contact) {
-      const container = document.getElementById("barkTaskListContainer");
-      if (!container) return;
-      container.innerHTML = "";
-      if (!contact.barkTasks || contact.barkTasks.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:20px 0; color:#bbb; font-size:13px;">暂无推送任务</div>';
-        return;
-      }
-      const sorted = [...contact.barkTasks].sort((a, b) => {
-        const orderMap = { 'pending': 0, 'sent': 1 };
-        const aO = orderMap[a.status] !== undefined ? orderMap[a.status] : 0;
-        const bO = orderMap[b.status] !== undefined ? orderMap[b.status] : 0;
-        if (aO !== bO) return aO - bO;
-        return (a.scheduledTime || '').localeCompare(b.scheduledTime || '');
-      });
-      sorted.forEach(task => {
-        const card = document.createElement("div");
-        const isPending = task.status === 'pending';
-        card.className = `bark-task-card ${isPending ? 'pending' : 'sent'}`;
-        const typeLabel = task.type === 'instant' ? '即时' : '定时';
-        const typeClass = task.type === 'instant' ? 'instant' : 'delayed';
-        const recurrenceLabel = task.recurrenceType === 'daily' ? ' · 每天' : task.recurrenceType === 'weekly' ? ' · 每周' : '';
-        const statusText = isPending ? '⏳ 等待推送中（关闭网页也能收到）' : '✅ 已推送';
-        card.innerHTML = `
-          <button class="bark-task-delete" data-task-id="${task.id}" title="删除">×</button>
-          <div class="bark-task-header">
-            <span class="bark-task-type ${typeClass}">${typeLabel}${recurrenceLabel}</span>
-            <span class="bark-task-time">⏰ ${task.scheduledTime || '--:--'}</span>
-          </div>
-          ${task.hint ? `<div style="font-size:11px; color:#c0a060; margin-bottom:4px;">💡 ${task.hint}</div>` : ''}
-          <div class="bark-task-status">
-            <span class="dot ${isPending ? 'pending' : 'sent'}"></span>
-            <span>${statusText}</span>
-          </div>`;
-        card.querySelector('.bark-task-delete').addEventListener('click', async (e) => {
-          e.stopPropagation();
-          const taskId = e.currentTarget.dataset.taskId;
-          contact.barkTasks = contact.barkTasks.filter(t => t.id !== taskId);
-          renderBarkTaskList(contact);
-        });
-        container.appendChild(card);
-      });
-    }
-
-    // AI生成推送消息内容
-    async function generateBarkMessage(contact, hint) {
-      const api = state.apiSettings;
-      if (!api.url || !api.key) return null;
-      const friendName = getDisplayName(contact);
-      let loreText = "";
-      if (contact.linkedLorebooks && contact.linkedLorebooks.length > 0) {
-        loreText = state.lorebooks.filter(l => contact.linkedLorebooks.includes(l.id)).map(l => `[${l.title}]: ${l.content}`).join("\n");
-      }
-      let memText = contact.memoryList && contact.memoryList.length > 0 ? contact.memoryList.join("\n") : "无";
-      let chatContext = "无";
-      if (contact.messages && contact.messages.length > 0) {
-        const recentMsgs = contact.messages.slice(-20).filter(m => !m.isTyping);
-        if (recentMsgs.length > 0) {
-          chatContext = recentMsgs.map(m => {
-            const who = m.from === "me" ? "用户" : friendName;
-            const txt = m.text ? m.text.replace(/<[^>]*>?/gm, '').slice(0, 100) : '[图片/特殊消息]';
-            return `${who}：${txt}`;
-          }).join("\n");
-        }
-      }
-      const taskDescription = hint
-        ? `用户希望你发的消息类型/内容方向是：「${hint}」\n请严格按照用户的提示词方向来生成消息，同时保持你的人设和性格。`
-        : `请基于你们最近的聊天上下文，自然地生成主动发给用户的消息。像真人主动找人聊天一样。`;
-      const sysPromptText = `你现在是${friendName}。
-你的设定：${contact.persona || "一个自然、真实的朋友"}
-${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
-【世界书】：${loreText || '无'}
-【你们过去的记忆总结】：${memText}
-【你们最近的聊天记录】：
-${chatContext}
-
-任务：${taskDescription}
-
-【核心回复规则 - 极其重要】
-1. 你的回复必须拆分成多条独立的消息！用换行符（回车）分隔每条消息。
-2. 条数根据你的性格和情境动态调整：
-   · 性格热情、话痨、黏人 → 4~6条
-   · 性格普通、正常状态 → 3~4条
-   · 性格冷淡、高冷 → 2~3条
-3. 以符合你人设的方式写消息，像发微信一样自然、口语化
-4. 直接输出消息本身，绝对不要加任何前缀、解释、引号、序号！
-5. 当前时间是${getCurrentTime()}，请自然融入时间感知
-
-【心声系统指令(极其重要)】：在每轮回复中，你必须额外输出你内心深处的真实想法和当下的颜文字。请严格按照以下格式附在你所有回复的最末尾（占独立一行）：
-[INNER_VOICE|你的颜文字|你的内心想法]
-例如：[INNER_VOICE|(*/ω＼*)|好想他啊，主动找他聊天好了]
-⚠️内心想法必须精简，字数严格控制在80字以内！
-
-【状态栏指令】：如果你决定改变状态，请在最后一行回复末尾附上：[STATUS:十六进制颜色码|状态文字]，例如：[STATUS:#37d05f|想你了]。不改变就不加。`;
-      try {
-        const endpoint = api.url.endsWith('/') ? api.url + 'chat/completions' : api.url + '/chat/completions';
-        const res = await fetch(endpoint, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${api.key}` },
-          body: JSON.stringify({ model: api.model || "gpt-3.5-turbo", messages: [{ role: "system", content: sysPromptText }], temperature: api.temperature })
-        });
-        if (!res.ok) return null;
-        const data = await res.json();
-        return data.choices[0].message.content.trim();
-      } catch(e) {
-        console.error("消息生成失败", e);
-        return null;
-      }
-    }
-
-    function parseBarkAIResponse(rawText, contact) {
-      let text = rawText;
-      const innerVoiceRegex = /\[INNER_VOICE\|([^|]+)\|([^\]]+)\]/i;
-      const innerMatch = text.match(innerVoiceRegex);
-      if (innerMatch) {
-        contact.latestEmoticon = innerMatch[1];
-        contact.latestInnerVoice = innerMatch[2];
-        text = text.replace(innerVoiceRegex, "").trim();
-      }
-      const statusRegex = /\[STATUS:([#a-zA-Z0-9]+)\|([^\]]+)\]/i;
-      const statusMatch = text.match(statusRegex);
-      if (statusMatch) {
-        contact.statusColor = statusMatch[1];
-        contact.statusText = statusMatch[2];
-        text = text.replace(statusRegex, "").trim();
-      }
-      return text.split('\n').map(l => l.trim()).filter(l => l !== "");
-    }
-
-    // 把HH:MM转为今天或明天的ISO时间字符串
-    function scheduledTimeToISO(timeStr) {
-      const [h, m] = timeStr.split(':').map(Number);
-      // 用中国时区（UTC+8）计算正确的UTC时间
-      const now = new Date();
-      const chinaOffsetMs = 8 * 60 * 60 * 1000;
-      const chinaToday = new Date(now.getTime() + chinaOffsetMs);
-      const y = chinaToday.getUTCFullYear();
-      const mo = chinaToday.getUTCMonth();
-      const d = chinaToday.getUTCDate();
-      // 构建中国时间的目标时刻，转换为UTC
-      let targetUTC = new Date(Date.UTC(y, mo, d, h - 8, m, 0));
-      if (targetUTC.getTime() <= now.getTime()) {
-        targetUTC = new Date(targetUTC.getTime() + 24 * 60 * 60 * 1000);
-      }
-      return targetUTC.toISOString();
-    }
-
-    // 提交推送任务到服务器
-    async function submitPushTask(contact, generatedMsg, scheduledTime, recurrenceType, hint, type) {
-      const sub = webPushSubscription || await getOrCreatePushSubscription();
-      if (!sub) {
-        await sysAlert("请先开启推送权限！");
-        return false;
-      }
-      const nextSendAt = scheduledTimeToISO(scheduledTime);
-      try {
-        const res = await fetch(PUSH_API_BASE + '/api/schedule-message', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contact_name: getDisplayName(contact),
-            contact_data: { id: contact.id, persona: contact.persona },
-            message_type: type,
-            hint: hint || null,
-            next_send_at: nextSendAt,
-            recurrence_type: recurrenceType || 'none',
-            push_subscription: sub.toJSON(),
-            generated_msg: generatedMsg
-          })
-        });
-        if (!res.ok) {
-          console.error('提交推送任务失败', await res.text());
-          return false;
-        }
-        return true;
-      } catch(e) {
-        console.error('提交推送任务失败', e);
-        return false;
-      }
-    }
-
-    // 创建即时推送任务
-    async function createInstantBarkTask(contact) {
-      const timeInput = document.getElementById("barkInstantTime");
-      const recurrenceInput = document.getElementById("barkInstantRecurrence");
-      const scheduledTime = timeInput ? timeInput.value : getTimeAfterMinutes(1);
-      const recurrenceType = recurrenceInput ? recurrenceInput.value : 'none';
-      if (!scheduledTime) { await sysAlert("请设置推送时间"); return; }
-      const api = state.apiSettings;
-      if (!api.url || !api.key) { await sysAlert("请先前往设置填写api哦"); return; }
-      const btn = document.getElementById("barkCreateInstantBtn");
-      btn.disabled = true;
-      btn.innerHTML = "AI正在生成消息...";
-      const rawMsg = await generateBarkMessage(contact, null);
-      if (!rawMsg) { btn.disabled = false; btn.innerHTML = "⚡ 创建即时推送任务"; await sysAlert("消息生成失败，请检查API配置"); return; }
-      const msgLines = parseBarkAIResponse(rawMsg, contact);
-      const generatedMsg = msgLines.join('\n');
-      btn.innerHTML = "正在提交到服务器...";
-      const ok = await submitPushTask(contact, generatedMsg, scheduledTime, recurrenceType, null, 'instant');
-      btn.disabled = false;
-      btn.innerHTML = "⚡ 创建即时推送任务";
-      if (!ok) { await sysAlert("提交失败，请检查网络"); return; }
-      if (!contact.barkTasks) contact.barkTasks = [];
-      contact.barkTasks.push({
-        id: "push_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
-        type: "instant", scheduledTime, generatedMsg, hint: "", recurrenceType, status: "pending", createdAt: getCurrentTime()
-      });
-      renderBarkTaskList(contact);
-      await sysAlert(`✅ 创建成功！即使关闭网页，也会在 ${scheduledTime} 准时推送到你的手机。`);
-    }
-
-    // 创建定时推送任务
-    async function createDelayedBarkTask(contact) {
-      const timeInput = document.getElementById("barkDelayedTime");
-      const hintInput = document.getElementById("barkDelayedHint");
-      const recurrenceInput = document.getElementById("barkDelayedRecurrence");
-      const scheduledTime = timeInput ? timeInput.value : "";
-      const hint = hintInput ? hintInput.value.trim() : "";
-      const recurrenceType = recurrenceInput ? recurrenceInput.value : 'none';
-      if (!scheduledTime) { await sysAlert("请设置推送时间"); return; }
-      if (!hint) { await sysAlert("请填写提示词，告诉AI你想收到什么类型的消息"); return; }
-      const api = state.apiSettings;
-      if (!api.url || !api.key) { await sysAlert("请先前往设置填写api哦"); return; }
-      const btn = document.getElementById("barkCreateDelayedBtn");
-      btn.disabled = true;
-      btn.innerHTML = "AI正在生成消息...";
-      const rawMsg = await generateBarkMessage(contact, hint);
-      if (!rawMsg) { btn.disabled = false; btn.innerHTML = "🌅 创建定时推送任务"; await sysAlert("消息生成失败，请检查API配置"); return; }
-      const msgLines = parseBarkAIResponse(rawMsg, contact);
-      const generatedMsg = msgLines.join('\n');
-      btn.innerHTML = "正在提交到服务器...";
-      const ok = await submitPushTask(contact, generatedMsg, scheduledTime, recurrenceType, hint, 'delayed');
-      btn.disabled = false;
-      btn.innerHTML = "🌅 创建定时推送任务";
-      if (!ok) { await sysAlert("提交失败，请检查网络"); return; }
-      if (!contact.barkTasks) contact.barkTasks = [];
-      contact.barkTasks.push({
-        id: "push_" + Date.now() + "_" + Math.random().toString(36).slice(2, 7),
-        type: "delayed", scheduledTime, generatedMsg, hint, recurrenceType, status: "pending", createdAt: getCurrentTime()
-      });
-      if (hintInput) hintInput.value = "";
-      renderBarkTaskList(contact);
-      await sysAlert(`✅ 创建成功！即使关闭网页，也会在 ${scheduledTime} 准时推送到你的手机。`);
-    }
-
-    document.getElementById("barkCreateInstantBtn") && document.getElementById("barkCreateInstantBtn").addEventListener("click", () => {
-      const contact = getContact(state.activeContactId);
-      if (contact) createInstantBarkTask(contact);
-    });
-
-    document.getElementById("barkCreateDelayedBtn") && document.getElementById("barkCreateDelayedBtn").addEventListener("click", () => {
-      const contact = getContact(state.activeContactId);
-      if (contact) createDelayedBarkTask(contact);
-    });
-
-    // 兼容旧数据
-    function renderBarkTimeList() {}
-    function getCurrentBarkTimes() { return []; }
     // 后台心跳守护循环（每隔 30 秒检查一次所有的触发条件）
     setInterval(() => {
         const now = Date.now();
-        const currentTime = String(new Date().getHours()).padStart(2,'0') + ':' + String(new Date().getMinutes()).padStart(2,'0');
-
         state.contacts.forEach(c => {
             // 1. 检查主动发消息
+            // lastInteractTimeMs 必须已被初始化（在保存详情时赋值）才开始计时
             if (c.autoMsgInterval && c.autoMsgInterval > 0 && c.lastInteractTimeMs) {
                 const diffMinutes = (now - c.lastInteractTimeMs) / 60000;
                 if (diffMinutes >= c.autoMsgInterval) {
-                    c.lastInteractTimeMs = now;
+                    c.lastInteractTimeMs = now; // 重置为当前时间，角色发完消息后再从现在开始算
                     executeAutoMessage(c);
                 }
             }
@@ -11504,12 +10992,8 @@ ${chatContext}
                     executeAutoMoment(c);
                 }
             }
-
         });
     }, 30000);
-
-    // Web Push方案下，消息由服务器推送，本地不需要检查错过的任务
-    function checkMissedBarkTasks() {}
 
     // 用户自己发消息 或 AI回复 时，都重置"上次交互时间"，让计时从头开始
     const origSendMessage = sendMessage;
@@ -12284,8 +11768,6 @@ ${chatContext}
       if (state.musicList && state.musicList.length > 0) {
         renderMusicList();
       }
-      // 检查是否有错过的Bark推送任务需要补发并插入聊天记录
-      checkMissedBarkTasks();
     }).catch(err => {
       console.error("IndexedDB 加载失败，使用默认数据:", err);
     });

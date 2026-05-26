@@ -3560,6 +3560,52 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           </div>
         </div>
 
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">界面背景 (好友/朋友圈/我)</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
+            自定义三个主界面的背景图片。设置后会自动保存到本地存储。
+          </div>
+          
+          <!-- 好友页背景 -->
+          <div style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">好友页背景</label>
+            <div class="bg-preview-box" id="settingsFriendsBgPreview" style="height: 80px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
+                更换背景
+                <input type="file" id="settingsFriendsBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
+              </button>
+              <button class="btn btn-light" id="clearFriendsBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+            </div>
+          </div>
+
+          <!-- 朋友圈页背景 -->
+          <div style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">朋友圈页背景</label>
+            <div class="bg-preview-box" id="settingsMomentsBgPreview" style="height: 80px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
+                更换背景
+                <input type="file" id="settingsMomentsBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
+              </button>
+              <button class="btn btn-light" id="clearMomentsBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+            </div>
+          </div>
+
+          <!-- 我的页面背景 -->
+          <div>
+            <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">我的页面背景</label>
+            <div class="bg-preview-box" id="settingsMeBgPreview" style="height: 80px; margin-bottom: 10px;"></div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
+                更换背景
+                <input type="file" id="settingsMeBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
+              </button>
+              <button class="btn btn-light" id="clearMeBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+            </div>
+          </div>
+        </div>
+
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">个性化 (全局字体与排版)</div>
         <div style="background: #fff; border-radius: 16px; padding: 16px;">
           
@@ -8205,7 +8251,7 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       fontPresetSelect.value = state.fontSettings.currentPresetId;
     }
 
-                    openSettingsBtn.addEventListener("click", () => {
+                                        openSettingsBtn.addEventListener("click", () => {
       // 载入 API 设置
       apiUrlInput.value = state.apiSettings.url;
       apiKeyInput.value = state.apiSettings.key;
@@ -8219,6 +8265,9 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       // 载入生图设置
       document.getElementById("imgGenToggle").checked = state.imgGenSettings ? state.imgGenSettings.enabled : false;
       document.getElementById("pollinationsKeyInput").value = state.imgGenSettings ? (state.imgGenSettings.pollinationsKey || "") : "";
+
+      // 载入背景设置预览
+      initializeScreenBackgrounds();
 
       // 载入个性化设置
       renderFontPresets();
@@ -8420,6 +8469,135 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       screens.settings.classList.remove("active");
       screens.me.classList.add("active");
       tabbar.classList.remove("hidden");
+    });
+
+    // ====== 界面背景管理逻辑 ======
+    // 初始化背景预览
+    function initializeScreenBackgrounds() {
+      const friendsBgPreview = document.getElementById("settingsFriendsBgPreview");
+      const momentsBgPreview = document.getElementById("settingsMomentsBgPreview");
+      const meBgPreview = document.getElementById("settingsMeBgPreview");
+
+      if (!state.screenBackgrounds) {
+        state.screenBackgrounds = {
+          friends: "",
+          moments: "",
+          me: ""
+        };
+      }
+
+      if (friendsBgPreview && state.screenBackgrounds.friends) {
+        friendsBgPreview.style.backgroundImage = `url(${state.screenBackgrounds.friends})`;
+      }
+      if (momentsBgPreview && state.screenBackgrounds.moments) {
+        momentsBgPreview.style.backgroundImage = `url(${state.screenBackgrounds.moments})`;
+      }
+      if (meBgPreview && state.screenBackgrounds.me) {
+        meBgPreview.style.backgroundImage = `url(${state.screenBackgrounds.me})`;
+      }
+    }
+
+    // 应用背景到实际界面
+    function applyScreenBackgrounds() {
+      const friendsScreen = screens.friends;
+      const momentsScreen = screens.moments;
+      const meScreen = screens.me;
+
+      if (state.screenBackgrounds.friends) {
+        friendsScreen.style.backgroundImage = `url(${state.screenBackgrounds.friends})`;
+        friendsScreen.style.backgroundSize = "cover";
+        friendsScreen.style.backgroundPosition = "center";
+        friendsScreen.style.backgroundAttachment = "fixed";
+      } else {
+        friendsScreen.style.backgroundImage = "";
+        friendsScreen.style.background = "#fff";
+      }
+
+      if (state.screenBackgrounds.moments) {
+        momentsScreen.style.backgroundImage = `url(${state.screenBackgrounds.moments})`;
+        momentsScreen.style.backgroundSize = "cover";
+        momentsScreen.style.backgroundPosition = "center";
+        momentsScreen.style.backgroundAttachment = "fixed";
+      } else {
+        momentsScreen.style.backgroundImage = "";
+        momentsScreen.style.background = "#fff";
+      }
+
+      if (state.screenBackgrounds.me) {
+        meScreen.style.backgroundImage = `url(${state.screenBackgrounds.me})`;
+        meScreen.style.backgroundSize = "cover";
+        meScreen.style.backgroundPosition = "center";
+        meScreen.style.backgroundAttachment = "fixed";
+      } else {
+        meScreen.style.backgroundImage = "";
+        meScreen.style.background = "#fff";
+      }
+    }
+
+    // 好友页背景处理
+    document.getElementById("settingsFriendsBgInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const compressed = await compressImageBase64(ev.target.result, 1280, 0.8);
+          state.screenBackgrounds.friends = compressed;
+          document.getElementById("settingsFriendsBgPreview").style.backgroundImage = `url(${compressed})`;
+          applyScreenBackgrounds();
+        };
+        reader.readAsDataURL(file);
+      }
+      e.target.value = "";
+    });
+
+    document.getElementById("clearFriendsBgBtn").addEventListener("click", () => {
+      state.screenBackgrounds.friends = "";
+      document.getElementById("settingsFriendsBgPreview").style.backgroundImage = "";
+      applyScreenBackgrounds();
+    });
+
+    // 朋友圈页背景处理
+    document.getElementById("settingsMomentsBgInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const compressed = await compressImageBase64(ev.target.result, 1280, 0.8);
+          state.screenBackgrounds.moments = compressed;
+          document.getElementById("settingsMomentsBgPreview").style.backgroundImage = `url(${compressed})`;
+          applyScreenBackgrounds();
+        };
+        reader.readAsDataURL(file);
+      }
+      e.target.value = "";
+    });
+
+    document.getElementById("clearMomentsBgBtn").addEventListener("click", () => {
+      state.screenBackgrounds.moments = "";
+      document.getElementById("settingsMomentsBgPreview").style.backgroundImage = "";
+      applyScreenBackgrounds();
+    });
+
+    // 我的页面背景处理
+    document.getElementById("settingsMeBgInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = async (ev) => {
+          const compressed = await compressImageBase64(ev.target.result, 1280, 0.8);
+          state.screenBackgrounds.me = compressed;
+          document.getElementById("settingsMeBgPreview").style.backgroundImage = `url(${compressed})`;
+          applyScreenBackgrounds();
+        };
+        reader.readAsDataURL(file);
+      }
+      e.target.value = "";
+    });
+
+    document.getElementById("clearMeBgBtn").addEventListener("click", () => {
+      state.screenBackgrounds.me = "";
+      document.getElementById("settingsMeBgPreview").style.backgroundImage = "";
+      applyScreenBackgrounds();
     });
 
     // ================== 头像同步与更换逻辑 ==================
@@ -11769,8 +11947,14 @@ ${imagePromptInstruction}`;
       if (state.musicList && state.musicList.length > 0) {
         renderMusicList();
       }
+      // 应用保存的背景
+      initializeScreenBackgrounds();
+      applyScreenBackgrounds();
     }).catch(err => {
       console.error("IndexedDB 加载失败，使用默认数据:", err);
+      // 应用保存的背景（即使加载失败也尝试应用）
+      initializeScreenBackgrounds();
+      applyScreenBackgrounds();
     });
 
 // ====== 音乐播放器完整逻辑 ======

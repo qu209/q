@@ -1360,19 +1360,7 @@
     .transfer-desc { font-size: 12px; opacity: 0.9; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .transfer-bottom { background: rgba(255,255,255,0.05); padding: 4px 14px; font-size: 10px; color: rgba(255,255,255,0.6); }
     .system-msg { text-align: center; font-size: 12px; color: #b2b2b2; margin: 10px 0; width: 100%; }
-        .system-msg {
-      text-align: center;
-      font-size: 12px;
-      color: #b2b2b2;
-      margin: 10px 0;
-      width: 100%;
-      padding: 4px 14px;
-      background: rgba(0, 0, 0, 0.08);
-      border-radius: 20px;
-      display: inline-block;
-      white-space: nowrap;
-    }
-
+    
     /* 转账回复确认卡片专属样式 */
     .transfer-reply { background: #1a1a1a; border-radius: 8px; width: 210px; display: flex; align-items: center; padding: 12px 14px; gap: 12px; border: 1px solid #333; cursor: default; }
     .transfer-reply .transfer-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; background: white; color: #f09a37; flex-shrink: 0; }
@@ -5375,7 +5363,7 @@ function estimateTokens(text) {
         else messagesEl.classList.remove("multi-select-mode");
 
         // 【唯一签名指纹】：加入 quote、多选状态，确保点击复选框能完美局部重绘
-        const signature = (msg.isTyping ? "typing:" : msg.isRetraction ? "retract:" : "text:") + msg.text + "|quote:" + (msg.quoteText||"") + "|qs:" + (msg.quoteSender||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|retract:" + (msg.isRetraction ? "1" : "0") + "|"
+        const signature = (msg.isTyping ? "typing:" : "text:") + msg.text + "|quote:" + (msg.quoteText||"") + "|qs:" + (msg.quoteSender||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|"
 + state.userAvatar + "|" + contact.avatar + "|" + contact.frameUrl + "|" + contact.showFrameInChat;
 if (row.dataset.signature !== signature) {
           row.dataset.signature = signature;
@@ -5579,24 +5567,11 @@ if (msg.isTyping) {
                   }
                 }, 0);
               }
-            } else if (msg.isRetraction) {
-              // 撤回消息的特殊处理（必须在【系统消息】判断之前！）
-              bubble.classList.add("is-transfer");
-              bubble.style.background = "transparent";
-              bubble.style.padding = "0";
-              const retractedName = msg.retractedBy || "对方";
-              const retractedContent = msg.retractedOriginal || "";
-              textSpan.innerHTML = `<div class="system-msg" style="cursor:pointer;user-select:none;">${retractedName} 撤回了一条消息</div>`;
-              row._isSystemMsg = true;
-              
-              textSpan.querySelector(".system-msg").onclick = async function(e) {
-                e.stopPropagation();
-                await sysAlert(`${retractedName} 撤回的消息：\n\n${retractedContent || "(内容为空)"}`, "撤回的消息");
-              };
             } else if (msg.text.startsWith("【系统消息】")) {
               bubble.classList.add("is-transfer");
               bubble.style.background = "transparent";
               textSpan.innerHTML = `<div class="system-msg">${msg.text.replace("【系统消息】", "")}</div>`;
+              // 标记这条消息为系统消息，后面会特殊处理布局
               row._isSystemMsg = true;
             } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
               // 渲染表情包图片
@@ -5717,31 +5692,10 @@ if (msg.isTyping) {
             contentWrap.appendChild(bubble._voiceTranscript);
           }
 
-          if ((positionClass === "single" || positionClass === "last") && !msg.isTyping && !msg.text.startsWith("【系统消息】") && !msg.isRetraction) {
+          if ((positionClass === "single" || positionClass === "last") && !msg.isTyping && !msg.text.startsWith("【系统消息】")) {
             const time = document.createElement("div");
             time.className = "message-time";
-            
-            if (msg.from === "me") {
-              // 判断后面是否有AI消息（双勾）- from为ai或system(撤回)都算对方回复了
-              let hasAIReply = false;
-              const msgIdx = contact.messages.indexOf(msg);
-              for (let i = msgIdx + 1; i < contact.messages.length; i++) {
-                const cm = contact.messages[i];
-                if (cm.isTyping) continue;
-                if (cm.from === "ai" || cm.from === "system" || cm.isRetraction) {
-                  hasAIReply = true;
-                  break;
-                }
-              }
-              const checkImg = hasAIReply 
-                ? "https://i.postimg.cc/d3Nqqm1F/IMG-5397.png" 
-                : "https://i.postimg.cc/hvZSSbjc/IMG-5396.png";
-              time.innerHTML = `${msg.time || getCurrentTime()}<img src="${checkImg}" style="width:14px;height:14px;vertical-align:middle;margin-left:2px;margin-bottom:1px;">`;
-              time.style.cssText = "font-size:11px;color:#b2b2b2;margin-top:6px;margin-left:4px;margin-right:4px;";
-            } else {
-              time.textContent = msg.time || getCurrentTime();
-            }
-            
+            time.textContent = msg.time || getCurrentTime();
             contentWrap.appendChild(time);
           }
 
@@ -5865,29 +5819,10 @@ if (msg.isTyping) {
       document.getElementById("msgMenuMask").classList.remove("show");
     });
 
-    // 指令3：撤回消息（仅限AI角色使用）
+    // 指令3：单条彻底删除（强制清空所有DOM签名缓存，确保完全重绘）
     document.getElementById("menuDelete").addEventListener("click", () => {
       const contact = getContact(state.activeContactId);
-      const msg = contact.messages[targetMsgIndex];
-      
-      if (msg.from === "ai") {
-        // AI撤回：记录撤回操作
-        const retractMsg = {
-          from: "system",
-          text: `【系统消息】${getDisplayName(contact)} 撤回了一条消息`,
-          time: getCurrentTime(),
-          msgTimestamp: Date.now(),
-          isRetraction: true,
-          retractedOriginal: msg.text,
-          retractedBy: getDisplayName(contact),
-          hasAnimated: false
-        };
-        contact.messages[targetMsgIndex] = retractMsg;
-      } else {
-        // 用户消息：直接删除
-        contact.messages.splice(targetMsgIndex, 1);
-      }
-      
+      contact.messages.splice(targetMsgIndex, 1);
       document.getElementById("msgMenuMask").classList.remove("show");
       // 强制清空所有消息节点的签名缓存，迫使renderChat完全重绘
       const allRows = messagesEl.querySelectorAll("[data-signature]");
@@ -6508,24 +6443,6 @@ TimeChecklist:
               await delay(Math.min(typingTime, 1500)); 
             }
           }
-                  // 新增：AI有10%概率撤回最后一条消息（模拟真实行为）
-        if (lines.length > 0 && Math.random() < 0.1) {
-          const lastMsgIndex = contact.messages.length - 1;
-          if (lastMsgIndex >= 0 && contact.messages[lastMsgIndex].from === "ai") {
-            const retractedMsg = contact.messages[lastMsgIndex];
-            contact.messages[lastMsgIndex] = {
-              from: "system",
-              text: `【系统消息】${getDisplayName(contact)} 撤回了一条消息`,
-              time: getCurrentTime(),
-              msgTimestamp: Date.now(),
-              isRetraction: true,
-              retractedOriginal: retractedMsg.text,
-              retractedBy: getDisplayName(contact),
-              hasAnimated: false
-            };
-          }
-        }
-
         } else {
           if (state.activeContactId === contact.id) renderChat();
           else renderContacts();

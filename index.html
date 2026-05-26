@@ -5579,14 +5579,8 @@ if (msg.isTyping) {
                   }
                 }, 0);
               }
-            } else if (msg.text.startsWith("【系统消息】")) {
-              bubble.classList.add("is-transfer");
-              bubble.style.background = "transparent";
-              textSpan.innerHTML = `<div class="system-msg">${msg.text.replace("【系统消息】", "")}</div>`;
-              // 标记这条消息为系统消息，后面会特殊处理布局
-              row._isSystemMsg = true;
             } else if (msg.isRetraction) {
-              // 撤回消息的特殊处理
+              // 撤回消息的特殊处理（必须在【系统消息】判断之前！）
               bubble.classList.add("is-transfer");
               bubble.style.background = "transparent";
               bubble.style.padding = "0";
@@ -5595,11 +5589,15 @@ if (msg.isTyping) {
               textSpan.innerHTML = `<div class="system-msg" style="cursor:pointer;user-select:none;">${retractedName} 撤回了一条消息</div>`;
               row._isSystemMsg = true;
               
-              // 点击显示撤回内容弹窗（用 onclick 而非 addEventListener，确保每次重绘都能正确绑定）
               textSpan.querySelector(".system-msg").onclick = async function(e) {
                 e.stopPropagation();
                 await sysAlert(`${retractedName} 撤回的消息：\n\n${retractedContent || "(内容为空)"}`, "撤回的消息");
               };
+            } else if (msg.text.startsWith("【系统消息】")) {
+              bubble.classList.add("is-transfer");
+              bubble.style.background = "transparent";
+              textSpan.innerHTML = `<div class="system-msg">${msg.text.replace("【系统消息】", "")}</div>`;
+              row._isSystemMsg = true;
             } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
               // 渲染表情包图片
               const parts = msg.text.slice(1, -1).split("|");
@@ -5724,19 +5722,22 @@ if (msg.isTyping) {
             time.className = "message-time";
             
             if (msg.from === "me") {
-              // 判断后面是否有AI消息（双勾）
+              // 判断后面是否有AI消息（双勾）- from为ai或system(撤回)都算对方回复了
               let hasAIReply = false;
               const msgIdx = contact.messages.indexOf(msg);
               for (let i = msgIdx + 1; i < contact.messages.length; i++) {
-                if (contact.messages[i].from === "ai" && !contact.messages[i].isRetraction && !contact.messages[i].isTyping) {
+                const cm = contact.messages[i];
+                if (cm.isTyping) continue;
+                if (cm.from === "ai" || cm.from === "system" || cm.isRetraction) {
                   hasAIReply = true;
                   break;
                 }
               }
-              const checkmark = hasAIReply ? "✓✓" : "✓";
-              // 紧贴时间，无间距，颜色与时间一致
-              time.innerHTML = `${msg.time || getCurrentTime()}&nbsp;${checkmark}`;
-              time.style.cssText = "font-size:11px;color:#b2b2b2;margin-top:6px;margin-left:4px;margin-right:4px;letter-spacing:0px;";
+              const checkImg = hasAIReply 
+                ? "https://i.postimg.cc/d3Nqqm1F/IMG-5397.png" 
+                : "https://i.postimg.cc/hvZSSbjc/IMG-5396.png";
+              time.innerHTML = `${msg.time || getCurrentTime()}<img src="${checkImg}" style="width:14px;height:14px;vertical-align:middle;margin-left:2px;margin-bottom:1px;">`;
+              time.style.cssText = "font-size:11px;color:#b2b2b2;margin-top:6px;margin-left:4px;margin-right:4px;";
             } else {
               time.textContent = msg.time || getCurrentTime();
             }

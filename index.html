@@ -177,8 +177,10 @@
       z-index: 8;
       height: calc(54px + var(--safe-top)); 
       padding-top: var(--safe-top);
-      background: var(--top);
-      border-bottom: 1px solid var(--line);
+      background: rgba(243,243,243,0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
     }
 
     .header-bar {
@@ -226,7 +228,7 @@
     }
 
     .friend-list {
-      background: #fff;
+      background: transparent;
     }
 
     .friend-item {
@@ -236,8 +238,8 @@
       gap: 14px;
       padding: 16px 18px;
       border: 0;
-      border-bottom: 1px solid var(--line);
-      background: #fff;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      background: transparent;
       text-align: left;
       cursor: pointer;
     }
@@ -415,7 +417,7 @@
       text-align: center;
       color: #b7bcc5;
       font-size: 15px;
-      background: #fff;
+      background: transparent;
     }
 
     /* 我 - 页面重构 */
@@ -427,7 +429,7 @@
 
     .me-profile {
       padding: calc(40px + var(--safe-top)) 24px 38px;
-      background: #fff;
+      background: transparent;
     }
 
     .me-header-row {
@@ -478,7 +480,7 @@
       list-style: none;
       margin: 0;
       padding: 0;
-      background: #fff;
+      background: transparent;
     }
 
     .menu li {
@@ -489,7 +491,8 @@
       font-size: 16px;
       font-weight: 400;
       color: #111;
-      border-bottom: 1px solid #f5f5f5;
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      background: transparent;
     }
 
     /* 底栏调整 */
@@ -503,8 +506,10 @@
       padding-bottom: env(safe-area-inset-bottom);
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      background: #fff;
-      border-top: 1px solid var(--line);
+      background: rgba(255,255,255,0.75);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(0,0,0,0.08);
     }
 
     .tabbar.hidden {
@@ -3563,19 +3568,24 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">界面背景 (好友/朋友圈/我)</div>
         <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
           <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
-            自定义三个主界面的背景图片。设置后会自动保存到本地存储。
+            自定义三个主界面的背景图片，背景会铺满整个界面。设置后会自动保存。
           </div>
           
           <!-- 好友页背景 -->
           <div style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">好友页背景</label>
             <div class="bg-preview-box" id="settingsFriendsBgPreview" style="height: 80px; margin-bottom: 10px;"></div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
               <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
                 更换背景
                 <input type="file" id="settingsFriendsBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
               </button>
               <button class="btn btn-light" id="clearFriendsBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="font-size: 13px; color: #666; white-space: nowrap; min-width: 52px;">透明度</label>
+              <input type="range" id="friendsBgOpacity" min="0" max="100" step="1" value="100" style="flex: 1; accent-color: #C1D0DC; height: 4px; outline: none;" />
+              <span id="friendsBgOpacityVal" style="font-size: 13px; color: #888; min-width: 36px; text-align: right;">100%</span>
             </div>
           </div>
 
@@ -3583,12 +3593,17 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           <div style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">朋友圈页背景</label>
             <div class="bg-preview-box" id="settingsMomentsBgPreview" style="height: 80px; margin-bottom: 10px;"></div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
               <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
                 更换背景
                 <input type="file" id="settingsMomentsBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
               </button>
               <button class="btn btn-light" id="clearMomentsBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="font-size: 13px; color: #666; white-space: nowrap; min-width: 52px;">透明度</label>
+              <input type="range" id="momentsBgOpacity" min="0" max="100" step="1" value="100" style="flex: 1; accent-color: #C1D0DC; height: 4px; outline: none;" />
+              <span id="momentsBgOpacityVal" style="font-size: 13px; color: #888; min-width: 36px; text-align: right;">100%</span>
             </div>
           </div>
 
@@ -3596,12 +3611,17 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           <div>
             <label style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px; display: block;">我的页面背景</label>
             <div class="bg-preview-box" id="settingsMeBgPreview" style="height: 80px; margin-bottom: 10px;"></div>
-            <div style="display: flex; gap: 8px;">
+            <div style="display: flex; gap: 8px; margin-bottom: 10px;">
               <button class="btn btn-light" style="flex: 1; height: 36px; font-size: 14px; border-radius: 8px; position: relative;">
                 更换背景
                 <input type="file" id="settingsMeBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
               </button>
               <button class="btn btn-light" id="clearMeBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <label style="font-size: 13px; color: #666; white-space: nowrap; min-width: 52px;">透明度</label>
+              <input type="range" id="meBgOpacity" min="0" max="100" step="1" value="100" style="flex: 1; accent-color: #C1D0DC; height: 4px; outline: none;" />
+              <span id="meBgOpacityVal" style="font-size: 13px; color: #888; min-width: 36px; text-align: right;">100%</span>
             </div>
           </div>
         </div>
@@ -8482,9 +8502,16 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         state.screenBackgrounds = {
           friends: "",
           moments: "",
-          me: ""
+          me: "",
+          friendsOpacity: 100,
+          momentsOpacity: 100,
+          meOpacity: 100
         };
       }
+      // 补充旧数据兼容
+      if (state.screenBackgrounds.friendsOpacity === undefined) state.screenBackgrounds.friendsOpacity = 100;
+      if (state.screenBackgrounds.momentsOpacity === undefined) state.screenBackgrounds.momentsOpacity = 100;
+      if (state.screenBackgrounds.meOpacity === undefined) state.screenBackgrounds.meOpacity = 100;
 
       if (friendsBgPreview && state.screenBackgrounds.friends) {
         friendsBgPreview.style.backgroundImage = `url(${state.screenBackgrounds.friends})`;
@@ -8495,43 +8522,131 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (meBgPreview && state.screenBackgrounds.me) {
         meBgPreview.style.backgroundImage = `url(${state.screenBackgrounds.me})`;
       }
+
+      // 恢复透明度拉条
+      const fSlider = document.getElementById("friendsBgOpacity");
+      const mSlider = document.getElementById("momentsBgOpacity");
+      const meSlider = document.getElementById("meBgOpacity");
+      if (fSlider) {
+        fSlider.value = state.screenBackgrounds.friendsOpacity;
+        document.getElementById("friendsBgOpacityVal").textContent = state.screenBackgrounds.friendsOpacity + "%";
+      }
+      if (mSlider) {
+        mSlider.value = state.screenBackgrounds.momentsOpacity;
+        document.getElementById("momentsBgOpacityVal").textContent = state.screenBackgrounds.momentsOpacity + "%";
+      }
+      if (meSlider) {
+        meSlider.value = state.screenBackgrounds.meOpacity;
+        document.getElementById("meBgOpacityVal").textContent = state.screenBackgrounds.meOpacity + "%";
+      }
     }
 
-    // 应用背景到实际界面
+    // 应用背景到实际界面（核心：用伪元素叠加法，背景铺满整个screen）
     function applyScreenBackgrounds() {
-      const friendsScreen = screens.friends;
-      const momentsScreen = screens.moments;
-      const meScreen = screens.me;
+      const sb = state.screenBackgrounds;
+      if (!sb) return;
 
-      if (state.screenBackgrounds.friends) {
-        friendsScreen.style.backgroundImage = `url(${state.screenBackgrounds.friends})`;
-        friendsScreen.style.backgroundSize = "cover";
-        friendsScreen.style.backgroundPosition = "center";
-        friendsScreen.style.backgroundAttachment = "fixed";
-      } else {
-        friendsScreen.style.backgroundImage = "";
-        friendsScreen.style.background = "#fff";
+      // 注入动态样式（用伪元素实现全屏背景，不影响子元素）
+      let styleEl = document.getElementById("screen-bg-style");
+      if (!styleEl) {
+        styleEl = document.createElement("style");
+        styleEl.id = "screen-bg-style";
+        document.head.appendChild(styleEl);
       }
 
-      if (state.screenBackgrounds.moments) {
-        momentsScreen.style.backgroundImage = `url(${state.screenBackgrounds.moments})`;
-        momentsScreen.style.backgroundSize = "cover";
-        momentsScreen.style.backgroundPosition = "center";
-        momentsScreen.style.backgroundAttachment = "fixed";
+      let css = "";
+
+      if (sb.friends) {
+        const opacity = (sb.friendsOpacity !== undefined ? sb.friendsOpacity : 100) / 100;
+        css += `
+          #screen-friends {
+            position: relative;
+          }
+          #screen-friends::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: url(${sb.friends});
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: ${opacity};
+            pointer-events: none;
+          }
+          #screen-friends > * {
+            position: relative;
+            z-index: 1;
+          }
+        `;
       } else {
-        momentsScreen.style.backgroundImage = "";
-        momentsScreen.style.background = "#fff";
+        css += `
+          #screen-friends::before { display: none; }
+          #screen-friends > * { position: relative; z-index: 1; }
+        `;
       }
 
-      if (state.screenBackgrounds.me) {
-        meScreen.style.backgroundImage = `url(${state.screenBackgrounds.me})`;
-        meScreen.style.backgroundSize = "cover";
-        meScreen.style.backgroundPosition = "center";
-        meScreen.style.backgroundAttachment = "fixed";
+      if (sb.moments) {
+        const opacity = (sb.momentsOpacity !== undefined ? sb.momentsOpacity : 100) / 100;
+        css += `
+          #screen-moments {
+            position: relative;
+          }
+          #screen-moments::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: url(${sb.moments});
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: ${opacity};
+            pointer-events: none;
+          }
+          #screen-moments > * {
+            position: relative;
+            z-index: 1;
+          }
+        `;
       } else {
-        meScreen.style.backgroundImage = "";
-        meScreen.style.background = "#fff";
+        css += `
+          #screen-moments::before { display: none; }
+          #screen-moments > * { position: relative; z-index: 1; }
+        `;
       }
+
+      if (sb.me) {
+        const opacity = (sb.meOpacity !== undefined ? sb.meOpacity : 100) / 100;
+        css += `
+          #screen-me {
+            position: relative;
+          }
+          #screen-me::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            background-image: url(${sb.me});
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            opacity: ${opacity};
+            pointer-events: none;
+          }
+          #screen-me > * {
+            position: relative;
+            z-index: 1;
+          }
+        `;
+      } else {
+        css += `
+          #screen-me::before { display: none; }
+          #screen-me > * { position: relative; z-index: 1; }
+        `;
+      }
+
+      styleEl.textContent = css;
     }
 
     // 好友页背景处理
@@ -8553,6 +8668,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     document.getElementById("clearFriendsBgBtn").addEventListener("click", () => {
       state.screenBackgrounds.friends = "";
       document.getElementById("settingsFriendsBgPreview").style.backgroundImage = "";
+      applyScreenBackgrounds();
+    });
+
+    // 好友页透明度
+    document.getElementById("friendsBgOpacity").addEventListener("input", (e) => {
+      const val = parseInt(e.target.value);
+      state.screenBackgrounds.friendsOpacity = val;
+      document.getElementById("friendsBgOpacityVal").textContent = val + "%";
       applyScreenBackgrounds();
     });
 
@@ -8578,6 +8701,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       applyScreenBackgrounds();
     });
 
+    // 朋友圈页透明度
+    document.getElementById("momentsBgOpacity").addEventListener("input", (e) => {
+      const val = parseInt(e.target.value);
+      state.screenBackgrounds.momentsOpacity = val;
+      document.getElementById("momentsBgOpacityVal").textContent = val + "%";
+      applyScreenBackgrounds();
+    });
+
     // 我的页面背景处理
     document.getElementById("settingsMeBgInput").addEventListener("change", async (e) => {
       const file = e.target.files[0];
@@ -8597,6 +8728,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     document.getElementById("clearMeBgBtn").addEventListener("click", () => {
       state.screenBackgrounds.me = "";
       document.getElementById("settingsMeBgPreview").style.backgroundImage = "";
+      applyScreenBackgrounds();
+    });
+
+    // 我的页面透明度
+    document.getElementById("meBgOpacity").addEventListener("input", (e) => {
+      const val = parseInt(e.target.value);
+      state.screenBackgrounds.meOpacity = val;
+      document.getElementById("meBgOpacityVal").textContent = val + "%";
       applyScreenBackgrounds();
     });
 

@@ -5375,7 +5375,7 @@ function estimateTokens(text) {
         else messagesEl.classList.remove("multi-select-mode");
 
         // 【唯一签名指纹】：加入 quote、多选状态，确保点击复选框能完美局部重绘
-        const signature = (msg.isTyping ? "typing:" : "text:") + msg.text + "|quote:" + (msg.quoteText||"") + "|qs:" + (msg.quoteSender||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|"
+        const signature = (msg.isTyping ? "typing:" : msg.isRetraction ? "retract:" : "text:") + msg.text + "|quote:" + (msg.quoteText||"") + "|qs:" + (msg.quoteSender||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|retract:" + (msg.isRetraction ? "1" : "0") + "|"
 + state.userAvatar + "|" + contact.avatar + "|" + contact.frameUrl + "|" + contact.showFrameInChat;
 if (row.dataset.signature !== signature) {
           row.dataset.signature = signature;
@@ -5585,19 +5585,21 @@ if (msg.isTyping) {
               textSpan.innerHTML = `<div class="system-msg">${msg.text.replace("【系统消息】", "")}</div>`;
               // 标记这条消息为系统消息，后面会特殊处理布局
               row._isSystemMsg = true;
-                          } else if (msg.isRetraction) {
+            } else if (msg.isRetraction) {
               // 撤回消息的特殊处理
               bubble.classList.add("is-transfer");
               bubble.style.background = "transparent";
               bubble.style.padding = "0";
-              textSpan.innerHTML = `<div class="system-msg" style="cursor:pointer;" title="点击查看撤回的内容">${msg.text.replace("【系统消息】", "")}</div>`;
+              const retractedName = msg.retractedBy || "对方";
+              const retractedContent = msg.retractedOriginal || "";
+              textSpan.innerHTML = `<div class="system-msg" style="cursor:pointer;user-select:none;">${retractedName} 撤回了一条消息</div>`;
               row._isSystemMsg = true;
               
-              // 点击显示撤回内容弹窗
-              bubble.addEventListener("click", async (e) => {
+              // 点击显示撤回内容弹窗（用 onclick 而非 addEventListener，确保每次重绘都能正确绑定）
+              textSpan.querySelector(".system-msg").onclick = async function(e) {
                 e.stopPropagation();
-                await sysAlert(`${msg.retractedBy} 撤回的消息内容：\n\n${msg.retractedOriginal}`, "撤回的消息");
-              });
+                await sysAlert(`${retractedName} 撤回的消息：\n\n${retractedContent || "(内容为空)"}`, "撤回的消息");
+              };
             } else if (msg.text.startsWith("[EMOJI_STICKER|")) {
               // 渲染表情包图片
               const parts = msg.text.slice(1, -1).split("|");
@@ -5721,19 +5723,20 @@ if (msg.isTyping) {
             const time = document.createElement("div");
             time.className = "message-time";
             
-            // 用户消息才显示对勾
             if (msg.from === "me") {
-              // 判断是否有AI回复（检查这条消息后面是否有AI消息）
+              // 判断后面是否有AI消息（双勾）
               let hasAIReply = false;
-              for (let i = contact.messages.indexOf(msg) + 1; i < contact.messages.length; i++) {
-                if (contact.messages[i].from === "ai" && !contact.messages[i].isRetraction) {
+              const msgIdx = contact.messages.indexOf(msg);
+              for (let i = msgIdx + 1; i < contact.messages.length; i++) {
+                if (contact.messages[i].from === "ai" && !contact.messages[i].isRetraction && !contact.messages[i].isTyping) {
                   hasAIReply = true;
                   break;
                 }
               }
-              
               const checkmark = hasAIReply ? "✓✓" : "✓";
-              time.innerHTML = `${msg.time || getCurrentTime()} <span style="margin-left:4px;font-size:12px;color:#b2b2b2;">${checkmark}</span>`;
+              // 紧贴时间，无间距，颜色与时间一致
+              time.innerHTML = `${msg.time || getCurrentTime()}&nbsp;${checkmark}`;
+              time.style.cssText = "font-size:11px;color:#b2b2b2;margin-top:6px;margin-left:4px;margin-right:4px;letter-spacing:0px;";
             } else {
               time.textContent = msg.time || getCurrentTime();
             }

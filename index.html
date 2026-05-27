@@ -182,6 +182,79 @@
       -webkit-backdrop-filter: blur(12px);
       border-bottom: 1px solid rgba(0,0,0,0.08);
     }
+    /* 好友页顶栏特殊样式 - 透明融合背景 */
+    .friends-header {
+      background: transparent !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border-bottom: none !important;
+    }
+    #screen-friends.has-bg .friends-header {
+      background: transparent !important;
+    }
+
+    .friends-header-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      flex: 1;
+      min-width: 0;
+      max-width: 140px;
+    }
+
+    .friends-header-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e0e0e0, #c4c4c4);
+      background-size: cover;
+      background-position: center;
+      flex-shrink: 0;
+      cursor: pointer;
+    }
+
+    .friends-header-info {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 0;
+      flex: 1;
+    }
+
+    .friends-header-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #111;
+      line-height: 1.2;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .friends-header-status {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      color: #888;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
+    .friends-header-status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #37d05f;
+      flex-shrink: 0;
+    }
+
+    .friends-header-status-text {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
 
     .header-bar {
       height: 54px;
@@ -3451,16 +3524,19 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
 <body>
   <div class="app">
     <section class="screen top-screen active" id="screen-friends">
-      <header class="header">
+      <header class="header friends-header">
         <div class="header-bar">
-          <button class="header-btn" id="menuBtn" aria-label="菜单">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-              <line x1="3" y1="12" x2="21" y2="12"></line>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <line x1="3" y1="18" x2="15" y2="18"></line>
-            </svg>
-          </button>
-          <div class="header-title">好友</div>
+          <div class="friends-header-left">
+            <div class="friends-header-avatar" id="friendsHeaderAvatar" title="点击打开音乐"></div>
+            <div class="friends-header-info">
+              <div class="friends-header-name" id="friendsHeaderName">{{user}}</div>
+              <div class="friends-header-status" id="friendsHeaderStatusRow" title="点击修改状态">
+                <span class="friends-header-status-dot" id="friendsHeaderStatusDot"></span>
+                <span class="friends-header-status-text" id="friendsHeaderStatusText">在线</span>
+              </div>
+            </div>
+          </div>
+          <div class="header-title">WeChat</div>
           <button class="header-btn" id="addRoleBtn" aria-label="添加角色">
             <svg class="plus-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
@@ -4781,6 +4857,39 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         </div>
       </div>
     </div>
+        <!-- ====== 好友页顶栏：用户状态修改弹窗 ====== -->
+    <div class="custom-dialog-mask" id="userStatusEditMask">
+      <div class="custom-dialog">
+        <div class="custom-dialog-title">修改在线状态</div>
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 13px; color: #666; display: block; margin-bottom: 6px;">状态文字</label>
+          <input class="custom-dialog-input" id="userStatusTextInput" placeholder="例如：在线、忙碌、离开..." maxlength="20" />
+        </div>
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 13px; color: #666; display: block; margin-bottom: 6px;">状态颜色（点击选择）</label>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <input type="color" id="userStatusColorInput" value="#37d05f" style="width: 50px; height: 40px; border: none; border-radius: 8px; padding: 2px; cursor: pointer; background: #f7f7f8;" />
+            <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+              <div class="status-color-preset" data-color="#37d05f" style="width: 28px; height: 28px; border-radius: 50%; background: #37d05f; cursor: pointer; border: 2px solid transparent;" title="在线"></div>
+              <div class="status-color-preset" data-color="#f5a623" style="width: 28px; height: 28px; border-radius: 50%; background: #f5a623; cursor: pointer; border: 2px solid transparent;" title="忙碌"></div>
+              <div class="status-color-preset" data-color="#df3b3b" style="width: 28px; height: 28px; border-radius: 50%; background: #df3b3b; cursor: pointer; border: 2px solid transparent;" title="请勿打扰"></div>
+              <div class="status-color-preset" data-color="#888888" style="width: 28px; height: 28px; border-radius: 50%; background: #888888; cursor: pointer; border: 2px solid transparent;" title="离线"></div>
+              <div class="status-color-preset" data-color="#5b9bd5" style="width: 28px; height: 28px; border-radius: 50%; background: #5b9bd5; cursor: pointer; border: 2px solid transparent;" title="工作中"></div>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 16px; padding: 12px; background: #f7f7f8; border-radius: 10px;">
+          <span style="font-size: 13px; color: #666;">预览：</span>
+          <span id="userStatusPreviewDot" style="width: 8px; height: 8px; border-radius: 50%; background: #37d05f;"></span>
+          <span id="userStatusPreviewText" style="font-size: 13px; color: #111;">在线</span>
+        </div>
+        <div class="custom-dialog-actions">
+          <button class="custom-dialog-btn-cancel" id="userStatusCancelBtn">取消</button>
+          <button class="custom-dialog-btn-confirm" id="userStatusSaveBtn">保存</button>
+        </div>
+      </div>
+    </div>
+
     <!-- ====== 我页面：文字修改弹窗 ====== -->
     <div class="custom-dialog-mask" id="meEditDialogMask">
       <div class="custom-dialog">
@@ -5036,6 +5145,8 @@ function estimateTokens(text) {
         userName: "{{user}}",
         userHandle: "Sent from 13:14PM",
         userQuote: "亲爱的，我甚至不知道如何不想你",
+        userStatusText: "在线",
+        userStatusColor: "#37d05f",
         apiSettings: {
           url: "",
           key: "",
@@ -5137,8 +5248,9 @@ function estimateTokens(text) {
       if (state.userAvatar) {
         updateUserAvatar(state.userAvatar);
       }
-      // 恢复名字签名心情
+      // 恢复名字签名心情和好友页顶栏
       syncMePageText();
+      syncFriendsHeaderProfile();
       // 恢复朋友圈封面背景
       if (state.momentsCoverBg) {
         const _coverEl = document.getElementById('momentsCover');
@@ -9239,6 +9351,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         drawerAvatar.style.backgroundSize = "cover";
         drawerAvatar.style.backgroundPosition = "center";
       }
+      
+      // 同步好友页顶栏头像
+      const friendsHeaderAvatar = document.getElementById("friendsHeaderAvatar");
+      if (friendsHeaderAvatar) {
+        friendsHeaderAvatar.style.backgroundImage = bgVal;
+        friendsHeaderAvatar.style.backgroundSize = "cover";
+        friendsHeaderAvatar.style.backgroundPosition = "center";
+      }
 
       // 如果在聊天界面，重新渲染以更新右侧气泡的头像
       if (screens.chat.classList.contains("active")) {
@@ -9289,8 +9409,110 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (meHandle) meHandle.textContent = handle;
       if (meQuote) meQuote.textContent = quote;
       if (momentsDisplayName) momentsDisplayName.textContent = name;
+      
+      // 同步好友页顶栏的名字和状态
+      syncFriendsHeaderProfile();
     }
+    
+    // ================== 好友页顶栏同步函数 ==================
+    function syncFriendsHeaderProfile() {
+      const name = state.userName || "{{user}}";
+      const statusText = state.userStatusText || "在线";
+      const statusColor = state.userStatusColor || "#37d05f";
+      
+      const headerAvatar = document.getElementById("friendsHeaderAvatar");
+      const headerName = document.getElementById("friendsHeaderName");
+      const headerStatusDot = document.getElementById("friendsHeaderStatusDot");
+      const headerStatusText = document.getElementById("friendsHeaderStatusText");
+      
+      if (headerAvatar) {
+        if (state.userAvatar) {
+          headerAvatar.style.backgroundImage = `url(${state.userAvatar})`;
+        } else {
+          headerAvatar.style.backgroundImage = "linear-gradient(135deg, #e0e0e0, #c4c4c4)";
+        }
+      }
+      if (headerName) headerName.textContent = name;
+      if (headerStatusDot) headerStatusDot.style.background = statusColor;
+      if (headerStatusText) headerStatusText.textContent = statusText;
+    }
+    
     syncMePageText();
+    
+    // ================== 好友页顶栏状态修改弹窗逻辑 ==================
+    (function() {
+      const statusEditMask = document.getElementById("userStatusEditMask");
+      const statusTextInput = document.getElementById("userStatusTextInput");
+      const statusColorInput = document.getElementById("userStatusColorInput");
+      const statusPreviewDot = document.getElementById("userStatusPreviewDot");
+      const statusPreviewText = document.getElementById("userStatusPreviewText");
+      const statusCancelBtn = document.getElementById("userStatusCancelBtn");
+      const statusSaveBtn = document.getElementById("userStatusSaveBtn");
+      const statusRow = document.getElementById("friendsHeaderStatusRow");
+      
+      // 预设颜色点击
+      document.querySelectorAll(".status-color-preset").forEach(preset => {
+        preset.addEventListener("click", () => {
+          const color = preset.dataset.color;
+          statusColorInput.value = color;
+          statusPreviewDot.style.background = color;
+        });
+      });
+      
+      // 颜色选择器实时预览
+      if (statusColorInput) {
+        statusColorInput.addEventListener("input", () => {
+          statusPreviewDot.style.background = statusColorInput.value;
+        });
+      }
+      
+      // 文字输入实时预览
+      if (statusTextInput) {
+        statusTextInput.addEventListener("input", () => {
+          statusPreviewText.textContent = statusTextInput.value || "在线";
+        });
+      }
+      
+      // 点击状态行打开弹窗
+      if (statusRow) {
+        statusRow.addEventListener("click", (e) => {
+          e.stopPropagation();
+          // 回填当前值
+          statusTextInput.value = state.userStatusText || "在线";
+          statusColorInput.value = state.userStatusColor || "#37d05f";
+          statusPreviewDot.style.background = state.userStatusColor || "#37d05f";
+          statusPreviewText.textContent = state.userStatusText || "在线";
+          statusEditMask.classList.add("show");
+          setTimeout(() => statusTextInput.focus(), 80);
+        });
+      }
+      
+      // 取消
+      if (statusCancelBtn) {
+        statusCancelBtn.addEventListener("click", () => {
+          statusEditMask.classList.remove("show");
+        });
+      }
+      
+      // 保存
+      if (statusSaveBtn) {
+        statusSaveBtn.addEventListener("click", () => {
+          const newText = statusTextInput.value.trim() || "在线";
+          const newColor = statusColorInput.value || "#37d05f";
+          state.userStatusText = newText;
+          state.userStatusColor = newColor;
+          syncFriendsHeaderProfile();
+          statusEditMask.classList.remove("show");
+        });
+      }
+      
+      // 点击遮罩关闭
+      if (statusEditMask) {
+        statusEditMask.addEventListener("click", (e) => {
+          if (e.target === statusEditMask) statusEditMask.classList.remove("show");
+        });
+      }
+    })();
 
     // ================== 我页面修改弹窗逻辑 ==================
     const meEditDialogMask = document.getElementById("meEditDialogMask");
@@ -12876,8 +13098,8 @@ ${imagePromptInstruction}`;
         });
       };
 
-      //====== 打开音乐弹窗 ======
-      document.getElementById("menuBtn").addEventListener("click", (e) => {
+      //====== 打开音乐弹窗（点击好友页顶栏头像触发）======
+      document.getElementById("friendsHeaderAvatar").addEventListener("click", (e) => {
         e.stopPropagation();
         musicPlayerMask.classList.add("show");
         renderMusicList();

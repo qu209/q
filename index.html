@@ -228,7 +228,7 @@
     }
 
     .friend-list {
-      background: transparent;
+      background: #f2f2f7;
     }
 
     .friend-item {
@@ -3261,10 +3261,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       margin: 6px 12px 0;
     }
     .friend-section-header {
-      display: flex;
-      align-items: center;
-      padding: 4px 4px 5px;
-      gap: 8px;
+      display: none;
     }
     .friend-section-label {
       font-size: 12px;
@@ -3277,9 +3274,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     }
     /* 去掉分区间分割线 */
     .friend-section-card {
-      background: rgba(180,180,180,0.22);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      background: #ffffff;
       border-radius: 16px;
       overflow: hidden;
     }
@@ -3291,6 +3286,13 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     }
     .friend-section-card .friend-swipe-wrap:last-child .friend-swipe-actions {
       border-radius: 0 0 16px 0;
+    }
+    /* 有背景图时，卡片改为低透明度白色，不要高斯模糊 */
+    #screen-friends.has-bg .friend-section-card {
+      background: rgba(255, 255, 255, 0.55);
+    }
+    #screen-friends.has-bg .friend-list {
+      background: transparent;
     }
 
     /* ====== 左滑操作按钮 ====== */
@@ -3429,7 +3431,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       transition: background 0.15s;
     }
     .group-picker-confirm-btn.ready {
-      background: #5ac8fa;
+      background: #C1D0DC;
     }
 
   </style>
@@ -5062,8 +5064,7 @@ function estimateTokens(text) {
         friendGroups: [
           { id: "g1", name: "♡ 最爱" },
           { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-          { id: "g3", name: "＊ 关注" },
-          { id: "g4", name: "· · · 其他" }
+          { id: "g3", name: "＊ 关注" }
         ]
       };
     }
@@ -5240,8 +5241,7 @@ function estimateTokens(text) {
       if (!state.friendGroups) state.friendGroups = [
         { id: "g1", name: "♡ 最爱" },
         { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-        { id: "g3", name: "＊ 关注" },
-        { id: "g4", name: "· · · 其他" }
+        { id: "g3", name: "＊ 关注" }
       ];
       tabsEl.innerHTML = "";
 
@@ -5267,8 +5267,7 @@ function estimateTokens(text) {
       if (!state.friendGroups) state.friendGroups = [
         { id: "g1", name: "♡ 最爱" },
         { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-        { id: "g3", name: "＊ 关注" },
-        { id: "g4", name: "· · · 其他" }
+        { id: "g3", name: "＊ 关注" }
       ];
 
       renderGroupTabs();
@@ -5438,12 +5437,11 @@ function estimateTokens(text) {
       const sort = arr => [...arr].sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
 
       if (activeGroupTabId === null) {
-        // 默认页：置顶 + 未分组
+        // 默认页：置顶在上面一组，全部非置顶在下面一组（包括已分组和未分组的所有好友）
         const pinned = sort(state.contacts.filter(c => c.isPinned));
+        const notPinned = sort(state.contacts.filter(c => !c.isPinned));
         if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
-
-        const ungrouped = sort(state.contacts.filter(c => !c.isPinned && !c.groupId));
-        if (ungrouped.length > 0) friendList.appendChild(buildSection("· · ·", ungrouped));
+        if (notPinned.length > 0) friendList.appendChild(buildSection("全部", notPinned));
       } else {
         // 分组页：该分组内的置顶 + 普通
         const group = state.friendGroups.find(g => g.id === activeGroupTabId);
@@ -5451,7 +5449,7 @@ function estimateTokens(text) {
         const pinned = sort(inGroup.filter(c => c.isPinned));
         const normal = sort(inGroup.filter(c => !c.isPinned));
         if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
-        if (normal.length > 0) friendList.appendChild(buildSection(group ? group.name : "· · ·", normal));
+        if (normal.length > 0) friendList.appendChild(buildSection(group ? group.name : "全部", normal));
         if (!inGroup.length) {
           const empty = document.createElement("div");
           empty.style.cssText = "text-align:center;color:#aaa;font-size:14px;padding:40px 0;";
@@ -5459,7 +5457,7 @@ function estimateTokens(text) {
           friendList.appendChild(empty);
         }
       }
-    }
+  }
 
     // 分组选择弹窗（图四：居中弹窗 tag点击选择 长按改名 确认按钮）
     function showGroupPicker(contact) {
@@ -9025,6 +9023,17 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       }
 
       styleEl.textContent = css;
+      
+      // 动态标记好友页是否有背景图
+      const friendsScreen = document.getElementById("screen-friends");
+      if (friendsScreen) {
+        if (sb.friends) {
+          friendsScreen.classList.add("has-bg");
+        } else {
+          friendsScreen.classList.remove("has-bg");
+        }
+      }
+
     }
     // 应用全局文字颜色
     function applyGlobalTextColor() {

@@ -184,10 +184,10 @@
     }
     /* 好友页顶栏特殊样式 - 透明融合背景 */
     .friends-header {
-      background: rgba(237,237,237,0.85) !important;
-      backdrop-filter: blur(12px) !important;
-      -webkit-backdrop-filter: blur(12px) !important;
-      border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+      background: #ededed !important;
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+      border-bottom: none !important;
     }
     #screen-friends.has-bg .friends-header {
       background: transparent !important;
@@ -261,9 +261,16 @@
 
     .header-bar {
       height: 54px;
-      display: grid;
-      grid-template-columns: 50px 1fr 50px;
+      display: flex;
       align-items: center;
+      gap: 0;
+    }
+    .header-bar .header-title {
+      flex: 1;
+      text-align: center;
+    }
+    .header-bar .header-btn {
+      flex-shrink: 0;
     }
 
     .header-title {
@@ -3539,8 +3546,8 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
               </div>
             </div>
           </div>
-          <div class="header-title">WeChat</div>
-          <button class="header-btn" id="addRoleBtn" aria-label="添加角色">
+          <div class="header-title" style="position: absolute; left: 50%; transform: translateX(-50%); pointer-events: none;">WeChat</div>
+          <button class="header-btn" id="addRoleBtn" aria-label="添加角色" style="margin-left: auto;">
             <svg class="plus-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#111" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>

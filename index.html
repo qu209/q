@@ -3225,27 +3225,21 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       display: flex;
       gap: 12px;
     }
-    /* ====== 好友分区标题行 ====== */
+    /* ====== 好友分区 ====== */
+    .friend-section {
+      margin: 10px 12px 0;
+    }
     .friend-section-header {
       display: flex;
       align-items: center;
-      padding: 6px 18px 4px;
+      padding: 4px 6px 6px;
       gap: 8px;
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: rgba(243,243,243,0.85);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
     }
     .friend-section-label {
       font-size: 12px;
-      color: #888;
+      color: #999;
       font-weight: 500;
-      letter-spacing: 0.5px;
-      background: rgba(200,200,200,0.35);
-      border-radius: 20px;
-      padding: 3px 12px;
+      letter-spacing: 0.3px;
       white-space: nowrap;
       cursor: default;
       user-select: none;
@@ -3254,6 +3248,25 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       flex: 1;
       height: 1px;
       background: rgba(0,0,0,0.07);
+    }
+    .friend-section-card {
+      background: rgba(255,255,255,0.82);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
+    }
+    /* 卡片内每条好友去掉背景，分隔线只在非最后一条显示 */
+    .friend-section-card .friend-swipe-wrap:last-child .friend-item {
+      border-bottom: none;
+    }
+    /* 左滑按钮圆角跟随卡片 */
+    .friend-section-card .friend-swipe-wrap:first-child .friend-swipe-actions {
+      border-radius: 0 16px 0 0;
+    }
+    .friend-section-card .friend-swipe-wrap:last-child .friend-swipe-actions {
+      border-radius: 0 0 16px 0;
     }
 
     /* ====== 左滑操作按钮 ====== */
@@ -5341,27 +5354,35 @@ function estimateTokens(text) {
         return wrap;
       }
 
-      // 分区标题
-      function buildSectionHeader(label) {
-        const h = document.createElement("div");
-        h.className = "friend-section-header";
+      // 构建一个完整分区（标题 + 圆角卡片包裹好友列表）
+      function buildSection(label, contacts) {
+        const section = document.createElement("div");
+        section.className = "friend-section";
+
+        const header = document.createElement("div");
+        header.className = "friend-section-header";
         const lbl = document.createElement("span");
         lbl.className = "friend-section-label";
         lbl.textContent = label;
         const line = document.createElement("div");
         line.className = "friend-section-line";
-        h.appendChild(lbl);
-        h.appendChild(line);
-        return h;
+        header.appendChild(lbl);
+        header.appendChild(line);
+
+        const card = document.createElement("div");
+        card.className = "friend-section-card";
+        contacts.forEach(c => card.appendChild(buildFriendItem(c)));
+
+        section.appendChild(header);
+        section.appendChild(card);
+        return section;
       }
 
       // 置顶区
       const pinned = state.contacts.filter(c => c.isPinned)
         .sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
-
       if (pinned.length > 0) {
-        friendList.appendChild(buildSectionHeader("📌 置顶"));
-        pinned.forEach(c => friendList.appendChild(buildFriendItem(c)));
+        friendList.appendChild(buildSection("📌 置顶", pinned));
       }
 
       // 分组区
@@ -5369,20 +5390,17 @@ function estimateTokens(text) {
         const members = state.contacts.filter(c => !c.isPinned && c.groupId === group.id)
           .sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
         if (members.length > 0) {
-          friendList.appendChild(buildSectionHeader(group.name));
-          members.forEach(c => friendList.appendChild(buildFriendItem(c)));
+          friendList.appendChild(buildSection(group.name, members));
         }
       });
 
-      // 未分组区（没有 groupId，也没置顶）
+      // 未分组区
       const ungrouped = state.contacts.filter(c => !c.isPinned && !c.groupId)
         .sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
       if (ungrouped.length > 0) {
-        friendList.appendChild(buildSectionHeader("· · ·"));
-        ungrouped.forEach(c => friendList.appendChild(buildFriendItem(c)));
+        friendList.appendChild(buildSection("· · ·", ungrouped));
       }
     }
-
     // 分组选择弹窗
     function showGroupPicker(contact) {
       if (!state.friendGroups) return;

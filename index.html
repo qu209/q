@@ -3225,14 +3225,45 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       display: flex;
       gap: 12px;
     }
+    /* ====== 好友分组Tab栏 ====== */
+    .friend-group-tabs {
+      display: flex;
+      gap: 8px;
+      padding: 10px 14px 2px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      flex-shrink: 0;
+    }
+    .friend-group-tabs::-webkit-scrollbar { display: none; }
+    .friend-group-tab {
+      flex-shrink: 0;
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 17px;
+      border: none;
+      background: rgba(0,0,0,0.07);
+      color: #555;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 0.18s, color 0.18s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .friend-group-tab.active {
+      background: rgba(0,0,0,0.18);
+      color: #111;
+      font-weight: 700;
+    }
+
     /* ====== 好友分区 ====== */
     .friend-section {
-      margin: 10px 12px 0;
+      margin: 6px 12px 0;
     }
     .friend-section-header {
       display: flex;
       align-items: center;
-      padding: 4px 6px 6px;
+      padding: 4px 4px 5px;
       gap: 8px;
     }
     .friend-section-label {
@@ -3244,24 +3275,17 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       cursor: default;
       user-select: none;
     }
-    .friend-section-line {
-      flex: 1;
-      height: 1px;
-      background: rgba(0,0,0,0.07);
-    }
+    /* 去掉分区间分割线 */
     .friend-section-card {
-      background: rgba(255,255,255,0.82);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      background: rgba(180,180,180,0.22);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 1px 6px rgba(0,0,0,0.06);
     }
-    /* 卡片内每条好友去掉背景，分隔线只在非最后一条显示 */
     .friend-section-card .friend-swipe-wrap:last-child .friend-item {
       border-bottom: none;
     }
-    /* 左滑按钮圆角跟随卡片 */
     .friend-section-card .friend-swipe-wrap:first-child .friend-swipe-actions {
       border-radius: 0 16px 0 0;
     }
@@ -3277,9 +3301,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     }
     .friend-swipe-actions {
       position: absolute;
-      right: 0;
-      top: 0;
-      bottom: 0;
+      right: 0; top: 0; bottom: 0;
       display: flex;
       align-items: stretch;
       transform: translateX(100%);
@@ -3316,66 +3338,98 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       transition: transform 0.25s cubic-bezier(0.25,0.8,0.25,1);
     }
 
-    /* ====== 分组弹窗 ====== */
+    /* ====== 分组弹窗（图四样式：居中弹窗+tag选择+确认） ====== */
     .group-picker-mask {
       position: fixed;
       inset: 0;
       z-index: 9998;
-      background: rgba(0,0,0,0.45);
+      background: rgba(0,0,0,0.4);
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       justify-content: center;
     }
     .group-picker-sheet {
-      width: 100%;
-      max-width: 480px;
-      background: #f2f2f7;
-      border-radius: 20px 20px 0 0;
-      padding: 0 0 calc(20px + env(safe-area-inset-bottom));
-      overflow: hidden;
+      width: calc(100% - 60px);
+      max-width: 340px;
+      background: #fff;
+      border-radius: 20px;
+      padding: 24px 20px 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.18);
     }
     .group-picker-title {
       text-align: center;
-      font-size: 13px;
-      color: #999;
-      padding: 14px 20px 8px;
-    }
-    .group-picker-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-      padding: 0 16px;
-    }
-    .group-picker-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      background: #fff;
-      border-radius: 0;
-      padding: 16px 16px;
       font-size: 16px;
+      font-weight: 700;
       color: #111;
+      margin-bottom: 18px;
+    }
+    .group-picker-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+      margin-bottom: 22px;
+    }
+    .group-picker-tag {
+      padding: 8px 18px;
+      border-radius: 20px;
+      border: 1.5px solid #ddd;
+      background: #f7f7f7;
+      font-size: 14px;
+      color: #333;
       cursor: pointer;
-      border-bottom: 1px solid #f2f2f7;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
       user-select: none;
       -webkit-user-select: none;
+      position: relative;
     }
-    .group-picker-item:first-child { border-radius: 14px 14px 0 0; }
-    .group-picker-item:last-child  { border-radius: 0 0 14px 14px; border-bottom: none; }
-    .group-picker-item:only-child  { border-radius: 14px; }
-    .group-picker-item.selected    { color: #007aff; font-weight: 600; }
-    .group-picker-check { font-size: 18px; color: #007aff; }
-    .group-picker-cancel {
-      margin: 10px 16px 0;
-      background: #fff;
+    .group-picker-tag.selected {
+      background: #111;
+      border-color: #111;
+      color: #fff;
+    }
+    /* 长按时显示编辑图标 */
+    .group-picker-tag-editing {
+      outline: 2px solid #5ac8fa;
+    }
+    .group-picker-tag input {
       border: none;
-      border-radius: 14px;
-      width: calc(100% - 32px);
-      height: 52px;
-      font-size: 17px;
-      font-weight: 600;
-      color: #007aff;
+      background: transparent;
+      font-size: 14px;
+      color: inherit;
+      width: 80px;
+      outline: none;
+      text-align: center;
+    }
+    .group-picker-actions {
+      display: flex;
+      gap: 12px;
+    }
+    .group-picker-cancel-btn {
+      flex: 1;
+      height: 46px;
+      border-radius: 12px;
+      border: 1.5px solid #ddd;
+      background: #fff;
+      font-size: 16px;
+      color: #333;
+      font-weight: 500;
       cursor: pointer;
+    }
+    .group-picker-confirm-btn {
+      flex: 2;
+      height: 46px;
+      border-radius: 12px;
+      border: none;
+      background: #c8cdd6;
+      font-size: 16px;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .group-picker-confirm-btn.ready {
+      background: #5ac8fa;
     }
 
   </style>
@@ -3404,6 +3458,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       </header>
 
       <div class="empty-list hidden" id="emptyList">还没有角色，点右上角 + 添加一个</div>
+      <div class="friend-group-tabs" id="friendGroupTabs"></div>
       <div class="friend-list" id="friendList"></div>
     </section>
 
@@ -5176,30 +5231,58 @@ function estimateTokens(text) {
       });
     }
 
+    // 当前激活的分组Tab，null = 默认页（置顶+未分组）
+    let activeGroupTabId = null;
+
+    function renderGroupTabs() {
+      const tabsEl = document.getElementById("friendGroupTabs");
+      if (!tabsEl) return;
+      if (!state.friendGroups) state.friendGroups = [
+        { id: "g1", name: "♡ 最爱" },
+        { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
+        { id: "g3", name: "＊ 关注" },
+        { id: "g4", name: "· · · 其他" }
+      ];
+      tabsEl.innerHTML = "";
+
+      // 第一个tab：默认（置顶+其他）
+      const defTab = document.createElement("button");
+      defTab.className = "friend-group-tab" + (activeGroupTabId === null ? " active" : "");
+      defTab.textContent = "· · ·";
+      defTab.onclick = () => { activeGroupTabId = null; renderGroupTabs(); renderContacts(); };
+      tabsEl.appendChild(defTab);
+
+      state.friendGroups.forEach(group => {
+        const btn = document.createElement("button");
+        btn.className = "friend-group-tab" + (activeGroupTabId === group.id ? " active" : "");
+        btn.textContent = group.name;
+        btn.onclick = () => { activeGroupTabId = group.id; renderGroupTabs(); renderContacts(); };
+        tabsEl.appendChild(btn);
+      });
+    }
+
     function renderContacts() {
       friendList.innerHTML = "";
+
+      if (!state.friendGroups) state.friendGroups = [
+        { id: "g1", name: "♡ 最爱" },
+        { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
+        { id: "g3", name: "＊ 关注" },
+        { id: "g4", name: "· · · 其他" }
+      ];
+
+      renderGroupTabs();
+
       if (!state.contacts.length) {
         emptyList.classList.remove("hidden");
         return;
       }
       emptyList.classList.add("hidden");
 
-      // 确保 friendGroups 存在
-      if (!state.friendGroups) {
-        state.friendGroups = [
-          { id: "g1", name: "♡ 最爱" },
-          { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-          { id: "g3", name: "＊ 关注" },
-          { id: "g4", name: "· · · 其他" }
-        ];
-      }
-
-      // 关闭所有已打开的左滑
       function closeAllSwipes() {
         document.querySelectorAll(".friend-swipe-wrap.swiped").forEach(w => w.classList.remove("swiped"));
       }
 
-      // 渲染单个好友条目
       function buildFriendItem(contact) {
         const wrap = document.createElement("div");
         wrap.className = "friend-swipe-wrap";
@@ -5209,7 +5292,6 @@ function estimateTokens(text) {
         item.className = "friend-item";
         item.dataset.id = contact.id;
 
-        // 头像
         const avatarWrap = document.createElement("div");
         avatarWrap.className = "friend-avatar-wrap";
         const avatar = document.createElement("div");
@@ -5261,7 +5343,6 @@ function estimateTokens(text) {
         item.appendChild(avatarWrap);
         item.appendChild(main);
 
-        // 左滑操作按钮
         const actions = document.createElement("div");
         actions.className = "friend-swipe-actions";
 
@@ -5303,13 +5384,11 @@ function estimateTokens(text) {
         wrap.appendChild(item);
         wrap.appendChild(actions);
 
-        // 左滑手势
         let touchStartX = 0, touchStartY = 0, isSwiping = false, swipeDir = null;
         item.addEventListener("touchstart", (e) => {
           touchStartX = e.touches[0].clientX;
           touchStartY = e.touches[0].clientY;
-          isSwiping = false;
-          swipeDir = null;
+          isSwiping = false; swipeDir = null;
         }, { passive: true });
         item.addEventListener("touchmove", (e) => {
           const dx = e.touches[0].clientX - touchStartX;
@@ -5318,92 +5397,75 @@ function estimateTokens(text) {
             if (Math.abs(dx) > Math.abs(dy) + 5) swipeDir = "h";
             else if (Math.abs(dy) > Math.abs(dx) + 5) swipeDir = "v";
           }
-          if (swipeDir === "h") {
-            isSwiping = true;
-          }
+          if (swipeDir === "h") isSwiping = true;
         }, { passive: true });
         item.addEventListener("touchend", (e) => {
           if (!swipeDir || swipeDir !== "h") return;
           const dx = e.changedTouches[0].clientX - touchStartX;
-          if (dx < -40) {
-            closeAllSwipes();
-            wrap.classList.add("swiped");
-          } else if (dx > 20) {
-            wrap.classList.remove("swiped");
-          }
+          if (dx < -40) { closeAllSwipes(); wrap.classList.add("swiped"); }
+          else if (dx > 20) { wrap.classList.remove("swiped"); }
         });
-
-        // 点击
         item.addEventListener("click", (e) => {
           if (isSwiping) { isSwiping = false; return; }
-          if (wrap.classList.contains("swiped")) {
-            closeAllSwipes();
-            return;
-          }
+          if (wrap.classList.contains("swiped")) { closeAllSwipes(); return; }
           contact.unreadCount = 0;
           openChat(contact.id);
         });
-
-        // 点击空白区关闭滑开
         document.addEventListener("touchstart", (e) => {
-          if (!wrap.contains(e.target) && wrap.classList.contains("swiped")) {
-            wrap.classList.remove("swiped");
-          }
+          if (!wrap.contains(e.target) && wrap.classList.contains("swiped")) wrap.classList.remove("swiped");
         }, { passive: true });
 
         return wrap;
       }
 
-      // 构建一个完整分区（标题 + 圆角卡片包裹好友列表）
       function buildSection(label, contacts) {
         const section = document.createElement("div");
         section.className = "friend-section";
-
         const header = document.createElement("div");
         header.className = "friend-section-header";
         const lbl = document.createElement("span");
         lbl.className = "friend-section-label";
         lbl.textContent = label;
-        const line = document.createElement("div");
-        line.className = "friend-section-line";
         header.appendChild(lbl);
-        header.appendChild(line);
-
         const card = document.createElement("div");
         card.className = "friend-section-card";
         contacts.forEach(c => card.appendChild(buildFriendItem(c)));
-
         section.appendChild(header);
         section.appendChild(card);
         return section;
       }
 
-      // 置顶区
-      const pinned = state.contacts.filter(c => c.isPinned)
-        .sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
-      if (pinned.length > 0) {
-        friendList.appendChild(buildSection("📌 置顶", pinned));
-      }
+      const sort = arr => [...arr].sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
 
-      // 分组区
-      state.friendGroups.forEach(group => {
-        const members = state.contacts.filter(c => !c.isPinned && c.groupId === group.id)
-          .sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
-        if (members.length > 0) {
-          friendList.appendChild(buildSection(group.name, members));
+      if (activeGroupTabId === null) {
+        // 默认页：置顶 + 未分组
+        const pinned = sort(state.contacts.filter(c => c.isPinned));
+        if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
+
+        const ungrouped = sort(state.contacts.filter(c => !c.isPinned && !c.groupId));
+        if (ungrouped.length > 0) friendList.appendChild(buildSection("· · ·", ungrouped));
+      } else {
+        // 分组页：该分组内的置顶 + 普通
+        const group = state.friendGroups.find(g => g.id === activeGroupTabId);
+        const inGroup = state.contacts.filter(c => c.groupId === activeGroupTabId);
+        const pinned = sort(inGroup.filter(c => c.isPinned));
+        const normal = sort(inGroup.filter(c => !c.isPinned));
+        if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
+        if (normal.length > 0) friendList.appendChild(buildSection(group ? group.name : "· · ·", normal));
+        if (!inGroup.length) {
+          const empty = document.createElement("div");
+          empty.style.cssText = "text-align:center;color:#aaa;font-size:14px;padding:40px 0;";
+          empty.textContent = "该分组暂无好友";
+          friendList.appendChild(empty);
         }
-      });
-
-      // 未分组区
-      const ungrouped = state.contacts.filter(c => !c.isPinned && !c.groupId)
-        .sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
-      if (ungrouped.length > 0) {
-        friendList.appendChild(buildSection("· · ·", ungrouped));
       }
     }
-    // 分组选择弹窗
+
+    // 分组选择弹窗（图四：居中弹窗 tag点击选择 长按改名 确认按钮）
     function showGroupPicker(contact) {
       if (!state.friendGroups) return;
+
+      let selectedId = contact.groupId || null;
 
       const mask = document.createElement("div");
       mask.className = "group-picker-mask";
@@ -5415,65 +5477,97 @@ function estimateTokens(text) {
       title.className = "group-picker-title";
       title.textContent = `为「${getDisplayName(contact)}」选择分组`;
 
-      const list = document.createElement("div");
-      list.className = "group-picker-list";
+      const tagsWrap = document.createElement("div");
+      tagsWrap.className = "group-picker-tags";
 
-      // 无分组选项
-      const noneItem = document.createElement("div");
-      noneItem.className = "group-picker-item" + (!contact.groupId ? " selected" : "");
-      noneItem.innerHTML = `<span>不分组</span>${!contact.groupId ? '<span class="group-picker-check">✓</span>' : ''}`;
-      noneItem.onclick = () => {
-        delete contact.groupId;
-        document.body.removeChild(mask);
-        renderContacts();
-      };
-      list.appendChild(noneItem);
+      const confirmBtn = document.createElement("button");
+      confirmBtn.className = "group-picker-confirm-btn" + (selectedId !== null ? " ready" : "");
+      confirmBtn.textContent = "确认";
 
-      state.friendGroups.forEach(group => {
-        const item = document.createElement("div");
-        const isSelected = contact.groupId === group.id;
-        item.className = "group-picker-item" + (isSelected ? " selected" : "");
-        item.innerHTML = `<span>${group.name}</span>${isSelected ? '<span class="group-picker-check">✓</span>' : ''}`;
+      function buildTags() {
+        tagsWrap.innerHTML = "";
 
-        item.onclick = () => {
-          contact.groupId = group.id;
-          document.body.removeChild(mask);
-          renderContacts();
+        // "不分组" tag
+        const noneTag = document.createElement("div");
+        noneTag.className = "group-picker-tag" + (selectedId === null ? " selected" : "");
+        noneTag.textContent = "不分组";
+        noneTag.onclick = () => {
+          selectedId = null;
+          confirmBtn.className = "group-picker-confirm-btn ready";
+          buildTags();
         };
+        tagsWrap.appendChild(noneTag);
 
-        // 长按改名
-        let renameTimer = null;
-        item.addEventListener("touchstart", () => {
-          renameTimer = setTimeout(async () => {
-            renameTimer = null;
-            const newName = await sysPrompt("修改分组名称：", group.name);
-            if (newName && newName.trim()) {
-              group.name = newName.trim();
-              document.body.removeChild(mask);
-              showGroupPicker(contact);
-            }
-          }, 700);
-        }, { passive: true });
-        item.addEventListener("touchend", () => { if (renameTimer) { clearTimeout(renameTimer); renameTimer = null; } });
-        item.addEventListener("touchcancel", () => { if (renameTimer) { clearTimeout(renameTimer); renameTimer = null; } });
+        state.friendGroups.forEach(group => {
+          const tag = document.createElement("div");
+          tag.className = "group-picker-tag" + (selectedId === group.id ? " selected" : "");
 
-        list.appendChild(item);
-      });
+          // 正常状态：显示名称
+          const nameSpan = document.createElement("span");
+          nameSpan.textContent = group.name;
+          tag.appendChild(nameSpan);
+
+          tag.onclick = () => {
+            selectedId = selectedId === group.id ? null : group.id;
+            confirmBtn.className = "group-picker-confirm-btn ready";
+            buildTags();
+          };
+
+          // 长按直接在tag里变成输入框改名
+          let renameTimer = null;
+          tag.addEventListener("touchstart", (e) => {
+            renameTimer = setTimeout(() => {
+              renameTimer = null;
+              tag.classList.add("group-picker-tag-editing");
+              tag.innerHTML = "";
+              const input = document.createElement("input");
+              input.value = group.name;
+              input.onclick = e => e.stopPropagation();
+              input.onblur = () => {
+                const v = input.value.trim();
+                if (v) group.name = v;
+                tag.classList.remove("group-picker-tag-editing");
+                buildTags();
+                renderGroupTabs();
+              };
+              tag.appendChild(input);
+              setTimeout(() => input.focus(), 30);
+            }, 650);
+          }, { passive: true });
+          tag.addEventListener("touchend", () => { if (renameTimer) { clearTimeout(renameTimer); renameTimer = null; } });
+          tag.addEventListener("touchcancel", () => { if (renameTimer) { clearTimeout(renameTimer); renameTimer = null; } });
+
+          tagsWrap.appendChild(tag);
+        });
+      }
+
+      buildTags();
+
+      const actions = document.createElement("div");
+      actions.className = "group-picker-actions";
 
       const cancelBtn = document.createElement("button");
-      cancelBtn.className = "group-picker-cancel";
+      cancelBtn.className = "group-picker-cancel-btn";
       cancelBtn.textContent = "取消";
       cancelBtn.onclick = () => document.body.removeChild(mask);
 
+      confirmBtn.onclick = () => {
+        if (selectedId === null) delete contact.groupId;
+        else contact.groupId = selectedId;
+        document.body.removeChild(mask);
+        renderContacts();
+      };
+
       mask.onclick = (e) => { if (e.target === mask) document.body.removeChild(mask); };
 
+      actions.appendChild(cancelBtn);
+      actions.appendChild(confirmBtn);
       sheet.appendChild(title);
-      sheet.appendChild(list);
-      sheet.appendChild(cancelBtn);
+      sheet.appendChild(tagsWrap);
+      sheet.appendChild(actions);
       mask.appendChild(sheet);
       document.body.appendChild(mask);
     }
-
     function openAddModal() {
       modalMask.classList.add("show");
       addRoleBtn.classList.add("open");

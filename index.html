@@ -3267,7 +3267,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           </div>
         </div>
       </div>
-      <div class="moments-body" id="momentsListContainer" style="padding-top: 8px; text-align: left; background: #fff; padding-bottom: 80px;">
+      <div class="moments-body" id="momentsListContainer" style="padding-top: 8px; text-align: left; background: transparent; padding-bottom: 80px;">
         <div style="text-align: center; color: #c8c5be; padding-top: 80px; font-size: 14px; letter-spacing: 0.3px;" id="momentsEmptyHint">暂时没有动态</div>
       </div>
       
@@ -3623,6 +3623,17 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
               <input type="range" id="meBgOpacity" min="0" max="100" step="1" value="100" style="flex: 1; accent-color: #C1D0DC; height: 4px; outline: none;" />
               <span id="meBgOpacityVal" style="font-size: 13px; color: #888; min-width: 36px; text-align: right;">100%</span>
             </div>
+          </div>
+        </div>
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">界面文字颜色</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
+            设置好友列表、朋友圈、我的页面的文字颜色，深色背景时可改为白色。
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <label style="font-size: 14px; font-weight: 600; color: #222; flex: 1;">主文字颜色</label>
+            <input type="color" id="globalTextColorInput" value="#111111" style="width: 44px; height: 36px; border: none; border-radius: 8px; padding: 2px; cursor: pointer; background: #f7f7f8;" />
+            <button class="btn btn-light" id="resetTextColorBtn" style="height: 36px; padding: 0 12px; font-size: 13px; border-radius: 8px; flex: none;">重置</button>
           </div>
         </div>
 
@@ -5028,9 +5039,6 @@ function estimateTokens(text) {
       sortedContacts.forEach(contact => {
         const item = document.createElement("button");
         item.className = "friend-item";
-        if (contact.isPinned) {
-            item.style.backgroundColor = "#fafafa";
-        }
         item.dataset.id = contact.id;
 
         // 头像包裹层（用于叠加角标）
@@ -8366,6 +8374,8 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         fontSizeInput.value = preset.size;
         fontSizeDisplay.textContent = preset.size + "px";
         applyGlobalFontAndSize();
+              applyGlobalTextColor();
+
       }
     });
 
@@ -8522,6 +8532,11 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (meBgPreview && state.screenBackgrounds.me) {
         meBgPreview.style.backgroundImage = `url(${state.screenBackgrounds.me})`;
       }
+      // 恢复文字颜色
+      const textColorInput = document.getElementById("globalTextColorInput");
+      if (textColorInput && state.screenBackgrounds.textColor) {
+        textColorInput.value = state.screenBackgrounds.textColor;
+      }
 
       // 恢复透明度拉条
       const fSlider = document.getElementById("friendsBgOpacity");
@@ -8648,6 +8663,33 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
 
       styleEl.textContent = css;
     }
+    // 应用全局文字颜色
+    function applyGlobalTextColor() {
+      let colorStyleEl = document.getElementById("global-text-color-style");
+      if (!colorStyleEl) {
+        colorStyleEl = document.createElement("style");
+        colorStyleEl.id = "global-text-color-style";
+        document.head.appendChild(colorStyleEl);
+      }
+      const color = (state.screenBackgrounds && state.screenBackgrounds.textColor) ? state.screenBackgrounds.textColor : "#111111";
+      colorStyleEl.textContent = `
+        #screen-friends .friend-name,
+        #screen-friends .friend-time,
+        #screen-friends .friend-sub,
+        #screen-friends .header-title,
+        #screen-friends .empty-list,
+        #screen-moments .moments-name,
+        #screen-me .me-name,
+        #screen-me .me-quote,
+        #screen-me .handle,
+        #screen-me .menu li {
+          color: ${color} !important;
+        }
+        #screen-friends .header {
+          --text: ${color};
+        }
+      `;
+    }
 
     // 好友页背景处理
     document.getElementById("settingsFriendsBgInput").addEventListener("change", async (e) => {
@@ -8737,6 +8779,18 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       state.screenBackgrounds.meOpacity = val;
       document.getElementById("meBgOpacityVal").textContent = val + "%";
       applyScreenBackgrounds();
+    });
+    // 文字颜色选择器
+    document.getElementById("globalTextColorInput").addEventListener("input", (e) => {
+      if (!state.screenBackgrounds) state.screenBackgrounds = {};
+      state.screenBackgrounds.textColor = e.target.value;
+      applyGlobalTextColor();
+    });
+    document.getElementById("resetTextColorBtn").addEventListener("click", () => {
+      if (!state.screenBackgrounds) state.screenBackgrounds = {};
+      state.screenBackgrounds.textColor = "#111111";
+      document.getElementById("globalTextColorInput").value = "#111111";
+      applyGlobalTextColor();
     });
 
     // ================== 头像同步与更换逻辑 ==================

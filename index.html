@@ -184,13 +184,16 @@
     }
     /* 好友页顶栏特殊样式 - 透明融合背景 */
     .friends-header {
+      background: rgba(237,237,237,0.85) !important;
+      backdrop-filter: blur(12px) !important;
+      -webkit-backdrop-filter: blur(12px) !important;
+      border-bottom: 1px solid rgba(0,0,0,0.08) !important;
+    }
+    #screen-friends.has-bg .friends-header {
       background: transparent !important;
       backdrop-filter: none !important;
       -webkit-backdrop-filter: none !important;
       border-bottom: none !important;
-    }
-    #screen-friends.has-bg .friends-header {
-      background: transparent !important;
     }
 
     .friends-header-left {
@@ -200,7 +203,7 @@
       cursor: pointer;
       flex: 1;
       min-width: 0;
-      max-width: 140px;
+      max-width: calc(100% - 100px);
     }
 
     .friends-header-avatar {
@@ -3525,13 +3528,13 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
   <div class="app">
     <section class="screen top-screen active" id="screen-friends">
       <header class="header friends-header">
-        <div class="header-bar">
+        <div class="header-bar" style="padding-left: 14px; padding-right: 4px;">
           <div class="friends-header-left">
             <div class="friends-header-avatar" id="friendsHeaderAvatar" title="点击打开音乐"></div>
             <div class="friends-header-info">
-              <div class="friends-header-name" id="friendsHeaderName">{{user}}</div>
+              <div class="friends-header-name" id="friendsHeaderName"></div>
               <div class="friends-header-status" id="friendsHeaderStatusRow" title="点击修改状态">
-                <span class="friends-header-status-dot" id="friendsHeaderStatusDot"></span>
+                <span class="friends-header-status-dot" id="friendsHeaderStatusDot" style="background: #37d05f;"></span>
                 <span class="friends-header-status-text" id="friendsHeaderStatusText">在线</span>
               </div>
             </div>

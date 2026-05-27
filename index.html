@@ -228,7 +228,7 @@
     }
 
     .friend-list {
-      background: #f2f2f7;
+      background: #ededed;
     }
 
     .friend-item {
@@ -3228,21 +3228,28 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     /* ====== 好友分组Tab栏 ====== */
     .friend-group-tabs {
       display: flex;
-      gap: 8px;
-      padding: 10px 14px 2px;
+      gap: 0;
+      padding: 10px 14px 6px;
       overflow-x: auto;
       scrollbar-width: none;
       flex-shrink: 0;
     }
     .friend-group-tabs::-webkit-scrollbar { display: none; }
+    .friend-group-tabs-inner {
+      display: flex;
+      background: #ffffff;
+      border-radius: 22px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
     .friend-group-tab {
       flex-shrink: 0;
-      height: 34px;
-      padding: 0 16px;
-      border-radius: 17px;
+      height: 38px;
+      padding: 0 18px;
+      border-radius: 0;
       border: none;
-      background: rgba(0,0,0,0.07);
-      color: #555;
+      background: transparent;
+      color: #888;
       font-size: 13px;
       font-weight: 500;
       cursor: pointer;
@@ -3251,14 +3258,14 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       user-select: none;
     }
     .friend-group-tab.active {
-      background: rgba(0,0,0,0.18);
+      background: rgba(0,0,0,0.12);
       color: #111;
       font-weight: 700;
     }
 
     /* ====== 好友分区 ====== */
     .friend-section {
-      margin: 6px 12px 0;
+      margin: 0 12px;
     }
     .friend-section-header {
       display: none;
@@ -5245,20 +5252,27 @@ function estimateTokens(text) {
       ];
       tabsEl.innerHTML = "";
 
-      // 第一个tab：默认（置顶+其他）
+      // 用一个统一的圆角容器包裹所有tab
+      const inner = document.createElement("div");
+      inner.className = "friend-group-tabs-inner";
+
+      // 默认tab（也存入state以便改名）
+      if (!state.defaultGroupName) state.defaultGroupName = "· · ·";
       const defTab = document.createElement("button");
       defTab.className = "friend-group-tab" + (activeGroupTabId === null ? " active" : "");
-      defTab.textContent = "· · ·";
+      defTab.textContent = state.defaultGroupName;
       defTab.onclick = () => { activeGroupTabId = null; renderGroupTabs(); renderContacts(); };
-      tabsEl.appendChild(defTab);
+      inner.appendChild(defTab);
 
       state.friendGroups.forEach(group => {
         const btn = document.createElement("button");
         btn.className = "friend-group-tab" + (activeGroupTabId === group.id ? " active" : "");
         btn.textContent = group.name;
         btn.onclick = () => { activeGroupTabId = group.id; renderGroupTabs(); renderContacts(); };
-        tabsEl.appendChild(btn);
+        inner.appendChild(btn);
       });
+
+      tabsEl.appendChild(inner);
     }
 
     function renderContacts() {
@@ -5485,15 +5499,45 @@ function estimateTokens(text) {
       function buildTags() {
         tagsWrap.innerHTML = "";
 
-        // "不分组" tag
+        // "不分组"（默认分组）tag - 也支持长按改名
+        if (!state.defaultGroupName) state.defaultGroupName = "· · ·";
         const noneTag = document.createElement("div");
         noneTag.className = "group-picker-tag" + (selectedId === null ? " selected" : "");
-        noneTag.textContent = "不分组";
+
+        const noneNameSpan = document.createElement("span");
+        noneNameSpan.textContent = state.defaultGroupName;
+        noneTag.appendChild(noneNameSpan);
+
         noneTag.onclick = () => {
           selectedId = null;
           confirmBtn.className = "group-picker-confirm-btn ready";
           buildTags();
         };
+
+        // 长按改名
+        let noneRenameTimer = null;
+        noneTag.addEventListener("touchstart", (e) => {
+          noneRenameTimer = setTimeout(() => {
+            noneRenameTimer = null;
+            noneTag.classList.add("group-picker-tag-editing");
+            noneTag.innerHTML = "";
+            const input = document.createElement("input");
+            input.value = state.defaultGroupName;
+            input.onclick = e => e.stopPropagation();
+            input.onblur = () => {
+              const v = input.value.trim();
+              if (v) state.defaultGroupName = v;
+              noneTag.classList.remove("group-picker-tag-editing");
+              buildTags();
+              renderGroupTabs();
+            };
+            noneTag.appendChild(input);
+            setTimeout(() => input.focus(), 30);
+          }, 650);
+        }, { passive: true });
+        noneTag.addEventListener("touchend", () => { if (noneRenameTimer) { clearTimeout(noneRenameTimer); noneRenameTimer = null; } });
+        noneTag.addEventListener("touchcancel", () => { if (noneRenameTimer) { clearTimeout(noneRenameTimer); noneRenameTimer = null; } });
+
         tagsWrap.appendChild(noneTag);
 
         state.friendGroups.forEach(group => {

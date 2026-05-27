@@ -3228,27 +3228,23 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     /* ====== 好友分组Tab栏 ====== */
     .friend-group-tabs {
       display: flex;
-      gap: 0;
-      padding: 10px 14px 6px;
-      overflow-x: auto;
-      scrollbar-width: none;
+      padding: 8px 14px 6px;
       flex-shrink: 0;
+      background: #ededed;
     }
-    .friend-group-tabs::-webkit-scrollbar { display: none; }
     .friend-group-tabs-inner {
       display: flex;
-      gap: 8px;
+      width: 100%;
       background: rgba(255,255,255,0.45);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-radius: 22px;
       padding: 4px;
-      flex-shrink: 0;
     }
     .friend-group-tab {
-      flex-shrink: 0;
+      flex: 1;
       height: 32px;
-      padding: 0 16px;
+      padding: 0;
       border-radius: 16px;
       border: none;
       background: transparent;
@@ -3259,11 +3255,16 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       transition: background 0.18s, color 0.18s;
       white-space: nowrap;
       user-select: none;
+      text-align: center;
     }
     .friend-group-tab.active {
       background: rgba(255,255,255,0.85);
       color: #111;
       font-weight: 700;
+    }
+    /* 有背景图时Tab栏透明 */
+    #screen-friends.has-bg .friend-group-tabs {
+      background: transparent;
     }
 
     /* ====== 好友分区 ====== */

@@ -3237,16 +3237,19 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .friend-group-tabs::-webkit-scrollbar { display: none; }
     .friend-group-tabs-inner {
       display: flex;
-      background: #ffffff;
+      gap: 8px;
+      background: rgba(255,255,255,0.45);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: 22px;
-      overflow: hidden;
+      padding: 4px;
       flex-shrink: 0;
     }
     .friend-group-tab {
       flex-shrink: 0;
-      height: 38px;
-      padding: 0 18px;
-      border-radius: 0;
+      height: 32px;
+      padding: 0 16px;
+      border-radius: 16px;
       border: none;
       background: transparent;
       color: #888;
@@ -3258,14 +3261,14 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       user-select: none;
     }
     .friend-group-tab.active {
-      background: rgba(0,0,0,0.12);
+      background: rgba(255,255,255,0.85);
       color: #111;
       font-weight: 700;
     }
 
     /* ====== 好友分区 ====== */
     .friend-section {
-      margin: 0 12px;
+      margin: 6px 12px 0;
     }
     .friend-section-header {
       display: none;

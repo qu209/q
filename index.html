@@ -2576,6 +2576,29 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       font-size: 12px;
       color: rgba(255,255,255,0.5);
     }
+        /* ====== MiniMax TTS 语音播放动画 ====== */
+    @keyframes ttsWaveBounce1 { 0%,100%{height:3px} 50%{height:14px} }
+    @keyframes ttsWaveBounce2 { 0%,100%{height:6px} 50%{height:18px} }
+    @keyframes ttsWaveBounce3 { 0%,100%{height:4px} 50%{height:12px} }
+    @keyframes ttsWaveBounce4 { 0%,100%{height:8px} 50%{height:16px} }
+    @keyframes ttsWaveBounce5 { 0%,100%{height:5px} 50%{height:20px} }
+
+    .voice-waveform-icon.tts-playing span:nth-child(1) { animation: ttsWaveBounce1 0.6s ease-in-out infinite; }
+    .voice-waveform-icon.tts-playing span:nth-child(2) { animation: ttsWaveBounce2 0.5s ease-in-out infinite 0.05s; }
+    .voice-waveform-icon.tts-playing span:nth-child(3) { animation: ttsWaveBounce3 0.7s ease-in-out infinite 0.1s; }
+    .voice-waveform-icon.tts-playing span:nth-child(4) { animation: ttsWaveBounce4 0.55s ease-in-out infinite 0.15s; }
+    .voice-waveform-icon.tts-playing span:nth-child(5) { animation: ttsWaveBounce5 0.65s ease-in-out infinite 0.08s; }
+    .voice-waveform-icon.tts-playing span:nth-child(6) { animation: ttsWaveBounce1 0.58s ease-in-out infinite 0.12s; }
+    .voice-waveform-icon.tts-playing span:nth-child(7) { animation: ttsWaveBounce3 0.72s ease-in-out infinite 0.06s; }
+
+    .voice-bar-inner.tts-loading { opacity: 0.6; }
+    .voice-bar-inner .tts-loading-dot {
+      width: 5px; height: 5px; border-radius: 50%;
+      background: currentColor; opacity: 0.5;
+      display: inline-block; margin-left: 4px;
+      animation: typingBounce 1.4s infinite ease-in-out both;
+    }
+
     /* ====== 全局消息横幅通知样式 ====== */
     @keyframes notifBounceIn {
       0% { transform: translateY(calc(-100% - 30px)) scale(0.92); opacity: 0; }
@@ -3988,12 +4011,48 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             <input type="range" id="fontSizeInput" min="12" max="25" step="1" value="15" style="width: 100%; accent-color: #C1D0DC; height: 4px; outline: none; margin: 4px 0 8px 0;" />
           </div>
 
-        </div><div style="font-size: 13px; color: #8e8e93; margin: 24px 0 8px 12px;">系统推送</div>
+        <div style="font-size: 13px; color: #8e8e93; margin: 24px 0 8px 12px;">系统推送</div>
         <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
           <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
             开启后，当页面在后台时（切到主屏幕或其他APP），AI角色发消息、发动态、回复评论等操作将通过手机系统通知推送提醒你。
           </div>
           <button class="btn" id="testPushBtn" style="width: 100%; background: #C1D0DC; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">测试后台推送</button>
+        </div>
+
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">语音消息设置 (MiniMax TTS)</div>
+        <div style="background: #fff; border-radius: 16px; padding: 4px 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; padding: 12px 0 10px; line-height: 1.6; border-bottom: 1px solid #f2f2f7;">
+            填写后，AI角色发出的语音消息将可点击波形图标播放 MiniMax 合成的真实声音。语音 ID 在各角色的聊天详情页单独设置。
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">Group ID</label>
+            <input class="input" id="minimaxGroupIdInput" type="text" placeholder="输入 Group ID" style="flex:1; background: transparent; border: none; text-align: right; padding: 0; font-size: 15px; color: #111;" />
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">API Key</label>
+            <input class="input" id="minimaxApiKeyInput" type="password" placeholder="输入 API Key" style="flex:1; background: transparent; border: none; text-align: right; padding: 0; font-size: 15px; color: #111;" />
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">模型</label>
+            <select id="minimaxModelSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
+              <option value="speech-01-turbo">Speech-01 Turbo (快速版)</option>
+              <option value="speech-01-hd">Speech-01 HD (高清版)</option>
+              <option value="speech-02-turbo">Speech-02 Turbo</option>
+              <option value="speech-02-hd">Speech-02 HD</option>
+              <option value="speech-2.5-hd">Speech-2.5 HD (高清)</option>
+              <option value="speech-2.6-turbo">Speech-2.6 Turbo</option>
+              <option value="speech-2.6-hd">Speech-2.6 HD</option>
+            </select>
+            <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">接口域名</label>
+            <select id="minimaxRegionSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
+              <option value="api.minimax.chat">🇨🇳 国内 (api.minimax.chat)</option>
+              <option value="api.minimaxi.chat">🌐 海外 (api.minimaxi.chat)</option>
+            </select>
+            <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
+          </div>
         </div>
 
       </div>
@@ -4400,6 +4459,51 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
               <input type="file" id="vcBgInput" accept="image/*" style="position: absolute; inset: 0; opacity: 0; cursor: pointer;" />
             </button>
             <button class="btn btn-light" id="clearVcBgBtn" style="height: 36px; padding: 0 16px; font-size: 14px; border-radius: 8px;">清除</button>
+          </div>
+        </div>
+
+        <!-- MiniMax TTS 角色语音设置卡片 -->
+        <div class="details-section-card">
+          <div class="details-section-title">语音合成设置 (TTS)</div>
+          <div style="font-size:13px; color:#666; margin-bottom:12px; line-height:1.6;">需先在「设置」页填写 MiniMax Group ID 和 API Key。启用后点击语音消息的波形图标可播放合成声音。</div>
+          <div class="toggle-row" style="margin-bottom:16px; border-bottom:1px solid #f2f2f7; padding-bottom:16px;">
+            <label style="font-size:15px; font-weight:600; color:#222;">启用语音合成 (TTS)</label>
+            <label class="switch">
+              <input type="checkbox" id="contactTtsEnabledToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div style="display:flex; align-items:center; min-height:44px; border-bottom:1px solid #f2f2f7; margin-bottom:0; padding-bottom:14px; margin-bottom:14px;">
+            <label style="font-size:15px; font-weight:600; color:#222; flex:none; width:72px;">语音 ID</label>
+            <input class="input" id="contactTtsVoiceIdInput" type="text" placeholder="minimax voice_id" style="flex:1; background:transparent; border:none; text-align:right; padding:0; font-size:15px; color:#111;" />
+          </div>
+          <div style="display:flex; align-items:center; min-height:44px;">
+            <label style="font-size:15px; font-weight:600; color:#222; flex:none; width:100px;">语音语言/方言</label>
+            <select id="contactTtsLangSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px; direction:rtl;">
+              <option value="">自动识别 (Auto)</option>
+              <option value="zh">🇨🇳 国语/普通话 (Chinese)</option>
+              <option value="yue">🇭🇰 粤语/广东话 (Cantonese)</option>
+              <option value="en">🇺🇸 英语 (English)</option>
+              <option value="ja">🇯🇵 日语 (Japanese)</option>
+              <option value="ko">🇰🇷 韩语 (Korean)</option>
+              <option value="de">🇩🇪 德语 (German)</option>
+              <option value="fr">🇫🇷 法语 (French)</option>
+              <option value="es">🇪🇸 西班牙语 (Spanish)</option>
+              <option value="it">🇮🇹 意大利语 (Italian)</option>
+              <option value="ru">🇷🇺 俄语 (Russian)</option>
+              <option value="pt">🇧🇷 葡萄牙语 (Portuguese)</option>
+              <option value="nl">🇳🇱 荷兰语 (Dutch)</option>
+              <option value="pl">🇵🇱 波兰语 (Polish)</option>
+              <option value="sv">🇸🇪 瑞典语 (Swedish)</option>
+              <option value="tr">🇹🇷 土耳其语 (Turkish)</option>
+              <option value="id">🇮🇩 印尼语 (Indonesian)</option>
+              <option value="ms">🇲🇾 马来语 (Malay)</option>
+              <option value="vi">🇻🇳 越南语 (Vietnamese)</option>
+              <option value="th">🇹🇭 泰语 (Thai)</option>
+              <option value="hi">🇮🇳 印地语 (Hindi)</option>
+              <option value="ar">🇸🇦 阿拉伯语 (Arabic)</option>
+            </select>
+            <span style="color:#c7c7cc; font-size:16px; pointer-events:none; flex-shrink:0;">›</span>
           </div>
         </div>
 
@@ -5164,6 +5268,12 @@ function estimateTokens(text) {
           temperature: 1.0,
           enableTranslation: false
         },
+        minimaxTtsSettings: {
+          groupId: "",
+          apiKey: "",
+          model: "speech-01-turbo",
+          region: "api.minimax.chat"
+        },
         fontSettings: {
           currentPresetId: "default",
           url: "",
@@ -5211,9 +5321,13 @@ function estimateTokens(text) {
       if (parsed.contacts) {
         parsed.contacts.forEach(c => {
           if (!c.messages) c.messages = [];
-          if (!c.memoryList) c.memoryList = [];if (!c.linkedLorebooks) c.linkedLorebooks = [];
+          if (!c.memoryList) c.memoryList = [];
+          if (!c.linkedLorebooks) c.linkedLorebooks = [];
           if (c.showFrameInChat === undefined) c.showFrameInChat = true;
           if (c.showFrameInHeader === undefined) c.showFrameInHeader = true;
+          if (c.ttsEnabled === undefined) c.ttsEnabled = false;
+          if (!c.ttsVoiceId) c.ttsVoiceId = "";
+          if (!c.ttsLang) c.ttsLang = "";
         });
       }
       if (!parsed.emojiCategories) parsed.emojiCategories = [];
@@ -5222,6 +5336,7 @@ function estimateTokens(text) {
       if (!parsed.moments) parsed.moments = [];
       if (!parsed.imgGenSettings) parsed.imgGenSettings = def.imgGenSettings;
       if (!parsed.friendGroups) parsed.friendGroups = def.friendGroups;
+      if (!parsed.minimaxTtsSettings) parsed.minimaxTtsSettings = def.minimaxTtsSettings;
       return parsed;
     }
 
@@ -5776,20 +5891,19 @@ function estimateTokens(text) {
         frameScale: 1,
         frameX: 0,
         frameY: 0,
-   
         showFrameInChat: true,
         showFrameInHeader: true,
         statusText: "在线中",
         statusColor: "#37d05f",
-        
         memoryList: [],
         autoSummary: false,
         summaryThreshold: 20,
         lastSummarizedLength: 0,
-        linkedLorebooks: [], // 绑定的世界书ID
-   
-        lastTime: getCurrentTime(), // 新联系人默认当前时间
-      
+        linkedLorebooks: [],
+        ttsEnabled: false,
+        ttsVoiceId: "",
+        ttsLang: "",
+        lastTime: getCurrentTime(),
         messages: []
       };
       state.contacts.unshift(newContact);
@@ -6226,6 +6340,22 @@ if (msg.isTyping) {
               bubble.addEventListener("click", (e) => {
                 e.stopPropagation();
                 if (state.isMultiSelecting) return;
+
+                // 如果当前角色开启了 TTS，点击波形区域触发 TTS 播放
+                const _contact = getContact(state.activeContactId);
+                if (msg.from === "ai" && _contact && _contact.ttsEnabled && _contact.ttsVoiceId &&
+                    state.minimaxTtsSettings && state.minimaxTtsSettings.groupId && state.minimaxTtsSettings.apiKey) {
+                  // 判断点击的是波形图标区域（左侧2/3范围）
+                  const bubbleRect = bubble.getBoundingClientRect();
+                  const clickX = e.clientX - bubbleRect.left;
+                  const isWaveArea = clickX < bubbleRect.width * 0.7;
+                  if (isWaveArea) {
+                    playTtsForVoiceMsg(voiceText, bubble, _contact);
+                    return;
+                  }
+                }
+
+                // 否则展开/收起语音文字
                 const vt = document.getElementById("voice-transcript-" + index);
                 if (vt) vt.classList.toggle("show");
               });
@@ -8720,7 +8850,143 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       voicePreviewMask.classList.remove("show");
       renderChat();
     });//========== 语音录入功能结束 ==========
- document.getElementById("voiceBtn").addEventListener("click", () => {
+     // ====== MiniMax TTS 语音合成核心逻辑 ======
+    // 全局 TTS audio 元素（单例，同时只播一个）
+    let _ttsAudioEl = null;
+    let _ttsPlayingWaveEl = null; // 当前正在播放的波形图标元素
+
+    function getTtsAudio() {
+      if (!_ttsAudioEl) {
+        _ttsAudioEl = document.createElement("audio");
+        _ttsAudioEl.style.display = "none";
+        document.body.appendChild(_ttsAudioEl);
+      }
+      return _ttsAudioEl;
+    }
+
+    function stopCurrentTts() {
+      const audio = getTtsAudio();
+      audio.pause();
+      audio.src = "";
+      if (_ttsPlayingWaveEl) {
+        _ttsPlayingWaveEl.classList.remove("tts-playing");
+        _ttsPlayingWaveEl = null;
+      }
+    }
+
+    async function playTtsForVoiceMsg(voiceText, voiceBarInnerEl, contact) {
+      // 检查设置
+      if (!contact || !contact.ttsEnabled || !contact.ttsVoiceId) return;
+      const tts = state.minimaxTtsSettings;
+      if (!tts || !tts.groupId || !tts.apiKey) return;
+
+      const waveEl = voiceBarInnerEl ? voiceBarInnerEl.querySelector(".voice-waveform-icon") : null;
+
+      // 如果当前正在播放同一个，点击停止
+      if (_ttsPlayingWaveEl && _ttsPlayingWaveEl === waveEl) {
+        stopCurrentTts();
+        return;
+      }
+
+      // 停止之前播放的
+      stopCurrentTts();
+
+      // 显示加载状态
+      if (waveEl) {
+        waveEl.classList.add("tts-playing");
+        _ttsPlayingWaveEl = waveEl;
+      }
+
+      try {
+        const region = tts.region || "api.minimax.chat";
+        const model = tts.model || "speech-01-turbo";
+        const groupId = tts.groupId;
+        const apiKey = tts.apiKey;
+        const voiceId = contact.ttsVoiceId;
+        const lang = contact.ttsLang || "";
+
+        const endpoint = `https://${region}/v1/t2a_v2?GroupId=${groupId}`;
+
+        const body = {
+          model: model,
+          text: voiceText,
+          stream: false,
+          voice_setting: {
+            voice_id: voiceId,
+            speed: 1.0,
+            vol: 1.0,
+            pitch: 0
+          },
+          audio_setting: {
+            audio_sample_rate: 32000,
+            bitrate: 128000,
+            format: "mp3",
+            channel: 1
+          }
+        };
+
+        // 如果指定了语言
+        if (lang) {
+          body.language_boost = lang;
+        }
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${apiKey}`
+          },
+          body: JSON.stringify(body)
+        });
+
+        if (!response.ok) {
+          throw new Error(`TTS API 错误: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // MiniMax 返回 base64 音频
+        const audioHex = data.data && data.data.audio;
+        if (!audioHex) {
+          throw new Error("未获取到音频数据");
+        }
+
+        // hex 转 base64（MiniMax 返回的是 hex 字符串）
+        function hexToBase64(hexStr) {
+          const bytes = new Uint8Array(hexStr.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+          let binary = "";
+          for (let i = 0; i < bytes.byteLength; i++) {
+            binary += String.fromCharCode(bytes[i]);
+          }
+          return btoa(binary);
+        }
+
+        const base64Audio = hexToBase64(audioHex);
+        const audioSrc = `data:audio/mp3;base64,${base64Audio}`;
+
+        const audio = getTtsAudio();
+        audio.src = audioSrc;
+
+        audio.onended = () => {
+          if (waveEl) waveEl.classList.remove("tts-playing");
+          if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
+        };
+
+        audio.onerror = () => {
+          if (waveEl) waveEl.classList.remove("tts-playing");
+          if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
+        };
+
+        await audio.play();
+
+      } catch (err) {
+        console.error("MiniMax TTS 播放失败:", err);
+        if (waveEl) waveEl.classList.remove("tts-playing");
+        if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
+      }
+    }
+    // ====== MiniMax TTS 逻辑结束 ======
+document.getElementById("voiceBtn").addEventListener("click", () => {
       triggerAIReply();
     });
 
@@ -8818,7 +9084,7 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       fontPresetSelect.value = state.fontSettings.currentPresetId;
     }
 
-                                        openSettingsBtn.addEventListener("click", () => {
+                                            openSettingsBtn.addEventListener("click", () => {
       // 载入 API 设置
       apiUrlInput.value = state.apiSettings.url;
       apiKeyInput.value = state.apiSettings.key;
@@ -8828,10 +9094,17 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (state.apiSettings.model && modelSelect.options.length <= 1) {
         modelSelect.innerHTML = `<option value="${state.apiSettings.model}">${state.apiSettings.model}</option>`;
       }
-      
+
       // 载入生图设置
       document.getElementById("imgGenToggle").checked = state.imgGenSettings ? state.imgGenSettings.enabled : false;
       document.getElementById("pollinationsKeyInput").value = state.imgGenSettings ? (state.imgGenSettings.pollinationsKey || "") : "";
+
+      // 载入 MiniMax TTS 设置
+      if (!state.minimaxTtsSettings) state.minimaxTtsSettings = { groupId: "", apiKey: "", model: "speech-01-turbo", region: "api.minimax.chat" };
+      document.getElementById("minimaxGroupIdInput").value = state.minimaxTtsSettings.groupId || "";
+      document.getElementById("minimaxApiKeyInput").value = state.minimaxTtsSettings.apiKey || "";
+      document.getElementById("minimaxModelSelect").value = state.minimaxTtsSettings.model || "speech-01-turbo";
+      document.getElementById("minimaxRegionSelect").value = state.minimaxTtsSettings.region || "api.minimax.chat";
 
       // 载入背景设置预览
       initializeScreenBackgrounds();
@@ -9022,7 +9295,7 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     });
 
     // 总体保存
-            saveSettingsBtn.addEventListener("click", async () => {
+                saveSettingsBtn.addEventListener("click", async () => {
       state.apiSettings.url = apiUrlInput.value.trim();
       state.apiSettings.key = apiKeyInput.value.trim();
       state.apiSettings.model = modelSelect.value;
@@ -9032,9 +9305,15 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (!state.imgGenSettings) state.imgGenSettings = {};
       state.imgGenSettings.enabled = document.getElementById("imgGenToggle").checked;
       state.imgGenSettings.pollinationsKey = document.getElementById("pollinationsKeyInput").value.trim();
+      // 保存 MiniMax TTS 设置
+      if (!state.minimaxTtsSettings) state.minimaxTtsSettings = {};
+      state.minimaxTtsSettings.groupId = document.getElementById("minimaxGroupIdInput").value.trim();
+      state.minimaxTtsSettings.apiKey = document.getElementById("minimaxApiKeyInput").value.trim();
+      state.minimaxTtsSettings.model = document.getElementById("minimaxModelSelect").value;
+      state.minimaxTtsSettings.region = document.getElementById("minimaxRegionSelect").value;
 
       await sysAlert("设置已保存");
-      
+
       screens.settings.classList.remove("active");
       screens.me.classList.add("active");
       tabbar.classList.remove("hidden");
@@ -9658,10 +9937,15 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       detailsRealNameInput.value = contact.realName || "";
       detailsPersonaInput.value = contact.persona || "";
       detailsMyPersonaInput.value = contact.myPersona || "";
-      
+
       // 回显后台活动设置
       document.getElementById("detailsAutoMsgInput").value = contact.autoMsgInterval || "";
       document.getElementById("detailsAutoMomentInput").value = contact.autoMomentInterval || "";
+
+      // 回显 TTS 设置
+      document.getElementById("contactTtsEnabledToggle").checked = contact.ttsEnabled || false;
+      document.getElementById("contactTtsVoiceIdInput").value = contact.ttsVoiceId || "";
+      document.getElementById("contactTtsLangSelect").value = contact.ttsLang || "";
 
       // 初始化和渲染记忆面板
       contact.memoryList = contact.memoryList || [];
@@ -9761,10 +10045,14 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       const loreCheckboxes = document.querySelectorAll("#chatDetailsLorebookList .lore-toggle-checkbox");
       if (loreCheckboxes.length > 0) {
         contact.linkedLorebooks = Array.from(loreCheckboxes).filter(cb => cb.checked).map(cb => cb.value);
- 
       } else {
-        if(!contact.linkedLorebooks) contact.linkedLorebooks = [];
+        if (!contact.linkedLorebooks) contact.linkedLorebooks = [];
       }
+
+      // 保存 TTS 设置
+      contact.ttsEnabled = document.getElementById("contactTtsEnabledToggle").checked;
+      contact.ttsVoiceId = document.getElementById("contactTtsVoiceIdInput").value.trim();
+      contact.ttsLang = document.getElementById("contactTtsLangSelect").value;
 
       // 保存后台活动设置
       const _oldMsgInterval = contact.autoMsgInterval || 0;

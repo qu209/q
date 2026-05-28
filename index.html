@@ -4035,13 +4035,15 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
             <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">模型</label>
             <select id="minimaxModelSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
+              <option value="speech-02-hd">Speech-01 HD (高清版)</option>
               <option value="speech-01-turbo">Speech-01 Turbo (快速版)</option>
-              <option value="speech-01-hd">Speech-01 HD (高清版)</option>
               <option value="speech-02-turbo">Speech-02 Turbo</option>
               <option value="speech-02-hd">Speech-02 HD</option>
-              <option value="speech-2.5-hd">Speech-2.5 HD (高清)</option>
+              <option value="speech-2.5-hd">Speech-2.5 HD</option>
               <option value="speech-2.6-turbo">Speech-2.6 Turbo</option>
               <option value="speech-2.6-hd">Speech-2.6 HD</option>
+              <option value="speech-2.8-turbo">Speech-2.8 Turbo</option>
+              <option value="speech-2.8-hd">Speech-2.8 HD (推荐)</option>
             </select>
             <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
           </div>
@@ -8850,10 +8852,11 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       voicePreviewMask.classList.remove("show");
       renderChat();
     });//========== 语音录入功能结束 ==========
-     // ====== MiniMax TTS 语音合成核心逻辑 ======
+    // ====== MiniMax TTS 语音合成核心逻辑 ======
     // 全局 TTS audio 元素（单例，同时只播一个）
     let _ttsAudioEl = null;
     let _ttsPlayingWaveEl = null; // 当前正在播放的波形图标元素
+    let _ttsPlayingMsgKey = null; // 当前正在播放的消息唯一key
 
     function getTtsAudio() {
       if (!_ttsAudioEl) {
@@ -8867,12 +8870,22 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     function stopCurrentTts() {
       const audio = getTtsAudio();
       audio.pause();
-      audio.src = "";
+      // 注意：不清空 audio.src，保留缓存，只是暂停
       if (_ttsPlayingWaveEl) {
         _ttsPlayingWaveEl.classList.remove("tts-playing");
         _ttsPlayingWaveEl = null;
       }
+      _ttsPlayingMsgKey = null;
     }
+
+    // 生成消息的唯一缓存key（用角色id+消息文字内容）
+    function _getTtsCacheKey(contactId, voiceText) {
+      return "tts_" + contactId + "_" + voiceText.slice(0, 80);
+    }
+
+    // 全局音频缓存（内存级，不存IndexedDB，不花额外空间）
+    // 格式：{ [cacheKey]: "data:audio/mp3;base64,..." }
+    const _ttsAudioCache = {};
 
     async function playTtsForVoiceMsg(voiceText, voiceBarInnerEl, contact) {
       // 检查设置
@@ -8881,100 +8894,142 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       if (!tts || !tts.groupId || !tts.apiKey) return;
 
       const waveEl = voiceBarInnerEl ? voiceBarInnerEl.querySelector(".voice-waveform-icon") : null;
+      const cacheKey = _getTtsCacheKey(contact.id, voiceText);
 
-      // 如果当前正在播放同一个，点击停止
-      if (_ttsPlayingWaveEl && _ttsPlayingWaveEl === waveEl) {
-        stopCurrentTts();
+      // 如果当前正在播放同一条消息 → 点击暂停/恢复
+      if (_ttsPlayingMsgKey === cacheKey) {
+        const audio = getTtsAudio();
+        if (!audio.paused) {
+          // 正在播放 → 暂停（保留波形动画，改为暂停状态）
+          audio.pause();
+          if (waveEl) waveEl.classList.remove("tts-playing");
+          _ttsPlayingWaveEl = null;
+          _ttsPlayingMsgKey = null;
+        } else {
+          // 已暂停 → 继续播放
+          if (waveEl) {
+            waveEl.classList.add("tts-playing");
+            _ttsPlayingWaveEl = waveEl;
+          }
+          audio.play().catch(() => {});
+        }
         return;
       }
 
-      // 停止之前播放的
-      stopCurrentTts();
+      // 切换到不同消息 → 先停止当前的
+      if (_ttsPlayingWaveEl) {
+        _ttsPlayingWaveEl.classList.remove("tts-playing");
+        _ttsPlayingWaveEl = null;
+      }
+      const audio = getTtsAudio();
+      audio.pause();
+      _ttsPlayingMsgKey = null;
 
-      // 显示加载状态
+      // 立即显示波形动画（加载中也要有动画）
       if (waveEl) {
         waveEl.classList.add("tts-playing");
         _ttsPlayingWaveEl = waveEl;
       }
 
       try {
-        const region = tts.region || "api.minimax.chat";
-        const model = tts.model || "speech-01-turbo";
-        const groupId = tts.groupId;
-        const apiKey = tts.apiKey;
-        const voiceId = contact.ttsVoiceId;
-        const lang = contact.ttsLang || "";
+        let audioSrc = "";
 
-        const endpoint = `https://${region}/v1/t2a_v2?GroupId=${groupId}`;
+        // 检查内存缓存
+        if (_ttsAudioCache[cacheKey]) {
+          audioSrc = _ttsAudioCache[cacheKey];
+        } else {
+          // 缓存不存在 → 调用 API（只有这里会花钱！）
+          const region = tts.region || "api.minimax.chat";
+          const model = tts.model || "speech-2.8-hd";
+          const groupId = tts.groupId;
+          const apiKey = tts.apiKey;
+          const voiceId = contact.ttsVoiceId;
+          const lang = contact.ttsLang || "";
 
-        const body = {
-          model: model,
-          text: voiceText,
-          stream: false,
-          voice_setting: {
-            voice_id: voiceId,
-            speed: 1.0,
-            vol: 1.0,
-            pitch: 0
-          },
-          audio_setting: {
-            audio_sample_rate: 32000,
-            bitrate: 128000,
-            format: "mp3",
-            channel: 1
+          const endpoint = `https://${region}/v1/t2a_v2?GroupId=${groupId}`;
+
+          const body = {
+            model: model,
+            text: voiceText,
+            stream: false,
+            voice_setting: {
+              voice_id: voiceId,
+              speed: 1.0,
+              vol: 1.0,
+              pitch: 0
+            },
+            audio_setting: {
+              audio_sample_rate: 32000,
+              bitrate: 128000,
+              format: "mp3",
+              channel: 1
+            }
+          };
+
+          if (lang) {
+            body.language_boost = lang;
           }
-        };
 
-        // 如果指定了语言
-        if (lang) {
-          body.language_boost = lang;
-        }
+          const response = await fetch(endpoint, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${apiKey}`
+            },
+            body: JSON.stringify(body)
+          });
 
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${apiKey}`
-          },
-          body: JSON.stringify(body)
-        });
-
-        if (!response.ok) {
-          throw new Error(`TTS API 错误: ${response.status}`);
-        }
-
-        const data = await response.json();
-
-        // MiniMax 返回 base64 音频
-        const audioHex = data.data && data.data.audio;
-        if (!audioHex) {
-          throw new Error("未获取到音频数据");
-        }
-
-        // hex 转 base64（MiniMax 返回的是 hex 字符串）
-        function hexToBase64(hexStr) {
-          const bytes = new Uint8Array(hexStr.match(/.{1,2}/g).map(b => parseInt(b, 16)));
-          let binary = "";
-          for (let i = 0; i < bytes.byteLength; i++) {
-            binary += String.fromCharCode(bytes[i]);
+          if (!response.ok) {
+            throw new Error(`TTS API 错误: ${response.status}`);
           }
-          return btoa(binary);
+
+          const data = await response.json();
+
+          const audioHex = data.data && data.data.audio;
+          if (!audioHex) {
+            throw new Error("未获取到音频数据");
+          }
+
+          // hex 转 base64
+          function hexToBase64(hexStr) {
+            const bytes = new Uint8Array(hexStr.match(/.{1,2}/g).map(b => parseInt(b, 16)));
+            let binary = "";
+            for (let i = 0; i < bytes.byteLength; i++) {
+              binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary);
+          }
+
+          const base64Audio = hexToBase64(audioHex);
+          audioSrc = `data:audio/mp3;base64,${base64Audio}`;
+
+          // 存入内存缓存，下次直接用，不再调用 API！
+          _ttsAudioCache[cacheKey] = audioSrc;
         }
 
-        const base64Audio = hexToBase64(audioHex);
-        const audioSrc = `data:audio/mp3;base64,${base64Audio}`;
+        // 检查波形元素是否还存在（用户可能已经切走了）
+        if (!document.body.contains(voiceBarInnerEl)) {
+          if (_ttsPlayingWaveEl === waveEl) {
+            if (waveEl) waveEl.classList.remove("tts-playing");
+            _ttsPlayingWaveEl = null;
+          }
+          return;
+        }
 
-        const audio = getTtsAudio();
+        // 设置音频并播放
         audio.src = audioSrc;
+        _ttsPlayingMsgKey = cacheKey;
 
         audio.onended = () => {
           if (waveEl) waveEl.classList.remove("tts-playing");
           if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
+          if (_ttsPlayingMsgKey === cacheKey) _ttsPlayingMsgKey = null;
         };
 
         audio.onerror = () => {
           if (waveEl) waveEl.classList.remove("tts-playing");
           if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
+          if (_ttsPlayingMsgKey === cacheKey) _ttsPlayingMsgKey = null;
         };
 
         await audio.play();
@@ -8983,6 +9038,7 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         console.error("MiniMax TTS 播放失败:", err);
         if (waveEl) waveEl.classList.remove("tts-playing");
         if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
+        _ttsPlayingMsgKey = null;
       }
     }
     // ====== MiniMax TTS 逻辑结束 ======

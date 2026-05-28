@@ -3834,19 +3834,15 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       <div class="chat-body" style="padding: 20px 16px; background: #f2f2f7;">
         
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">API 设置</div>
-        <div style="background: #fff; border-radius: 16px; padding: 4px 16px; margin-bottom: 24px;">
-          <div class="field" style="margin: 12px 0; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div class="field" style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label for="apiUrlInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">反代地址 (API URL)</label>
             <input class="input" id="apiUrlInput" type="text" placeholder="例如: https://api.openai.com/v1" style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
           </div>
-          <div class="field" style="margin: 12px 0;">
+          <div class="field" style="margin-bottom: 16px; border-bottom: 1px solid #f2f2f7; padding-bottom: 16px;">
             <label for="apiKeyInput" style="font-size: 14px; font-weight: 600; color: #222; margin-bottom: 8px;">密钥 (API Key)</label>
             <input class="input" id="apiKeyInput" type="password" placeholder="sk-..." style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
           </div>
-        </div>
-
-        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">模型设置</div>
-        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
           <div class="field" style="display: flex; margin-bottom: 16px;">
             <button class="btn" id="fetchModelsBtn" style="flex: 1; background: #C1D0DC; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">拉取可用模型</button>
           </div>
@@ -3863,13 +3859,50 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             </label>
             <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; accent-color: #C1D0DC; height: 4px; outline: none; margin: 4px 0 8px 0;" />
           </div>
-          
           <div class="toggle-row" style="margin-top: 16px; margin-bottom: 4px;">
             <label style="font-size: 14px; font-weight: 600; color: #222;">强制外语翻译模式</label>
             <label class="switch">
               <input type="checkbox" id="translationToggle">
               <span class="slider"></span>
             </label>
+          </div>
+        </div>
+
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">语音消息设置 (MiniMax TTS)</div>
+        <div style="background: #fff; border-radius: 16px; padding: 4px 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; padding: 12px 0 10px; line-height: 1.6; border-bottom: 1px solid #f2f2f7;">
+            填写后，AI角色发出的语音消息将可点击波形图标播放 MiniMax 合成的真实声音。语音 ID 在各角色的聊天详情页单独设置。
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">Group ID</label>
+            <input class="input" id="minimaxGroupIdInput" type="text" placeholder="输入 Group ID" style="flex:1; background: transparent; border: none; text-align: right; padding: 0; font-size: 15px; color: #111;" />
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">API Key</label>
+            <input class="input" id="minimaxApiKeyInput" type="password" placeholder="输入 API Key" style="flex:1; background: transparent; border: none; text-align: right; padding: 0; font-size: 15px; color: #111;" />
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">模型</label>
+            <select id="minimaxModelSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
+              <option value="speech-02-hd">Speech-01 HD (高清版)</option>
+              <option value="speech-01-turbo">Speech-01 Turbo (快速版)</option>
+              <option value="speech-02-turbo">Speech-02 Turbo</option>
+              <option value="speech-02-hd">Speech-02 HD</option>
+              <option value="speech-2.5-hd">Speech-2.5 HD</option>
+              <option value="speech-2.6-turbo">Speech-2.6 Turbo</option>
+              <option value="speech-2.6-hd">Speech-2.6 HD</option>
+              <option value="speech-2.8-turbo">Speech-2.8 Turbo</option>
+              <option value="speech-2.8-hd">Speech-2.8 HD (推荐)</option>
+            </select>
+            <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
+          </div>
+          <div style="display: flex; align-items: center; min-height: 50px;">
+            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">接口域名</label>
+            <select id="minimaxRegionSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
+              <option value="api.minimax.chat">🇨🇳 国内 (api.minimax.chat)</option>
+              <option value="api.minimaxi.chat">🌐 海外 (api.minimaxi.chat)</option>
+            </select>
+            <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
           </div>
         </div>
 
@@ -4019,48 +4052,9 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           <button class="btn" id="testPushBtn" style="width: 100%; background: #C1D0DC; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">测试后台推送</button>
         </div>
 
-        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">语音消息设置 (MiniMax TTS)</div>
-        <div style="background: #fff; border-radius: 16px; padding: 4px 16px; margin-bottom: 24px;">
-          <div style="font-size: 13px; color: #666; padding: 12px 0 10px; line-height: 1.6; border-bottom: 1px solid #f2f2f7;">
-            填写后，AI角色发出的语音消息将可点击波形图标播放 MiniMax 合成的真实声音。语音 ID 在各角色的聊天详情页单独设置。
-          </div>
-          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
-            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">Group ID</label>
-            <input class="input" id="minimaxGroupIdInput" type="text" placeholder="输入 Group ID" style="flex:1; background: transparent; border: none; text-align: right; padding: 0; font-size: 15px; color: #111;" />
-          </div>
-          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
-            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">API Key</label>
-            <input class="input" id="minimaxApiKeyInput" type="password" placeholder="输入 API Key" style="flex:1; background: transparent; border: none; text-align: right; padding: 0; font-size: 15px; color: #111;" />
-          </div>
-          <div style="display: flex; align-items: center; min-height: 50px; border-bottom: 1px solid #f2f2f7;">
-            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">模型</label>
-            <select id="minimaxModelSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
-              <option value="speech-02-hd">Speech-01 HD (高清版)</option>
-              <option value="speech-01-turbo">Speech-01 Turbo (快速版)</option>
-              <option value="speech-02-turbo">Speech-02 Turbo</option>
-              <option value="speech-02-hd">Speech-02 HD</option>
-              <option value="speech-2.5-hd">Speech-2.5 HD</option>
-              <option value="speech-2.6-turbo">Speech-2.6 Turbo</option>
-              <option value="speech-2.6-hd">Speech-2.6 HD</option>
-              <option value="speech-2.8-turbo">Speech-2.8 Turbo</option>
-              <option value="speech-2.8-hd">Speech-2.8 HD (推荐)</option>
-            </select>
-            <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
-          </div>
-          <div style="display: flex; align-items: center; min-height: 50px;">
-            <label style="font-size: 15px; font-weight: 600; color: #222; flex: none; width: 80px;">接口域名</label>
-            <select id="minimaxRegionSelect" style="flex:1; border:none; background:transparent; text-align:right; font-size:15px; color:#111; outline:none; appearance:none; -webkit-appearance:none; cursor:pointer; padding-right:4px;">
-              <option value="api.minimax.chat">🇨🇳 国内 (api.minimax.chat)</option>
-              <option value="api.minimaxi.chat">🌐 海外 (api.minimaxi.chat)</option>
-            </select>
-            <span style="color:#c7c7cc; font-size:16px; pointer-events:none;">›</span>
-          </div>
-        </div>
-
       </div>
     </section>
-
-    <section class="screen chat-screen" id="screen-chat">
+ <section class="screen chat-screen" id="screen-chat">
       <div class="chat-header">
         <div class="chat-header-bar">
           <div class="chat-header-left">
@@ -8853,10 +8847,9 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       renderChat();
     });//========== 语音录入功能结束 ==========
     // ====== MiniMax TTS 语音合成核心逻辑 ======
-    // 全局 TTS audio 元素（单例，同时只播一个）
     let _ttsAudioEl = null;
-    let _ttsPlayingWaveEl = null; // 当前正在播放的波形图标元素
-    let _ttsPlayingMsgKey = null; // 当前正在播放的消息唯一key
+    let _ttsPlayingWaveEl = null;
+    let _ttsPlayingMsgKey = null;
 
     function getTtsAudio() {
       if (!_ttsAudioEl) {
@@ -8870,7 +8863,6 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
     function stopCurrentTts() {
       const audio = getTtsAudio();
       audio.pause();
-      // 注意：不清空 audio.src，保留缓存，只是暂停
       if (_ttsPlayingWaveEl) {
         _ttsPlayingWaveEl.classList.remove("tts-playing");
         _ttsPlayingWaveEl = null;
@@ -8878,17 +8870,49 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       _ttsPlayingMsgKey = null;
     }
 
-    // 生成消息的唯一缓存key（用角色id+消息文字内容）
     function _getTtsCacheKey(contactId, voiceText) {
       return "tts_" + contactId + "_" + voiceText.slice(0, 80);
     }
 
-    // 全局音频缓存（内存级，不存IndexedDB，不花额外空间）
-    // 格式：{ [cacheKey]: "data:audio/mp3;base64,..." }
+    // 内存缓存（运行时快速查找，避免重复从消息对象读取）
     const _ttsAudioCache = {};
 
+    // 核心：从消息对象里找到已持久化的音频缓存
+    function _findMsgTtsCache(contact, voiceText) {
+      if (!contact || !contact.messages) return null;
+      for (let i = contact.messages.length - 1; i >= 0; i--) {
+        const m = contact.messages[i];
+        if (m.from === "ai" && m.ttsAudioData && m.text) {
+          // 匹配语音内容
+          const raw = m.text.slice(1, -1);
+          const parts = raw.replace(/^VOICE_MSG[|:]/, "").split("|");
+          const mVoiceText = parts.length > 1 ? parts.slice(1).join("|") : "";
+          if (mVoiceText === voiceText) {
+            return m.ttsAudioData;
+          }
+        }
+      }
+      return null;
+    }
+
+    // 核心：把音频数据存回消息对象（持久化到IndexedDB）
+    function _saveMsgTtsCache(contact, voiceText, audioSrc) {
+      if (!contact || !contact.messages) return;
+      for (let i = contact.messages.length - 1; i >= 0; i--) {
+        const m = contact.messages[i];
+        if (m.from === "ai" && m.text) {
+          const raw = m.text.slice(1, -1);
+          const parts = raw.replace(/^VOICE_MSG[|:]/, "").split("|");
+          const mVoiceText = parts.length > 1 ? parts.slice(1).join("|") : "";
+          if (mVoiceText === voiceText) {
+            m.ttsAudioData = audioSrc;
+            return;
+          }
+        }
+      }
+    }
+
     async function playTtsForVoiceMsg(voiceText, voiceBarInnerEl, contact) {
-      // 检查设置
       if (!contact || !contact.ttsEnabled || !contact.ttsVoiceId) return;
       const tts = state.minimaxTtsSettings;
       if (!tts || !tts.groupId || !tts.apiKey) return;
@@ -8896,49 +8920,47 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       const waveEl = voiceBarInnerEl ? voiceBarInnerEl.querySelector(".voice-waveform-icon") : null;
       const cacheKey = _getTtsCacheKey(contact.id, voiceText);
 
-      // 如果当前正在播放同一条消息 → 点击暂停/恢复
+      // 同一条消息 → 暂停/继续
       if (_ttsPlayingMsgKey === cacheKey) {
         const audio = getTtsAudio();
         if (!audio.paused) {
-          // 正在播放 → 暂停（保留波形动画，改为暂停状态）
           audio.pause();
           if (waveEl) waveEl.classList.remove("tts-playing");
           _ttsPlayingWaveEl = null;
           _ttsPlayingMsgKey = null;
         } else {
-          // 已暂停 → 继续播放
-          if (waveEl) {
-            waveEl.classList.add("tts-playing");
-            _ttsPlayingWaveEl = waveEl;
-          }
+          if (waveEl) { waveEl.classList.add("tts-playing"); _ttsPlayingWaveEl = waveEl; }
+          _ttsPlayingMsgKey = cacheKey;
           audio.play().catch(() => {});
         }
         return;
       }
 
-      // 切换到不同消息 → 先停止当前的
-      if (_ttsPlayingWaveEl) {
-        _ttsPlayingWaveEl.classList.remove("tts-playing");
-        _ttsPlayingWaveEl = null;
-      }
+      // 切换到不同消息
+      if (_ttsPlayingWaveEl) { _ttsPlayingWaveEl.classList.remove("tts-playing"); _ttsPlayingWaveEl = null; }
       const audio = getTtsAudio();
       audio.pause();
       _ttsPlayingMsgKey = null;
 
-      // 立即显示波形动画（加载中也要有动画）
-      if (waveEl) {
-        waveEl.classList.add("tts-playing");
-        _ttsPlayingWaveEl = waveEl;
-      }
+      if (waveEl) { waveEl.classList.add("tts-playing"); _ttsPlayingWaveEl = waveEl; }
 
       try {
         let audioSrc = "";
 
-        // 检查内存缓存
+        // 1. 先查内存缓存
         if (_ttsAudioCache[cacheKey]) {
           audioSrc = _ttsAudioCache[cacheKey];
-        } else {
-          // 缓存不存在 → 调用 API（只有这里会花钱！）
+        }
+        // 2. 再查消息对象的持久化缓存（刷新后依然有效！）
+        if (!audioSrc) {
+          const persisted = _findMsgTtsCache(contact, voiceText);
+          if (persisted) {
+            audioSrc = persisted;
+            _ttsAudioCache[cacheKey] = audioSrc; // 回填内存缓存
+          }
+        }
+        // 3. 都没有 → 调用API（唯一花钱的地方！）
+        if (!audioSrc) {
           const region = tts.region || "api.minimax.chat";
           const model = tts.model || "speech-2.8-hd";
           const groupId = tts.groupId;
@@ -8947,76 +8969,45 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
           const lang = contact.ttsLang || "";
 
           const endpoint = `https://${region}/v1/t2a_v2?GroupId=${groupId}`;
-
           const body = {
-            model: model,
-            text: voiceText,
-            stream: false,
-            voice_setting: {
-              voice_id: voiceId,
-              speed: 1.0,
-              vol: 1.0,
-              pitch: 0
-            },
-            audio_setting: {
-              audio_sample_rate: 32000,
-              bitrate: 128000,
-              format: "mp3",
-              channel: 1
-            }
+            model: model, text: voiceText, stream: false,
+            voice_setting: { voice_id: voiceId, speed: 1.0, vol: 1.0, pitch: 0 },
+            audio_setting: { audio_sample_rate: 32000, bitrate: 128000, format: "mp3", channel: 1 }
           };
-
-          if (lang) {
-            body.language_boost = lang;
-          }
+          if (lang) body.language_boost = lang;
 
           const response = await fetch(endpoint, {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${apiKey}`
-            },
+            headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
             body: JSON.stringify(body)
           });
 
-          if (!response.ok) {
-            throw new Error(`TTS API 错误: ${response.status}`);
-          }
-
+          if (!response.ok) throw new Error(`TTS API 错误: ${response.status}`);
           const data = await response.json();
-
           const audioHex = data.data && data.data.audio;
-          if (!audioHex) {
-            throw new Error("未获取到音频数据");
-          }
+          if (!audioHex) throw new Error("未获取到音频数据");
 
-          // hex 转 base64
           function hexToBase64(hexStr) {
             const bytes = new Uint8Array(hexStr.match(/.{1,2}/g).map(b => parseInt(b, 16)));
             let binary = "";
-            for (let i = 0; i < bytes.byteLength; i++) {
-              binary += String.fromCharCode(bytes[i]);
-            }
+            for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
             return btoa(binary);
           }
 
           const base64Audio = hexToBase64(audioHex);
           audioSrc = `data:audio/mp3;base64,${base64Audio}`;
 
-          // 存入内存缓存，下次直接用，不再调用 API！
+          // 存入内存缓存
           _ttsAudioCache[cacheKey] = audioSrc;
+          // 持久化到消息对象（跟着IndexedDB自动保存，刷新后永远不再调用API！）
+          _saveMsgTtsCache(contact, voiceText, audioSrc);
         }
 
-        // 检查波形元素是否还存在（用户可能已经切走了）
         if (!document.body.contains(voiceBarInnerEl)) {
-          if (_ttsPlayingWaveEl === waveEl) {
-            if (waveEl) waveEl.classList.remove("tts-playing");
-            _ttsPlayingWaveEl = null;
-          }
+          if (_ttsPlayingWaveEl === waveEl) { if (waveEl) waveEl.classList.remove("tts-playing"); _ttsPlayingWaveEl = null; }
           return;
         }
 
-        // 设置音频并播放
         audio.src = audioSrc;
         _ttsPlayingMsgKey = cacheKey;
 
@@ -9025,7 +9016,6 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
           if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
           if (_ttsPlayingMsgKey === cacheKey) _ttsPlayingMsgKey = null;
         };
-
         audio.onerror = () => {
           if (waveEl) waveEl.classList.remove("tts-playing");
           if (_ttsPlayingWaveEl === waveEl) _ttsPlayingWaveEl = null;
@@ -9033,7 +9023,6 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
         };
 
         await audio.play();
-
       } catch (err) {
         console.error("MiniMax TTS 播放失败:", err);
         if (waveEl) waveEl.classList.remove("tts-playing");

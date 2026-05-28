@@ -6305,15 +6305,21 @@ if (msg.isTyping) {
             contentWrap.appendChild(time);
           }
 
-          // 如果是系统消息，不显示头像和复选框，整行居中
+          // 如果是系统消息，不显示头像，整行居中；多选时显示复选框允许删除
           if (row._isSystemMsg) {
             row.className = "message-row";
-            row.style.cssText = "display:flex;justify-content:center;padding:0;margin-bottom:8px;width:100%;";
+            row.style.cssText = "display:flex;justify-content:center;align-items:center;padding:0;margin-bottom:8px;width:100%;";
             avatar.style.display = "none";
-            checkbox.style.display = "none";
             contentWrap.style.alignItems = "center";
             contentWrap.style.maxWidth = "100%";
-            row.appendChild(contentWrap);
+            if (state.isMultiSelecting) {
+              checkbox.style.display = "";
+              row.appendChild(checkbox);
+              row.appendChild(contentWrap);
+            } else {
+              checkbox.style.display = "none";
+              row.appendChild(contentWrap);
+            }
           } else {
             // 按严格顺序把节点放入 row：先头像，再气泡，最后复选框
             // 配合原本的 flex-direction (AI是 row, ME是 row-reverse)
@@ -6351,7 +6357,9 @@ if (msg.isTyping) {
       }
 
       requestAnimationFrame(() => {
-        chatBody.scrollTop = chatBody.scrollHeight;
+        if (!state.isMultiSelecting) {
+          chatBody.scrollTop = chatBody.scrollHeight;
+        }
       });
 
       renderContacts();

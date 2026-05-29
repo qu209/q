@@ -4351,15 +4351,14 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
         <div class="details-section-card">
           <div class="details-section-title">聊天数据管理</div>
           <div style="display:flex; gap:10px; margin-bottom:12px;">
-            <button id="exportDataBtn" class="btn btn-light" style="flex:1; height:40px; font-size:14px; border-radius:10px;">📦 导出全部存档</button>
-            <button id="importDataBtn" class="btn btn-light" style="flex:1; height:40px; font-size:14px; border-radius:10px; position:relative;">📥 导入存档
+            <button id="exportDataBtn" class="btn btn-light" style="flex:1; height:40px; font-size:14px; border-radius:10px;">📦 导出该角色存档</button>
+            <button id="importDataBtn" class="btn btn-light" style="flex:1; height:40px; font-size:14px; border-radius:10px; position:relative;">📥 导入该角色存档
               <input type="file" id="importDataFileInput" accept=".json" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
             </button>
           </div>
-          <div style="font-size:12px; color:#aaa; line-height:1.6;">导出会把所有好友、聊天记录、设置等数据打包成JSON文件下载。导入会覆盖当前所有数据，请谨慎操作。</div>
+          <div style="font-size:12px; color:#aaa; line-height:1.6;">导出仅包含当前角色的资料与聊天记录。导入只会覆盖当前角色的数据，不影响其他角色，请谨慎操作。</div>
         </div>
-
-        <!-- 聊天记录搜索卡片 -->
+       <!-- 聊天记录搜索卡片 -->
         <div class="details-section-card">
           <div class="details-section-title">搜索聊天记录</div>
           <div style="display:flex; gap:8px; margin-bottom:10px;">
@@ -10547,29 +10546,46 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         applyBubbleStyleToChat(contact);
       }
     });
-        // ================== 数据导入导出逻辑 ==================
+        // ================== 数据导入导出逻辑（仅当前角色）==================
     document.getElementById("exportDataBtn").addEventListener("click", async () => {
       try {
-        // 触发一次保存确保最新
         await saveStateToDB();
         const saved = await loadStateFromDB();
         if (!saved) {
           await sysAlert("没有找到可导出的数据！");
           return;
         }
-        const jsonStr = JSON.stringify(saved, null, 2);
+        // 找到当前角色id
+        const cid = state.activeContactId;
+        if (!cid) {
+          await sysAlert("请先打开一个角色的聊天页再导出！");
+          return;
+        }
+        const contact = (saved.contacts || []).find(c => c.id === cid);
+        if (!contact) {
+          await sysAlert("找不到当前角色数据！");
+          return;
+        }
+        const msgs = (saved.messages || {})[cid] || [];
+        const exportData = {
+          _type: "tacenda_single_contact",
+          contact: contact,
+          messages: msgs
+        };
+        const jsonStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonStr], { type: "application/json" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
         const now = new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-        a.download = `Tacenda_backup_${dateStr}.json`;
+        const safeName = (contact.name || cid).replace(/[\\/:*?"<>|]/g, "_");
+        a.download = `Tacenda_${safeName}_${dateStr}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        await sysAlert("存档已导出！请妥善保管下载的JSON文件。");
+        await sysAlert("角色存档已导出！");
       } catch(e) {
         await sysAlert("导出失败：" + e.message);
       }
@@ -10578,56 +10594,60 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
     document.getElementById("importDataFileInput").addEventListener("change", async (e) => {
       const file = e.target.files[0];
       if (!file) return;
-      
-      const confirmed = await sysConfirm("导入存档将覆盖当前所有数据（包括所有好友、聊天记录、设置等），此操作不可撤销！\n\n确定要继续吗？", "导入存档", true);
+
+      const cid = state.activeContactId;
+      if (!cid) {
+        await sysAlert("请先打开一个角色的聊天页再导入！");
+        e.target.value = "";
+        return;
+      }
+
+      const confirmed = await sysConfirm("导入存档将覆盖当前角色的资料与聊天记录，此操作不可撤销！\n\n确定要继续吗？", "导入角色存档", true);
       if (!confirmed) {
         e.target.value = "";
         return;
       }
-      
+
       try {
         const text = await file.text();
         const parsed = JSON.parse(text);
-        
-        // 基本验证
-        if (!parsed.contacts || !Array.isArray(parsed.contacts)) {
-          await sysAlert("文件格式不正确，不是有效的Tacenda存档文件！");
+
+        // 验证是单角色存档格式
+        if (parsed._type !== "tacenda_single_contact" || !parsed.contact || !parsed.contact.id) {
+          await sysAlert("文件格式不正确，不是有效的Tacenda单角色存档文件！");
           e.target.value = "";
           return;
         }
-        
-        const restored = applyLoadedState(parsed);
-        
-        // 覆盖全局state
-        for (const key in restored) {
-          if (key ==='selectedMsgs') {
-            state.selectedMsgs = new Set(restored.selectedMsgs || []);
-          } else {
-            state[key] = restored[key];
-          }
+
+        const importedContact = parsed.contact;
+        const importedMsgs = parsed.messages || [];
+
+        // 强制将导入数据绑定到当前角色id（防止id不匹配）
+        importedContact.id = cid;
+
+        // 替换contacts中的当前角色
+        const idx = state.contacts.findIndex(c => c.id === cid);
+        if (idx >= 0) {
+          state.contacts[idx] = importedContact;
+        } else {
+          state.contacts.push(importedContact);
         }
-        
-        //恢复支付密码
-        if (state._globalPayPassword) {
-          globalPayPassword = state._globalPayPassword;
-          delete state._globalPayPassword;
-        }
-        
+
+        // 替换当前角色的消息
+        if (!state.messages) state.messages = {};
+        state.messages[cid] = importedMsgs;
+
         // 保存到IndexedDB
         await saveStateToDB();
-        
-        //刷新所有UI
+
+        // 刷新UI
         restoreAllUI();
-        
-        // 退回好友列表
-        screenChatDetails.classList.remove("active");
-        screens.chat.classList.remove("active");
-        switchTab("friends");
-        
-        await sysAlert("存档导入成功！所有数据已恢复。");
+
+        await sysAlert("角色存档导入成功！");
       } catch(err) {
         await sysAlert("导入失败：" + err.message);
-      }e.target.value = "";
+      }
+      e.target.value = "";
     });
 
     // ==================聊天记录搜索逻辑 ==================

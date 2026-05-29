@@ -2538,8 +2538,8 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       margin-top: 4px; border-radius: 14px; max-width: 100%;
     }
     .voice-transcript.show { display: block; }
-    .message-row.ai .voice-transcript { background: #e8eaef; color: #111; }
-    .message-row.me .voice-transcript { background: #222; color: rgba(255,255,255,0.9); }
+    .message-row.ai .voice-transcript { background: #ffffff; color: #111; }
+    .message-row.me .voice-transcript { background: #ffffff; color: #111; }
     /* 朋友圈AI配图描述弹窗 */
     .moment-img-desc-mask {
       position: fixed;
@@ -6346,7 +6346,16 @@ if (msg.isTyping) {
                   const clickX = e.clientX - bubbleRect.left;
                   const isWaveArea = clickX < bubbleRect.width * 0.7;
                   if (isWaveArea) {
-                    playTtsForVoiceMsg(voiceText, bubble, _contact);
+                    // 翻译模式下 voiceText 含 <details> HTML，只取 <summary> 内的外语文字朗读
+                    let ttsText = voiceText;
+                    if (ttsText.includes("<details")) {
+                      const tmp = document.createElement("div");
+                      tmp.innerHTML = ttsText;
+                      const summaryTexts = [];
+                      tmp.querySelectorAll("summary span").forEach(span => summaryTexts.push(span.textContent.trim()));
+                      if (summaryTexts.length > 0) ttsText = summaryTexts.join(" ");
+                    }
+                    playTtsForVoiceMsg(ttsText, bubble, _contact);
                     return;
                   }
                 }

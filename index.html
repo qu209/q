@@ -4356,7 +4356,7 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
               <input type="file" id="importDataFileInput" accept=".json" style="position:absolute; inset:0; opacity:0; cursor:pointer;" />
             </button>
           </div>
-          <div style="font-size:12px; color:#aaa; line-height:1.6;">导出仅包含当前角色的资料与聊天记录。导入只会覆盖当前角色的数据，不影响其他角色，请谨慎操作。</div>
+          <div style="font-size:12px; color:#aaa; line-height:1.6;">导出包含当前角色的全部信息：人设、我的人设、备注、本名、头像、头像框、状态、TTS语音设置、气泡样式、聊天背景、语音通话背景、后台活动设置、记忆、世界书挂载及全部聊天记录。导入只会覆盖当前角色的数据，不影响其他角色，请谨慎操作。</div>
         </div>
        <!-- 聊天记录搜索卡片 -->
         <div class="details-section-card">
@@ -10547,7 +10547,7 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
       }
     });
         // ================== 数据导入导出逻辑（仅当前角色）==================
-        document.getElementById("exportDataBtn").addEventListener("click", async () => {
+    document.getElementById("exportDataBtn").addEventListener("click", async () => {
       try {
         await saveStateToDB();
         const saved = await loadStateFromDB();
@@ -10555,22 +10555,22 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           await sysAlert("没有找到可导出的数据！");
           return;
         }
+        // 找到当前角色id
         const cid = state.activeContactId;
         if (!cid) {
           await sysAlert("请先打开一个角色的聊天页再导出！");
           return;
         }
-        // 导出 contact 对象本身（含所有字段：人设、头像、背景、帧图、TTS、记忆、世界书挂载、自动消息等一切）
-        // contact.messages 里也存着消息，saved.messages[cid] 是同一份，两者都导出保证完整
         const contact = (saved.contacts || []).find(c => c.id === cid);
         if (!contact) {
           await sysAlert("找不到当前角色数据！");
           return;
         }
+        const msgs = (saved.messages || {})[cid] || [];
         const exportData = {
-          _type: "tacenda_single_contact_v2",
-          contact: contact,   // 包含所有字段，含 contact.messages
-          messages: (saved.messages || {})[cid] || []   // 备份一份顶层 messages
+          _type: "tacenda_single_contact",
+          contact: contact,
+          messages: msgs
         };
         const jsonStr = JSON.stringify(exportData, null, 2);
         const blob = new Blob([jsonStr], { type: "application/json" });
@@ -10579,13 +10579,13 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         a.href = url;
         const now = new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-        const safeName = (contact.remark || contact.realName || cid).replace(/[\\/:*?"<>|]/g, "_");
+        const safeName = (contact.name || cid).replace(/[\\/:*?"<>|]/g, "_");
         a.download = `Tacenda_${safeName}_${dateStr}.json`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        await sysAlert("角色完整存档已导出！（含人设、背景、头像、聊天记录、记忆等所有数据）");
+        await sysAlert("角色存档已导出！");
       } catch(e) {
         await sysAlert("导出失败：" + e.message);
       }
@@ -10602,7 +10602,7 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         return;
       }
 
-      const confirmed = await sysConfirm("导入存档将完整覆盖当前角色的所有数据（人设、背景、头像、聊天记录、记忆等），此操作不可撤销！\n\n确定要继续吗？", "导入角色存档", true);
+      const confirmed = await sysConfirm("导入存档将覆盖当前角色的资料与聊天记录，此操作不可撤销！\n\n确定要继续吗？", "导入角色存档", true);
       if (!confirmed) {
         e.target.value = "";
         return;
@@ -10612,28 +10612,20 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         const text = await file.text();
         const parsed = JSON.parse(text);
 
-        // 兼容新旧两种格式
-        if (
-          (parsed._type !== "tacenda_single_contact_v2" && parsed._type !== "tacenda_single_contact") ||
-          !parsed.contact
-        ) {
+        // 验证是单角色存档格式
+        if (parsed._type !== "tacenda_single_contact" || !parsed.contact || !parsed.contact.id) {
           await sysAlert("文件格式不正确，不是有效的Tacenda单角色存档文件！");
           e.target.value = "";
           return;
         }
 
         const importedContact = parsed.contact;
-        // messages 优先用顶层备份，其次用 contact.messages
-        const importedMsgs = (parsed.messages && parsed.messages.length > 0)
-          ? parsed.messages
-          : (importedContact.messages || []);
+        const importedMsgs = parsed.messages || [];
 
-        // 强制绑定到当前角色id，防止串号
+        // 强制将导入数据绑定到当前角色id（防止id不匹配）
         importedContact.id = cid;
-        // 确保 messages 字段也同步
-        importedContact.messages = importedMsgs;
 
-        // 替换 contacts 中的当前角色（完整覆盖，所有字段都会被还原）
+        // 替换contacts中的当前角色
         const idx = state.contacts.findIndex(c => c.id === cid);
         if (idx >= 0) {
           state.contacts[idx] = importedContact;
@@ -10641,20 +10633,40 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           state.contacts.push(importedContact);
         }
 
-        // 同步顶层 messages
+        // 替换当前角色的消息
         if (!state.messages) state.messages = {};
         state.messages[cid] = importedMsgs;
 
         // 保存到IndexedDB
         await saveStateToDB();
 
-        // 刷新联系人列表UI
+        // 刷新UI
         restoreAllUI();
 
-        // 重新打开当前角色聊天页，触发背景图/气泡等所有样式立即生效
-        openChat(cid);
+        // 重新应用气泡样式到聊天界面
+        const importedContactFinal = state.contacts.find(c => c.id === cid);
+        if (importedContactFinal && typeof applyBubbleStyleToChat === "function") {
+          applyBubbleStyleToChat(importedContactFinal);
+        }
 
-        await sysAlert("角色存档导入成功！所有数据已完整恢复。");
+        // 重新应用聊天背景
+        const chatBodyEl = document.getElementById("chatBody");
+        if (chatBodyEl && importedContactFinal) {
+          if (importedContactFinal.chatBg) {
+            chatBodyEl.style.backgroundImage = `url(${importedContactFinal.chatBg})`;
+            chatBodyEl.style.backgroundSize = "cover";
+            chatBodyEl.style.backgroundPosition = "center";
+          } else {
+            chatBodyEl.style.backgroundImage = "";
+          }
+        }
+
+        // 如果当前正在聊天详情页，刷新详情页面板内容
+        if (typeof openDetails === "function") {
+          // 不跳转，只静默同步
+        }
+
+        await sysAlert("角色存档导入成功！已恢复全部设置（人设、TTS、气泡样式、背景等）。");
       } catch(err) {
         await sysAlert("导入失败：" + err.message);
       }

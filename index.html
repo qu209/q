@@ -10643,8 +10643,16 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         // 刷新UI
         restoreAllUI();
 
-        // 重新应用气泡样式到聊天界面
+        // 保存到IndexedDB
+        await saveStateToDB();
+
+        // 刷新UI（好友列表、朋友圈等）
+        restoreAllUI();
+
+        // 取导入后的最新contact对象
         const importedContactFinal = state.contacts.find(c => c.id === cid);
+
+        // 重新应用气泡样式到聊天界面
         if (importedContactFinal && typeof applyBubbleStyleToChat === "function") {
           applyBubbleStyleToChat(importedContactFinal);
         }
@@ -10661,9 +10669,55 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           }
         }
 
-        // 如果当前正在聊天详情页，刷新详情页面板内容
-        if (typeof openDetails === "function") {
-          // 不跳转，只静默同步
+        // 刷新详情页所有输入框（使导入的TTS/后台活动/气泡等设置立即显示）
+        if (importedContactFinal) {
+          detailsRemarkInput.value = importedContactFinal.remark || "";
+          detailsRealNameInput.value = importedContactFinal.realName || "";
+          detailsPersonaInput.value = importedContactFinal.persona || "";
+          detailsMyPersonaInput.value = importedContactFinal.myPersona || "";
+
+          document.getElementById("detailsAutoMsgInput").value = importedContactFinal.autoMsgInterval || "";
+          document.getElementById("detailsAutoMomentInput").value = importedContactFinal.autoMomentInterval || "";
+
+          document.getElementById("contactTtsEnabledToggle").checked = importedContactFinal.ttsEnabled || false;
+          document.getElementById("contactTtsVoiceIdInput").value = importedContactFinal.ttsVoiceId || "";
+          document.getElementById("contactTtsLangSelect").value = importedContactFinal.ttsLang || "";
+
+          document.getElementById("autoSummarySwitch").checked = importedContactFinal.autoSummary || false;
+          document.getElementById("autoSummaryThreshold").value = importedContactFinal.summaryThreshold || 20;
+
+          // 刷新气泡颜色选择器
+          if (typeof loadBubbleStyleFromContact === "function") {
+            loadBubbleStyleFromContact(importedContactFinal);
+          }
+          const customCssInput = document.getElementById("customBubbleCss");
+          if (customCssInput) customCssInput.value = importedContactFinal.customBubbleCss || "";
+
+          // 刷新聊天背景预览框
+          const detailsBgPreviewBox = document.getElementById("detailsBgPreviewBox");
+          const detailsBgPreviewHint = document.getElementById("detailsBgPreviewHint");
+          if (detailsBgPreviewBox) {
+            if (importedContactFinal.chatBg) {
+              detailsBgPreviewBox.style.backgroundImage = `url(${importedContactFinal.chatBg})`;
+              if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "none";
+            } else {
+              detailsBgPreviewBox.style.backgroundImage = "";
+              if (detailsBgPreviewHint) detailsBgPreviewHint.style.display = "";
+            }
+          }
+
+          // 刷新头像预览
+          const detailsAvatarPreview = document.getElementById("detailsAvatarPreview");
+          if (detailsAvatarPreview && importedContactFinal.avatar) {
+            detailsAvatarPreview.style.backgroundImage = `url(${importedContactFinal.avatar})`;
+          }
+
+          // 刷新记忆列表
+          importedContactFinal.memoryList = importedContactFinal.memoryList || [];
+          if (typeof renderMemoryBlocks === "function") renderMemoryBlocks(importedContactFinal);
+
+          // 刷新世界书挂载
+          if (typeof renderChatDetailsLorebooks === "function") renderChatDetailsLorebooks(importedContactFinal);
         }
 
         await sysAlert("角色存档导入成功！已恢复全部设置（人设、TTS、气泡样式、背景等）。");

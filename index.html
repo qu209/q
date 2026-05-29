@@ -10555,7 +10555,6 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           await sysAlert("没有找到可导出的数据！");
           return;
         }
-        // 找到当前角色id
         const cid = state.activeContactId;
         if (!cid) {
           await sysAlert("请先打开一个角色的聊天页再导出！");
@@ -10566,10 +10565,14 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           await sysAlert("找不到当前角色数据！");
           return;
         }
-        const msgs = (saved.messages || {})[cid] || [];
+        // messages字段单独存或内嵌都兼容
+        const msgs = contact.messages || (saved.messages || {})[cid] || [];
+        // 导出完整contact所有字段（人设/我的人设/头像/背景/气泡/TTS/记忆/世界书/状态等全部）
+        const exportContact = Object.assign({}, contact);
+        delete exportContact.messages; // 消息单独存，不重复
         const exportData = {
           _type: "tacenda_single_contact",
-          contact: contact,
+          contact: exportContact,
           messages: msgs
         };
         const jsonStr = JSON.stringify(exportData, null, 2);
@@ -10579,7 +10582,7 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         a.href = url;
         const now = new Date();
         const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}${String(now.getMinutes()).padStart(2,'0')}`;
-        const safeName = (contact.name || cid).replace(/[\\/:*?"<>|]/g, "_");
+        const safeName = (contact.remark || contact.realName || cid).replace(/[\\/:*?"<>|]/g, "_");
         a.download = `Tacenda_${safeName}_${dateStr}.json`;
         document.body.appendChild(a);
         a.click();
@@ -10602,7 +10605,7 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         return;
       }
 
-      const confirmed = await sysConfirm("导入存档将覆盖当前角色的资料与聊天记录，此操作不可撤销！\n\n确定要继续吗？", "导入角色存档", true);
+      const confirmed = await sysConfirm("导入存档将覆盖当前角色的所有配置与聊天记录，此操作不可撤销！\n\n确定要继续吗？", "导入角色存档", true);
       if (!confirmed) {
         e.target.value = "";
         return;
@@ -10612,20 +10615,21 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         const text = await file.text();
         const parsed = JSON.parse(text);
 
-        // 验证是单角色存档格式
-        if (parsed._type !== "tacenda_single_contact" || !parsed.contact || !parsed.contact.id) {
+        if (parsed._type !== "tacenda_single_contact" || !parsed.contact) {
           await sysAlert("文件格式不正确，不是有效的Tacenda单角色存档文件！");
           e.target.value = "";
           return;
         }
 
-        const importedContact = parsed.contact;
+        const importedContact = Object.assign({}, parsed.contact);
         const importedMsgs = parsed.messages || [];
 
-        // 强制将导入数据绑定到当前角色id（防止id不匹配）
+        // 强制绑定到当前角色id，保留messages字段到state.messages
         importedContact.id = cid;
+        // messages不内嵌在contact对象里
+        delete importedContact.messages;
 
-        // 替换contacts中的当前角色
+        // 替换contacts中的当前角色（全字段覆盖）
         const idx = state.contacts.findIndex(c => c.id === cid);
         if (idx >= 0) {
           state.contacts[idx] = importedContact;
@@ -10633,17 +10637,25 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           state.contacts.push(importedContact);
         }
 
-        // 替换当前角色的消息
+        // 替换当前角色消息
         if (!state.messages) state.messages = {};
         state.messages[cid] = importedMsgs;
+
+        // 同步到contact.messages（部分地方直接读contact.messages）
+        state.contacts[state.contacts.findIndex(c => c.id === cid)].messages = importedMsgs;
 
         // 保存到IndexedDB
         await saveStateToDB();
 
-        // 刷新UI
+        // 刷新好友列表UI
         restoreAllUI();
 
-        await sysAlert("角色存档导入成功！");
+        // 重新进入聊天，立即刷新背景/气泡/头像等所有视觉配置
+        if (typeof openChat === "function") {
+          openChat(cid);
+        }
+
+        await sysAlert("角色存档导入成功！所有配置已生效。");
       } catch(err) {
         await sysAlert("导入失败：" + err.message);
       }

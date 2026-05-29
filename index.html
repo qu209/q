@@ -11202,10 +11202,23 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
         return;
       }
 
+      // 提取时间范围
+      function fmtTs(ts) {
+        if (!ts) return null;
+        const d = new Date(ts);
+        const pad = n => String(n).padStart(2, '0');
+        return `${d.getFullYear()}年${pad(d.getMonth()+1)}月${pad(d.getDate())}日${pad(d.getHours())}:${pad(d.getMinutes())}`;
+      }
+      const validMsgs = messagesArray.filter(m => !m.isTyping);
+      const firstTs = validMsgs.find(m => m.msgTimestamp)?.msgTimestamp;
+      const lastTs = [...validMsgs].reverse().find(m => m.msgTimestamp)?.msgTimestamp;
+      const timeRangeLabel = (firstTs && lastTs)
+        ? `对话时间：${fmtTs(firstTs)} 至 ${fmtTs(lastTs)}\n`
+        : '';
+
       // 把聊天记录拼在一起给AI看
-      let chatText = messagesArray.map(msg => {
-        if (msg.isTyping) return ""; // 忽略打字状态
-        let pureText = msg.text.replace(/<[^>]*>?/gm, ''); // 过滤掉卡片HTML
+      let chatText = validMsgs.map(msg => {
+        let pureText = msg.text.replace(/<[^>]*>?/gm, '');
         return `${msg.from === 'me' ? '我' : 'TA'}: ${pureText}`;
       }).filter(t => t !== "").join('\n');
 
@@ -11220,10 +11233,10 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
           body: JSON.stringify({
             model: api.model || "gpt-3.5-turbo",
             messages: [
-              { role: 'system', content: '你是一个用于提炼聊天记忆的助手。请将以下对话提取出最重要的记忆点、人物关系、发生的事件，用简明扼要的语言总结（例如：1. 我今天去吃了火锅；2. TA今天心情不好）。如果给出的对话很短没有实际意义或没有营养，请只回复"无"一个字。' },
+              { role: 'system', content: '你是角色本人，正在用第一人称回顾并记录你和用户之间发生的事。请根据以下对话内容，以角色视角写一段连贯的叙事记忆，像日记或心里回忆那样流畅地描述你们聊了什么、发生了什么、对方说了什么、你是什么感受——要有细节，有情绪，有过程，不要写成列表或条目格式。字数要求：不少于209字，可以超过。如果对话内容极短、毫无实质内容，请只回复"无"一个字。' },
               { role: 'user', content: chatText }
             ],
-            temperature: 0.3
+            temperature: 0.7
           })
         });
 
@@ -11233,7 +11246,8 @@ document.getElementById("voiceBtn").addEventListener("click", () => {
 
         if (summary !== '无' && summary !== '') {
           contact.memoryList = contact.memoryList || [];
-          contact.memoryList.push(`[记忆点]: ${summary}`);
+          const memEntry = `[长期记忆] ${timeRangeLabel}${summary}`;
+          contact.memoryList.push(memEntry);
           if (screenChatDetails.classList.contains("active")) {
             renderMemoryBlocks(contact); // 顺便刷新UI
           }

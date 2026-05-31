@@ -6329,7 +6329,12 @@ if (msg.isTyping) {
               const vTranscript = document.createElement("div");
               vTranscript.className = "voice-transcript";
               vTranscript.id = "voice-transcript-" + index;
-              vTranscript.textContent = voiceText;
+              // 翻译模式下 voiceText 含 <details> HTML，需用 innerHTML 渲染；否则用 textContent
+              if (voiceText.includes("<details")) {
+                vTranscript.innerHTML = voiceText;
+              } else {
+                vTranscript.textContent = voiceText;
+              }
               bubble._voiceTranscript = vTranscript;
               bubble.style.cursor = "pointer";
               bubble.addEventListener("click", (e) => {

@@ -9039,8 +9039,17 @@ ${contact.myPersona ? "用户的人设：" + contact.myPersona : ""}
       }
     }
     // ====== MiniMax TTS 逻辑结束 ======
-document.getElementById("voiceBtn").addEventListener("click", () => {
-      triggerAIReply();
+document.getElementById("voiceBtn").addEventListener("click", async () => {
+      const vBtn = document.getElementById("voiceBtn");
+      if (vBtn.disabled) return;
+      vBtn.disabled = true;
+      vBtn.style.opacity = "0.4";
+      try {
+        await triggerAIReply();
+      } finally {
+        vBtn.disabled = false;
+        vBtn.style.opacity = "";
+      }
     });
 
     // ================== 新增：心声弹窗交互逻辑 ==================

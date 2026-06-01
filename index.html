@@ -6416,32 +6416,54 @@ if (msg.isTyping) {
             }
             bubble.appendChild(textSpan);
             
-            // 新增：如果有图片，渲染图片（带点击描述浮层）
+            // 如果有图片，区分用户真实照片和AI描述图片
             if (msg.image) {
-              const imgWrapper = document.createElement("div");
-              imgWrapper.style.cssText = "position:relative;display:inline-block;cursor:pointer;margin-top:" + (msg.text ? "8px" : "0") + ";";
+              if (msg.image === "placeholder" && msg.imageDesc) {
+                // AI发的描述图片：显示占位图 + 点击浮现描述文字
+                const imgWrapper = document.createElement("div");
+                imgWrapper.style.cssText = "position:relative;display:inline-block;cursor:pointer;margin-top:" + (msg.text ? "8px" : "0") + ";";
 
-              const imgEl = document.createElement("img");
-              imgEl.src = msg.image;
-              imgEl.style.cssText = "width:160px;height:auto;border-radius:8px;display:block;";
+                const imgEl = document.createElement("img");
+                imgEl.src = "https://i.postimg.cc/pT7Wzx6H/IMG-5154.jpg";
+                imgEl.style.cssText = "width:160px;height:auto;border-radius:8px;display:block;";
 
-              const descOverlay = document.createElement("div");
-              descOverlay.style.cssText = "display:none;position:absolute;inset:0;background:rgba(0,0,0,0.72);border-radius:8px;padding:10px;box-sizing:border-box;color:#fff;font-size:13px;line-height:1.55;overflow-y:auto;word-break:break-all;align-items:center;justify-content:center;text-align:center;";
-              descOverlay.style.display = "none";
-              descOverlay.textContent = msg.imageDesc || "（暂无图片描述）";
+                const descOverlay = document.createElement("div");
+                descOverlay.style.cssText = "display:none;position:absolute;inset:0;background:rgba(0,0,0,0.72);border-radius:8px;padding:10px;box-sizing:border-box;color:#fff;font-size:13px;line-height:1.55;overflow-y:auto;word-break:break-all;align-items:center;justify-content:center;text-align:center;";
+                descOverlay.style.display = "none";
+                descOverlay.textContent = msg.imageDesc || "（暂无图片描述）";
 
-              imgWrapper.appendChild(imgEl);
-              imgWrapper.appendChild(descOverlay);
+                imgWrapper.appendChild(imgEl);
+                imgWrapper.appendChild(descOverlay);
 
-              let descVisible = false;
-              imgWrapper.addEventListener("click", (e) => {
-                e.stopPropagation();
-                if (state.isMultiSelecting) return;
-                descVisible = !descVisible;
-                descOverlay.style.display = descVisible ? "flex" : "none";
-              });
+                let descVisible = false;
+                imgWrapper.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  if (state.isMultiSelecting) return;
+                  descVisible = !descVisible;
+                  descOverlay.style.display = descVisible ? "flex" : "none";
+                });
 
-              bubble.appendChild(imgWrapper);
+                bubble.appendChild(imgWrapper);
+              } else {
+                // 用户发的真实照片（或任何非占位图）：直接显示实际图片
+                const realImgEl = document.createElement("img");
+                realImgEl.src = msg.image;
+                realImgEl.style.cssText = "max-width:200px;height:auto;border-radius:8px;display:block;cursor:pointer;margin-top:" + (msg.text ? "8px" : "0") + ";";
+                realImgEl.addEventListener("click", (e) => {
+                  e.stopPropagation();
+                  if (state.isMultiSelecting) return;
+                  // 点击查看大图
+                  const fullMask = document.createElement("div");
+                  fullMask.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:pointer;";
+                  const bigImg = document.createElement("img");
+                  bigImg.src = msg.image;
+                  bigImg.style.cssText = "max-width:92vw;max-height:92vh;object-fit:contain;border-radius:8px;";
+                  fullMask.appendChild(bigImg);
+                  fullMask.addEventListener("click", () => document.body.removeChild(fullMask));
+                  document.body.appendChild(fullMask);
+                });
+                bubble.appendChild(realImgEl);
+              }
             }
           }
 

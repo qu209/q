@@ -4426,7 +4426,43 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
  gap:4px;">
             </div>
         </div>
-                
+
+        <!-- 位置与天气时间卡片 -->
+        <div class="details-section-card">
+          <div class="details-section-title">位置 · 时间 · 天气同步</div>
+          <div style="font-size:13px; color:#666; margin-bottom:14px; line-height:1.6;">开启后，AI 将感知双方各自的真实城市时间与天气，适合存在时差或地区差的角色扮演。</div>
+
+          <div class="toggle-row" style="margin-bottom:16px; border-bottom:1px solid #f2f2f7; padding-bottom:16px;">
+            <label style="font-size:15px; font-weight:600; color:#222;">启用实时天气与时间</label>
+            <label class="switch">
+              <input type="checkbox" id="locationWeatherEnabledToggle">
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- 用户位置 -->
+          <div style="margin-bottom:16px; border-bottom:1px solid #f2f2f7; padding-bottom:16px;">
+            <div style="font-size:14px; font-weight:600; color:#222; margin-bottom:10px;">我的位置（用户）</div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <input type="text" id="userLocationAlias" class="input" placeholder="自定义称呼（可不填）" style="flex:1; height:40px; border-radius:10px; background:#f7f7f8; border:none; padding:0 12px; font-size:14px;" />
+              <input type="text" id="userLocationCity" class="input" placeholder="城市（拼音/英文）" style="flex:1; height:40px; border-radius:10px; background:#f7f7f8; border:none; padding:0 12px; font-size:14px;" />
+              <button id="userLocationSearchBtn" class="btn btn-light" style="height:40px; padding:0 14px; font-size:14px; border-radius:10px; white-space:nowrap;">搜索</button>
+            </div>
+            <div id="userLocationResult" style="font-size:13px; color:#4caf50; min-height:18px;"></div>
+          </div>
+
+          <!-- 角色位置 -->
+          <div>
+            <div style="font-size:14px; font-weight:600; color:#222; margin-bottom:10px;">角色所在位置</div>
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+              <input type="text" id="charLocationAlias" class="input" placeholder="自定义称呼（可不填）" style="flex:1; height:40px; border-radius:10px; background:#f7f7f8; border:none; padding:0 12px; font-size:14px;" />
+              <input type="text" id="charLocationCity" class="input" placeholder="城市（拼音/英文）" style="flex:1; height:40px; border-radius:10px; background:#f7f7f8; border:none; padding:0 12px; font-size:14px;" />
+              <button id="charLocationSearchBtn" class="btn btn-light" style="height:40px; padding:0 14px; font-size:14px; border-radius:10px; white-space:nowrap;">搜索</button>
+            </div>
+            <div id="charLocationResult" style="font-size:13px; color:#4caf50; min-height:18px;"></div>
+          </div>
+        </div>
+
         <!-- 更换聊天背景卡片 -->
         <div class="details-section-card">
           <div class="details-section-title">聊天界面背景</div>
@@ -6883,6 +6919,43 @@ TimeChecklist:
       if (contact.myPersona) {
         combinedPersona += `【与你对话的用户人设】：${contact.myPersona}\n`;
       }
+
+      // ===== 注入位置/时间/天气 =====
+      if (contact.locationWeatherEnabled) {
+        const injectLocationWeather = async () => {
+          let locationBlock = "\n【双方位置·时间·天气（重要）】\n";
+          // 用户
+          if (contact.userLocationData) {
+            const uLoc = contact.userLocationData;
+            const uAlias = contact.userLocationAlias ? contact.userLocationAlias : uLoc.name;
+            try {
+              const uInfo = await getWeatherAndTime(uLoc.lat, uLoc.lon);
+              if (uInfo) {
+                locationBlock += `▸ 用户所在地：${uAlias}（真实：${uLoc.name}）\n  当地时间：${uInfo.localTime}　时区：${uInfo.timezone}\n  天气：${uInfo.weatherDesc}，气温：${uInfo.tempC}℃，湿度：${uInfo.humidity}%\n`;
+              }
+            } catch(e) {}
+          }
+          // 角色
+          if (contact.charLocationData) {
+            const cLoc = contact.charLocationData;
+            const cAlias = contact.charLocationAlias ? contact.charLocationAlias : cLoc.name;
+            try {
+              const cInfo = await getWeatherAndTime(cLoc.lat, cLoc.lon);
+              if (cInfo) {
+                locationBlock += `▸ 你（角色）所在地：${cAlias}（真实：${cLoc.name}）\n  当地时间：${cInfo.localTime}　时区：${cInfo.timezone}\n  天气：${cInfo.weatherDesc}，气温：${cInfo.tempC}℃，湿度：${cInfo.humidity}%\n`;
+              }
+            } catch(e) {}
+          }
+          locationBlock += "请根据以上真实时间和天气自然地融入对话，感知时差与地区差，不要机械报出数据。\n";
+          return locationBlock;
+        };
+        // 异步注入：在发送前等待
+        try {
+          const locBlock = await injectLocationWeather();
+          combinedPersona += locBlock;
+        } catch(e) {}
+      }
+      // ==========================
       
       // ===== 注入记忆系统 =====
       if (contact.memoryList && contact.memoryList.length > 0) {
@@ -10409,6 +10482,26 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       document.getElementById("contactTtsVoiceIdInput").value = contact.ttsVoiceId || "";
       document.getElementById("contactTtsLangSelect").value = contact.ttsLang || "";
 
+      // 回显 位置/天气/时间 设置
+      document.getElementById("locationWeatherEnabledToggle").checked = contact.locationWeatherEnabled || false;
+      document.getElementById("userLocationAlias").value = contact.userLocationAlias || "";
+      document.getElementById("userLocationCity").value = contact.userLocationCity || "";
+      document.getElementById("charLocationAlias").value = contact.charLocationAlias || "";
+      document.getElementById("charLocationCity").value = contact.charLocationCity || "";
+      // 显示已保存的坐标结果
+      if (contact.userLocationData) {
+        const u = contact.userLocationData;
+        document.getElementById("userLocationResult").textContent = `已映射：${u.name}（${u.lat.toFixed(4)}, ${u.lon.toFixed(4)}）`;
+      } else {
+        document.getElementById("userLocationResult").textContent = "";
+      }
+      if (contact.charLocationData) {
+        const c = contact.charLocationData;
+        document.getElementById("charLocationResult").textContent = `已映射：${c.name}（${c.lat.toFixed(4)}, ${c.lon.toFixed(4)}）`;
+      } else {
+        document.getElementById("charLocationResult").textContent = "";
+      }
+
       // 初始化和渲染记忆面板
       contact.memoryList = contact.memoryList || [];
     
@@ -10516,6 +10609,13 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       contact.ttsVoiceId = document.getElementById("contactTtsVoiceIdInput").value.trim();
       contact.ttsLang = document.getElementById("contactTtsLangSelect").value;
 
+      // 保存 位置/天气/时间 设置
+      contact.locationWeatherEnabled = document.getElementById("locationWeatherEnabledToggle").checked;
+      contact.userLocationAlias = document.getElementById("userLocationAlias").value.trim();
+      contact.userLocationCity = document.getElementById("userLocationCity").value.trim();
+      contact.charLocationAlias = document.getElementById("charLocationAlias").value.trim();
+      contact.charLocationCity = document.getElementById("charLocationCity").value.trim();
+
       // 保存后台活动设置
       const _oldMsgInterval = contact.autoMsgInterval || 0;
       const _oldMomentInterval = contact.autoMomentInterval || 0;
@@ -10552,6 +10652,97 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       renderChat();
       renderContacts();
       if (typeof renderMoments === "function") renderMoments();
+    });
+    // ====== 位置搜索功能 ======
+    async function searchLocationByName(cityInput) {
+      const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(cityInput)}&format=json&limit=1&accept-language=zh`;
+      try {
+        const res = await fetch(url, { headers: { "Accept-Language": "zh-CN,zh;q=0.9,en;q=0.8" } });
+        const data = await res.json();
+        if (data && data.length > 0) {
+          return { name: data[0].display_name.split(",")[0], lat: parseFloat(data[0].lat), lon: parseFloat(data[0].lon) };
+        }
+        return null;
+      } catch(e) { return null; }
+    }
+
+    async function getWeatherAndTime(lat, lon) {
+      try {
+        // 获取时区
+        const tzUrl = `https://timezonefinder.michelfe.eu/api/0?lat=${lat}&lng=${lon}`;
+        let timezone = "UTC";
+        try {
+          const tzRes = await fetch(tzUrl);
+          const tzData = await tzRes.json();
+          if (tzData && tzData.timezone_id) timezone = tzData.timezone_id;
+        } catch(e) {}
+
+        // 获取天气（wttr.in）
+        const wUrl = `https://wttr.in/?format=j1&lang=zh&lat=${lat}&lon=${lon}`;
+        let weatherDesc = "未知", tempC = "?", humidity = "?";
+        try {
+          const wRes = await fetch(wUrl);
+          const wData = await wRes.json();
+          const cur = wData.current_condition[0];
+          weatherDesc = cur.lang_zh?.[0]?.value || cur.weatherDesc?.[0]?.value || "未知";
+          tempC = cur.temp_C;
+          humidity = cur.humidity;
+        } catch(e) {}
+
+        // 计算当地时间
+        let localTime = "未知";
+        try {
+          localTime = new Intl.DateTimeFormat("zh-CN", {
+            timeZone: timezone,
+            year: "numeric", month: "2-digit", day: "2-digit",
+            weekday: "short", hour: "2-digit", minute: "2-digit", hour12: false
+          }).format(new Date());
+        } catch(e) {}
+
+        return { timezone, weatherDesc, tempC, humidity, localTime };
+      } catch(e) { return null; }
+    }
+
+    // 用户位置搜索按钮
+    document.getElementById("userLocationSearchBtn").addEventListener("click", async () => {
+      const cityInput = document.getElementById("userLocationCity").value.trim();
+      const resultEl = document.getElementById("userLocationResult");
+      if (!cityInput) { resultEl.style.color = "#df3b3b"; resultEl.textContent = "请输入城市名称"; return; }
+      resultEl.style.color = "#aaa";
+      resultEl.textContent = "搜索中…";
+      const loc = await searchLocationByName(cityInput);
+      if (!loc) {
+        resultEl.style.color = "#df3b3b";
+        resultEl.textContent = "未找到该城市，请尝试拼音或英文（如 New York）";
+        const contact = getContact(state.activeContactId);
+        if (contact) contact.userLocationData = null;
+        return;
+      }
+      resultEl.style.color = "#4caf50";
+      resultEl.textContent = `已映射：${loc.name}（${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}）`;
+      const contact = getContact(state.activeContactId);
+      if (contact) contact.userLocationData = loc;
+    });
+
+    // 角色位置搜索按钮
+    document.getElementById("charLocationSearchBtn").addEventListener("click", async () => {
+      const cityInput = document.getElementById("charLocationCity").value.trim();
+      const resultEl = document.getElementById("charLocationResult");
+      if (!cityInput) { resultEl.style.color = "#df3b3b"; resultEl.textContent = "请输入城市名称"; return; }
+      resultEl.style.color = "#aaa";
+      resultEl.textContent = "搜索中…";
+      const loc = await searchLocationByName(cityInput);
+      if (!loc) {
+        resultEl.style.color = "#df3b3b";
+        resultEl.textContent = "未找到该城市，请尝试拼音或英文（如 Tokyo）";
+        const contact = getContact(state.activeContactId);
+        if (contact) contact.charLocationData = null;
+        return;
+      }
+      resultEl.style.color = "#4caf50";
+      resultEl.textContent = `已映射：${loc.name}（${loc.lat.toFixed(4)}, ${loc.lon.toFixed(4)}）`;
+      const contact = getContact(state.activeContactId);
+      if (contact) contact.charLocationData = loc;
     });
 
 // 5. 打开头像框弹窗

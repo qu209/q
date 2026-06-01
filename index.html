@@ -5168,6 +5168,18 @@ function estimateTokens(text) {
       return `${h}:${m}`;
     }
 
+    function getFullDateTime() {
+      const now = new Date();
+      const weekDays = ['周日','周一','周二','周三','周四','周五','周六'];
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const week = weekDays[now.getDay()];
+      const h = String(now.getHours()).padStart(2, '0');
+      const m = String(now.getMinutes()).padStart(2, '0');
+      return `${year}年${month}月${day}日 ${week} ${h}:${m}`;
+    }
+
     let longPressTimer = null;
     let targetMsgIndex = -1;
 
@@ -6754,7 +6766,7 @@ if (msg.isTyping) {
 - 绝对不要把所有话挤在同一行里发出来，你的每一行都会被系统变成独立的聊天气泡发送！
 - 【严厉警告】：绝对不允许带上任何序号、排版前缀或行号（千万不要写"Line 1:"、"1."等）！只允许输出纯文本，用换行符隔开即可！
 
-【时间感知引擎：注意，当前真实世界时间是 ${getCurrentTime()}】
+【时间感知引擎：注意，当前真实世界完整时间是 ${getFullDateTime()}，请根据这个精确时间（年月日+星期+时分）感知当前情境。】
 ============================================
 # 【第一部分：硬性规则】必须放在最前面
 FORBIDDEN:

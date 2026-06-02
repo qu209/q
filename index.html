@@ -7407,6 +7407,9 @@ Code-switch between formal/casual based on comfort level
         // 强制防护：如果 [PHOTO_MSG|...] 和其他文字粘在同一行，强制在其前后插入换行符劈开
         aiText = aiText.replace(/(\[PHOTO_MSG\|[^\]]+\])/g, '\n$1\n');
         
+        // 强制防护：如果 [EMOJI_STICKER|...] 和其他文字粘在同一行，强制在其前后插入换行符劈开
+        aiText = aiText.replace(/(\[EMOJI_STICKER\|[^\]]+\])/g, '\n$1\n');
+        
         // 去除空行，保留真实的文本行
         let lines = aiText.split('\n').map(l => l.trim()).filter(l => l !== "");
         // 先彻底移除掉原来的转圈思考气泡

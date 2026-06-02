@@ -1037,7 +1037,7 @@
       top: calc(72px + var(--safe-top));
       left: 0;
       right: 0;
-      bottom: 68px; /* 配合底栏稍微抬高的尺寸，防止最后一条消息被挡住 */
+      bottom: 50px; /* 配合更紧凑的底栏高度 */
       overflow-y: auto;
       overscroll-behavior: contain;
       background: #fff;
@@ -1209,18 +1209,19 @@
       left: 0; right: 0; bottom: 0;
       z-index: 6;
       background: #fff;
-      border-top: 1px solid #f0f0f0;
+      border-top: none;
       display: flex;
       flex-direction: column;
     }
     .chatbar.hidden { display: none !important; }
 
     .chatbar-inner {
-      min-height: 68px; /* 改为最小高度，允许拉伸 */
-      padding: 8px 12px 13px;
+      min-height: 50px;
+      padding: 6px 12px;
+      padding-bottom: calc(6px + env(safe-area-inset-bottom));
       display: flex;
-      align-items: flex-end; /* 让右侧图标在输入框变高时保持在底部 */
-      margin-top: -10px;
+      align-items: flex-end;
+      margin-top: 0;
     }
 
     /* ======== 新增：长按菜单、引用与多选样式 ======== */
@@ -6745,7 +6746,7 @@ if (msg.isTyping) {
       
       // 【新增】发送完毕后让输入框瞬间收缩回1行大小，同时恢复聊天列表的底部间距防遮挡
       chatInput.style.height = "22px";
-      document.getElementById("chatBody").style.bottom = "68px";
+      document.getElementById("chatBody").style.bottom = "50px";
 
       renderChat();
       checkAndTriggerAutoSummary(contact); // 检查是否需要自动总结

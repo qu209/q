@@ -1037,7 +1037,7 @@
       top: calc(72px + var(--safe-top));
       left: 0;
       right: 0;
-      bottom: 50px; /* 配合更紧凑的底栏高度 */
+      bottom: calc(50px + env(safe-area-inset-bottom)); /* 配合更紧凑的底栏高度 + 安全区域 */
       overflow-y: auto;
       overscroll-behavior: contain;
       background: #fff;
@@ -1212,13 +1212,13 @@
       border-top: 1px solid #f0f0f0;
       display: flex;
       flex-direction: column;
+      padding-bottom: env(safe-area-inset-bottom);
     }
     .chatbar.hidden { display: none !important; }
 
     .chatbar-inner {
       height: 69px;
       padding: 0 12px;
-      padding-bottom: env(safe-area-inset-bottom);
       display: flex;
       align-items: center;
       margin-top: 0;

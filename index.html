@@ -1209,18 +1209,18 @@
       left: 0; right: 0; bottom: 0;
       z-index: 6;
       background: #fff;
-      border-top: none;
+      border-top: 1px solid #f0f0f0;
       display: flex;
       flex-direction: column;
     }
     .chatbar.hidden { display: none !important; }
 
     .chatbar-inner {
-      min-height: 50px;
-      padding: 6px 12px;
-      padding-bottom: calc(6px + env(safe-area-inset-bottom));
+      height: 69px;
+      padding: 0 12px;
+      padding-bottom: env(safe-area-inset-bottom);
       display: flex;
-      align-items: flex-end;
+      align-items: center;
       margin-top: 0;
     }
 
@@ -1342,10 +1342,11 @@
       flex: 1;
       margin: 0 -6px;
       position: relative;
+      height: 36px;
       min-height: 36px;
-      border-radius: 18px; /* 取消纯胶囊，用圆角矩形适应多行更美观 */
+      border-radius: 18px;
       background: #f7f7f8;
-      padding: 7px 40px 7px 15px; /* 右侧留给表情按钮空间 */
+      padding: 0 40px 0 15px;
       box-sizing: border-box;
       display: flex;
       align-items: center;
@@ -1385,18 +1386,19 @@
 
     .chat-input {
       width: 100%;
+      height: 22px;
       min-height: 22px;
-      max-height: 90px; /* 控制最高拉伸到90px后内部开始滑动 */
+      max-height: 22px;
       border: 0;
       outline: none;
       background: transparent;
       padding: 0;
       margin: 0;
       font-size: 16px; 
-      line-height: 22px; /* 固定行高辅助计算 */
+      line-height: 22px;
       color: #111;
-      resize: none; /* 禁用系统拖拽 */
-      overflow-y: auto; /* 允许纵向滑动 */
+      resize: none;
+      overflow: hidden;
       word-break: break-all;
     }
 
@@ -7572,17 +7574,7 @@ Code-switch between formal/casual based on comfort level
       }
     });
 
-    // 监听输入，实现输入框的高度自动拉伸！
-    chatInput.addEventListener("input", function() {
-      this.style.height = "22px"; // 每次输入先重置回单行最小高度
-      this.style.height = this.scrollHeight + "px"; // 然后读取文本排版真实高度，实现撑开
-      
-      // 让聊天气泡列表同步上移，避免键盘框变高后遮挡了最后一条消息
-      const chatBody = document.getElementById("chatBody");
-      const currentBarHeight = document.getElementById("chatbar").offsetHeight;
-      chatBody.style.bottom = currentBarHeight + "px";
-      chatBody.scrollTop = chatBody.scrollHeight;
-    });
+    // 输入框固定高度，不自动拉伸
 
         const inventoryPopup = document.getElementById("inventoryPopup");
     

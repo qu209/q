@@ -1037,8 +1037,7 @@
       top: calc(72px + var(--safe-top));
       left: 0;
       right: 0;
-      bottom: calc(50px + constant(safe-area-inset-bottom));
-      bottom: calc(50px + env(safe-area-inset-bottom));
+      bottom: 68px; /* 配合底栏稍微抬高的尺寸，防止最后一条消息被挡住 */
       overflow-y: auto;
       overscroll-behavior: contain;
       background: #fff;
@@ -1210,25 +1209,18 @@
       left: 0; right: 0; bottom: 0;
       z-index: 6;
       background: #fff;
-      border-top: 1px solid #f0f0;
+      border-top: 1px solid #f0f0f0;
       display: flex;
-      flex-direction: column;}
+      flex-direction: column;
+    }
     .chatbar.hidden { display: none !important; }
 
     .chatbar-inner {
-      height: 50px;
-      padding: 0 12px;
+      min-height: 68px; /* 改为最小高度，允许拉伸 */
+      padding: 8px 12px 13px;
       display: flex;
-      align-items: center;
-      margin-top: 0;
-    }
-
-    .chatbar::after {
-      content: "";
-      display: block;
-      height: constant(safe-area-inset-bottom);
-      height: env(safe-area-inset-bottom);
-      flex-shrink: 0;
+      align-items: flex-end; /* 让右侧图标在输入框变高时保持在底部 */
+      margin-top: -10px;
     }
 
     /* ======== 新增：长按菜单、引用与多选样式 ======== */
@@ -1349,11 +1341,10 @@
       flex: 1;
       margin: 0 -6px;
       position: relative;
-      height: 36px;
       min-height: 36px;
-      border-radius: 18px;
+      border-radius: 18px; /* 取消纯胶囊，用圆角矩形适应多行更美观 */
       background: #f7f7f8;
-      padding: 0 40px 0 15px;
+      padding: 7px 40px 7px 15px; /* 右侧留给表情按钮空间 */
       box-sizing: border-box;
       display: flex;
       align-items: center;
@@ -1393,19 +1384,18 @@
 
     .chat-input {
       width: 100%;
-      height: 22px;
       min-height: 22px;
-      max-height: 22px;
+      max-height: 90px; /* 控制最高拉伸到90px后内部开始滑动 */
       border: 0;
       outline: none;
       background: transparent;
       padding: 0;
       margin: 0;
       font-size: 16px; 
-      line-height: 22px;
+      line-height: 22px; /* 固定行高辅助计算 */
       color: #111;
-      resize: none;
-      overflow: hidden;
+      resize: none; /* 禁用系统拖拽 */
+      overflow-y: auto; /* 允许纵向滑动 */
       word-break: break-all;
     }
 
@@ -6755,7 +6745,7 @@ if (msg.isTyping) {
       
       // 【新增】发送完毕后让输入框瞬间收缩回1行大小，同时恢复聊天列表的底部间距防遮挡
       chatInput.style.height = "22px";
-      document.getElementById("chatBody").style.bottom = "50px";
+      document.getElementById("chatBody").style.bottom = "68px";
 
       renderChat();
       checkAndTriggerAutoSummary(contact); // 检查是否需要自动总结
@@ -7587,7 +7577,17 @@ Code-switch between formal/casual based on comfort level
       }
     });
 
-    // 输入框固定高度，不自动拉伸
+    // 监听输入，实现输入框的高度自动拉伸！
+    chatInput.addEventListener("input", function() {
+      this.style.height = "22px"; // 每次输入先重置回单行最小高度
+      this.style.height = this.scrollHeight + "px"; // 然后读取文本排版真实高度，实现撑开
+      
+      // 让聊天气泡列表同步上移，避免键盘框变高后遮挡了最后一条消息
+      const chatBody = document.getElementById("chatBody");
+      const currentBarHeight = document.getElementById("chatbar").offsetHeight;
+      chatBody.style.bottom = currentBarHeight + "px";
+      chatBody.scrollTop = chatBody.scrollHeight;
+    });
 
         const inventoryPopup = document.getElementById("inventoryPopup");
     
@@ -12513,13 +12513,13 @@ ${contact.myPersona ? '发朋友圈的人(我)的设定：' + contact.myPersona 
                 moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
             }
             renderMoments();
-            // 回复评论通知横幅
+            // 朋友圈评论通知横幅（不在朋友圈界面时显示）
             if (!(state.currentTab === "moments" && !screens.chat.classList.contains("active"))) {
                 const contactName = getDisplayName(contact);
                 showNotifBanner(
                     contact.avatar || "",
                     contactName,
-                    "叮 " + contactName + " 回复了你的评论，快去看看吧",
+                    "叮 " + contactName + " 给你的动态评论了，快去看看吧",
                     () => { switchTab("moments"); }
                 );
             }
@@ -12658,31 +12658,29 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                             msgTimestamp: Date.now(),
                             hasAnimated: false
                         });
-                                            contact.lastTime = getCurrentTime();
-                    contact.lastMsgTimestamp = Date.now();
-                    if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
-                        renderChat();
-                    } else {
-                        renderContacts();
-                    }
-                    // 后台主动发消息时显示横幅
-                    if (shouldShowNotif(contact.id)) {
-                        contact.unreadCount = (contact.unreadCount || 0) + 1;
-                        let previewMsg = lines[i];
-                        if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
-                        else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
-                        else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
-                        else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
-                        showNotifBanner(
-                            contact.avatar || "",
-                            getDisplayName(contact),
-                            previewMsg,
-                            () => { openChat(contact.id); }
-                        );
-                        // 页面在后台时同时发送系统推送
-                        pushIfBackground(getDisplayName(contact), previewMsg, contact.avatar || "");
-                        renderContacts();
-                    }
+                        contact.lastTime = getCurrentTime();
+                        contact.lastMsgTimestamp = Date.now();
+                        if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+                            renderChat();
+                        } else {
+                            renderContacts();
+                        }
+                        // 后台主动发消息时显示横幅
+                        if (shouldShowNotif(contact.id)) {
+                            contact.unreadCount = (contact.unreadCount || 0) + 1;
+                            let previewMsg = lines[i];
+                            if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
+                            else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
+                            else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
+                            else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
+                            showNotifBanner(
+                                contact.avatar || "",
+                                getDisplayName(contact),
+                                previewMsg,
+                                () => { openChat(contact.id); }
+                            );
+                            renderContacts();
+                        }
                         if (i < lines.length - 1) {
                             await delay(Math.min(400 + lines[i].length * 50, 1500));
                         }
@@ -12901,21 +12899,20 @@ ${imagePromptInstruction}`;
                 typingAIs: []
             };
             
-                                state.moments.unshift(newMoment);
-                    contact.lastAutoMomentTimeMs = Date.now();
-                    renderMoments();
+            state.moments.unshift(newMoment);
+            contact.lastAutoMomentTimeMs = Date.now();
+            renderMoments();
 
-                    // ====== 第四步：发布成功后弹出横幅通知 ======
-                    let notifPreview = momentText || "[图片动态]";
-                    if (notifPreview.length > 30) notifPreview = notifPreview.slice(0, 30) + "...";
-                    showNotifBanner(
-                        contact.avatar || "",
-                        contactName,
-                        `📸 ${contactName} 发了一条新动态：${notifPreview}`,
-                        () => { switchTab("moments"); }
-                    );
-                    // 页面在后台时同时发送系统推送
-                    pushIfBackground(contactName, `📸 发了一条新动态：${notifPreview}`, contact.avatar || "");
+            // ====== 第四步：发布成功后弹出横幅通知 ======
+            let notifPreview = momentText || "[图片动态]";
+            if (notifPreview.length > 30) notifPreview = notifPreview.slice(0, 30) + "...";
+            showNotifBanner(
+                contact.avatar || "",
+                contactName,
+                `📸 ${contactName} 发了一条新动态：${notifPreview}`,
+                () => { switchTab("moments"); }
+            );
+
         } catch(e) {
             console.error("后台主动发动态报错", e);showNotifBanner(
                 contact.avatar || "",

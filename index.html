@@ -12513,13 +12513,13 @@ ${contact.myPersona ? '发朋友圈的人(我)的设定：' + contact.myPersona 
                 moment.typingAIs = moment.typingAIs.filter(n => n !== getDisplayName(contact));
             }
             renderMoments();
-            // 朋友圈评论通知横幅（不在朋友圈界面时显示）
+            // 回复评论通知横幅
             if (!(state.currentTab === "moments" && !screens.chat.classList.contains("active"))) {
                 const contactName = getDisplayName(contact);
                 showNotifBanner(
                     contact.avatar || "",
                     contactName,
-                    "叮 " + contactName + " 给你的动态评论了，快去看看吧",
+                    "叮 " + contactName + " 回复了你的评论，快去看看吧",
                     () => { switchTab("moments"); }
                 );
             }
@@ -12658,29 +12658,31 @@ ${contact.myPersona ? '用户的设定：' + contact.myPersona : ''}
                             msgTimestamp: Date.now(),
                             hasAnimated: false
                         });
-                        contact.lastTime = getCurrentTime();
-                        contact.lastMsgTimestamp = Date.now();
-                        if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
-                            renderChat();
-                        } else {
-                            renderContacts();
-                        }
-                        // 后台主动发消息时显示横幅
-                        if (shouldShowNotif(contact.id)) {
-                            contact.unreadCount = (contact.unreadCount || 0) + 1;
-                            let previewMsg = lines[i];
-                            if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
-                            else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
-                            else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
-                            else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
-                            showNotifBanner(
-                                contact.avatar || "",
-                                getDisplayName(contact),
-                                previewMsg,
-                                () => { openChat(contact.id); }
-                            );
-                            renderContacts();
-                        }
+                                            contact.lastTime = getCurrentTime();
+                    contact.lastMsgTimestamp = Date.now();
+                    if (state.activeContactId === contact.id && screens.chat.classList.contains("active")) {
+                        renderChat();
+                    } else {
+                        renderContacts();
+                    }
+                    // 后台主动发消息时显示横幅
+                    if (shouldShowNotif(contact.id)) {
+                        contact.unreadCount = (contact.unreadCount || 0) + 1;
+                        let previewMsg = lines[i];
+                        if (lines[i].startsWith("[EMOJI_STICKER|")) previewMsg = "[表情包]";
+                        else if (lines[i].startsWith("[TRANSFER|")) previewMsg = "[转账]";
+                        else if (lines[i].startsWith("[VOICE_MSG|")) previewMsg = "[语音]";
+                        else previewMsg = lines[i].replace(/<[^>]*>?/gm, '');
+                        showNotifBanner(
+                            contact.avatar || "",
+                            getDisplayName(contact),
+                            previewMsg,
+                            () => { openChat(contact.id); }
+                        );
+                        // 页面在后台时同时发送系统推送
+                        pushIfBackground(getDisplayName(contact), previewMsg, contact.avatar || "");
+                        renderContacts();
+                    }
                         if (i < lines.length - 1) {
                             await delay(Math.min(400 + lines[i].length * 50, 1500));
                         }
@@ -12899,20 +12901,21 @@ ${imagePromptInstruction}`;
                 typingAIs: []
             };
             
-            state.moments.unshift(newMoment);
-            contact.lastAutoMomentTimeMs = Date.now();
-            renderMoments();
+                                state.moments.unshift(newMoment);
+                    contact.lastAutoMomentTimeMs = Date.now();
+                    renderMoments();
 
-            // ====== 第四步：发布成功后弹出横幅通知 ======
-            let notifPreview = momentText || "[图片动态]";
-            if (notifPreview.length > 30) notifPreview = notifPreview.slice(0, 30) + "...";
-            showNotifBanner(
-                contact.avatar || "",
-                contactName,
-                `📸 ${contactName} 发了一条新动态：${notifPreview}`,
-                () => { switchTab("moments"); }
-            );
-
+                    // ====== 第四步：发布成功后弹出横幅通知 ======
+                    let notifPreview = momentText || "[图片动态]";
+                    if (notifPreview.length > 30) notifPreview = notifPreview.slice(0, 30) + "...";
+                    showNotifBanner(
+                        contact.avatar || "",
+                        contactName,
+                        `📸 ${contactName} 发了一条新动态：${notifPreview}`,
+                        () => { switchTab("moments"); }
+                    );
+                    // 页面在后台时同时发送系统推送
+                    pushIfBackground(contactName, `📸 发了一条新动态：${notifPreview}`, contact.avatar || "");
         } catch(e) {
             console.error("后台主动发动态报错", e);showNotifBanner(
                 contact.avatar || "",

@@ -3858,13 +3858,6 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             </label>
             <input type="range" id="tempInput" min="0" max="2" step="0.1" value="1.0" style="width: 100%; accent-color: #C1D0DC; height: 4px; outline: none; margin: 4px 0 8px 0;" />
           </div>
-          <div class="toggle-row" style="margin-top: 16px; margin-bottom: 4px;">
-            <label style="font-size: 14px; font-weight: 600; color: #222;">强制外语翻译模式</label>
-            <label class="switch">
-              <input type="checkbox" id="translationToggle">
-              <span class="slider"></span>
-            </label>
-          </div>
         </div>
 
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">语音消息设置 (MiniMax TTS)</div>
@@ -4534,6 +4527,18 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
               <option value="ar">🇸🇦 阿拉伯语 (Arabic)</option>
             </select>
             <span style="color:#c7c7cc; font-size:16px; pointer-events:none; flex-shrink:0;">›</span>
+          </div>
+        </div>
+        <!-- 外语翻译模式卡片 -->
+        <div class="details-section-card">
+          <div class="details-section-title">外语翻译模式</div>
+          <div style="font-size:13px; color:#666; margin-bottom:12px; line-height:1.6;">开启后，该角色将强制使用外语回复，并在每条消息下方折叠显示中文翻译。</div>
+          <div class="toggle-row" style="margin-bottom: 0;">
+            <label style="font-size:15px; font-weight:600; color:#222;">启用外语翻译模式</label>
+            <label class="switch">
+              <input type="checkbox" id="contactTranslationToggle">
+              <span class="slider"></span>
+            </label>
           </div>
         </div>
 
@@ -7274,8 +7279,8 @@ Code-switch between formal/casual based on comfort level
       // 图片消息功能注入
       combinedPersona += `\n【图片发送功能】\n你可以在聊天中发送图片给用户！当场景需要分享照片时（比如晒自拍、发风景、展示物品、截图等），可以选择发图片。\n发送规则：必须单独占一行输出指令：[PHOTO_MSG|图片的详细文字描述]\n描述要求：描述必须在50字以上100字以内，像真正的图片说明一样，具体描述画面内容、颜色、氛围、细节，让用户点击后能生动感受到这张图片是什么样子。\n例如：[PHOTO_MSG|这是我今天在咖啡馆拍的，阳光斜斜地照进来，拿铁的奶泡拉了个心形，旁边放着一本书，整个画面暖暖的，米色和棕色为主调，很治愈的午后感。]\n注意：不要频繁发图，仅在自然对话中真正需要"看一张图"的时机才发送。\n`;
 
-      // 检查是否开启了翻译模式，并注入超强逻辑覆写
-      if (api.enableTranslation) {
+      // 检查是否开启了翻译模式，并注入超强逻辑覆写（每个角色单独控制）
+      if (contact.enableTranslation) {
        combinedPersona += `\n【⚠️ 绝对逻辑覆写 / Absolute Logic Overwrite】
 1. 语言强制 (Language Core): 你的思维已被锁定。你必须且只能使用【符合你角色设定的外语（任何语言均可）】进行回复。禁止在 HTML 模板外部输出任何中文！
 2. 格式协议 (Format Protocol): 说完外语后，必须紧接着提供对应的中文翻译。
@@ -10349,6 +10354,9 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       document.getElementById("contactTtsVoiceIdInput").value = contact.ttsVoiceId || "";
       document.getElementById("contactTtsLangSelect").value = contact.ttsLang || "";
 
+      // 回显翻译模式设置
+      document.getElementById("contactTranslationToggle").checked = contact.enableTranslation || false;
+
       // 回显 位置/天气/时间 设置
       document.getElementById("locationWeatherEnabledToggle").checked = contact.locationWeatherEnabled || false;
       document.getElementById("userLocationAlias").value = contact.userLocationAlias || "";
@@ -10475,6 +10483,9 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       contact.ttsEnabled = document.getElementById("contactTtsEnabledToggle").checked;
       contact.ttsVoiceId = document.getElementById("contactTtsVoiceIdInput").value.trim();
       contact.ttsLang = document.getElementById("contactTtsLangSelect").value;
+
+      // 保存翻译模式设置
+      contact.enableTranslation = document.getElementById("contactTranslationToggle").checked;
 
       // 保存 位置/天气/时间 设置
       contact.locationWeatherEnabled = document.getElementById("locationWeatherEnabledToggle").checked;

@@ -3918,6 +3918,26 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
             <input class="input" id="pollinationsKeyInput" type="text" placeholder="留空则使用免费公共服务" style="background: #f7f7f8; border: none; height: 44px; border-radius: 12px;" />
           </div>
         </div>
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">底栏名称 (好友/动态/我)</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div style="font-size: 13px; color: #666; margin-bottom: 14px; line-height: 1.6;">
+            自定义底部导航栏三个按钮的显示名称。
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label style="font-size: 14px; font-weight: 600; color: #222; width: 60px; flex-shrink: 0;">好友栏</label>
+              <input class="input" id="tabNameFriendsInput" type="text" placeholder="好友" style="flex: 1; background: #f7f7f8; border: none; height: 40px; border-radius: 10px; padding: 0 12px;" />
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label style="font-size: 14px; font-weight: 600; color: #222; width: 60px; flex-shrink: 0;">动态栏</label>
+              <input class="input" id="tabNameMomentsInput" type="text" placeholder="动态" style="flex: 1; background: #f7f7f8; border: none; height: 40px; border-radius: 10px; padding: 0 12px;" />
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <label style="font-size: 14px; font-weight: 600; color: #222; width: 60px; flex-shrink: 0;">我栏</label>
+              <input class="input" id="tabNameMeInput" type="text" placeholder="我" style="flex: 1; background: #f7f7f8; border: none; height: 40px; border-radius: 10px; padding: 0 12px;" />
+            </div>
+          </div>
+        </div>
 
         <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">界面背景 (好友/朋友圈/我)</div>
         <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
@@ -4939,9 +4959,9 @@ border: none; border-radius: 12px; min-height: 80px;"></textarea>
     <audio id="musicAudioEl" preload="auto"></audio>
 
     <nav class="tabbar" id="tabbar">
-      <button class="tab-item active" data-tab="friends">好友</button>
-      <button class="tab-item" data-tab="moments">朋友圈</button>
-      <button class="tab-item" data-tab="me">我</button>
+      <button class="tab-item active" data-tab="friends" id="tabLabelFriends">好友</button>
+      <button class="tab-item" data-tab="moments" id="tabLabelMoments">动态</button>
+      <button class="tab-item" data-tab="me" id="tabLabelMe">我</button>
     </nav>
 
     <div class="modal-mask" id="modalMask">
@@ -9519,6 +9539,13 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       fontUrlInput.value = state.fontSettings.url;
       fontSizeInput.value = state.fontSettings.size;
       fontSizeDisplay.textContent = state.fontSettings.size + "px";
+
+      // 载入底栏名称设置
+      const tabNames = state.tabNames || { friends: "好友", moments: "动态", me: "我" };
+      document.getElementById("tabNameFriendsInput").value = tabNames.friends || "好友";
+      document.getElementById("tabNameMomentsInput").value = tabNames.moments || "动态";
+      document.getElementById("tabNameMeInput").value = tabNames.me || "我";
+
       screens.me.classList.remove("active");
       screens.settings.classList.add("active");
       tabbar.classList.add("hidden");
@@ -9700,7 +9727,7 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
     });
 
     // 总体保存
-                saveSettingsBtn.addEventListener("click", async () => {
+                                saveSettingsBtn.addEventListener("click", async () => {
       state.apiSettings.url = apiUrlInput.value.trim();
       state.apiSettings.key = apiKeyInput.value.trim();
       state.apiSettings.model = modelSelect.value;
@@ -9716,6 +9743,20 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       state.minimaxTtsSettings.apiKey = document.getElementById("minimaxApiKeyInput").value.trim();
       state.minimaxTtsSettings.model = document.getElementById("minimaxModelSelect").value;
       state.minimaxTtsSettings.region = document.getElementById("minimaxRegionSelect").value;
+
+      // 保存底栏名称设置
+      const fnF = document.getElementById("tabNameFriendsInput").value.trim();
+      const fnM = document.getElementById("tabNameMomentsInput").value.trim();
+      const fnMe = document.getElementById("tabNameMeInput").value.trim();
+      state.tabNames = {
+        friends: fnF || "好友",
+        moments: fnM || "动态",
+        me: fnMe || "我"
+      };
+      // 立即应用到底栏
+      document.getElementById("tabLabelFriends").textContent = state.tabNames.friends;
+      document.getElementById("tabLabelMoments").textContent = state.tabNames.moments;
+      document.getElementById("tabLabelMe").textContent = state.tabNames.me;
 
       await sysAlert("设置已保存");
 
@@ -13732,11 +13773,25 @@ ${imagePromptInstruction}`;
       // 应用保存的背景
       initializeScreenBackgrounds();
       applyScreenBackgrounds();
+      // 应用底栏名称
+      (function applyTabNames() {
+        const tn = state.tabNames || {};
+        document.getElementById("tabLabelFriends").textContent = tn.friends || "好友";
+        document.getElementById("tabLabelMoments").textContent = tn.moments || "动态";
+        document.getElementById("tabLabelMe").textContent = tn.me || "我";
+      })();
     }).catch(err => {
       console.error("IndexedDB 加载失败，使用默认数据:", err);
       // 应用保存的背景（即使加载失败也尝试应用）
       initializeScreenBackgrounds();
       applyScreenBackgrounds();
+      // 应用底栏名称
+      (function applyTabNames() {
+        const tn = state.tabNames || {};
+        document.getElementById("tabLabelFriends").textContent = tn.friends || "好友";
+        document.getElementById("tabLabelMoments").textContent = tn.months || "动态";
+        document.getElementById("tabLabelMe").textContent = tn.me || "我";
+      })();
     });
 
 // ====== 音乐播放器完整逻辑 ======

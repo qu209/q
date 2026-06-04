@@ -9464,7 +9464,6 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
     const modelSelect = document.getElementById("modelSelect");
     const tempInput = document.getElementById("tempInput");
     const tempValueDisplay = document.getElementById("tempValueDisplay");
-    const translationToggle = document.getElementById("translationToggle");
 
     // 个性化 元素
     const fontPresetSelect = document.getElementById("fontPresetSelect");
@@ -9497,7 +9496,6 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       apiKeyInput.value = state.apiSettings.key;
       tempInput.value = state.apiSettings.temperature;
       tempValueDisplay.textContent = state.apiSettings.temperature;
-      translationToggle.checked = state.apiSettings.enableTranslation || false;
       if (state.apiSettings.model && modelSelect.options.length <= 1) {
         modelSelect.innerHTML = `<option value="${state.apiSettings.model}">${state.apiSettings.model}</option>`;
       }
@@ -9707,7 +9705,7 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       state.apiSettings.key = apiKeyInput.value.trim();
       state.apiSettings.model = modelSelect.value;
       state.apiSettings.temperature = parseFloat(tempInput.value);
-      state.apiSettings.enableTranslation = translationToggle.checked;
+      
       // 保存生图设置
       if (!state.imgGenSettings) state.imgGenSettings = {};
       state.imgGenSettings.enabled = document.getElementById("imgGenToggle").checked;

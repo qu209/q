@@ -130,33 +130,14 @@
       position: relative;
     }
     #screen-friends .friend-list {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 70px;
-  position: relative;
-}
-
-.virtual-scroll-container {
-  position: relative;
-  width: 100%;
-}
-
-.virtual-scroll-phantom {
-  position: absolute;
-  left: 0;
-  top: 0;
-  width: 1px;
-  pointer-events: none;
-}
-
-.virtual-scroll-content {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  width: 100%;
-}
+      flex: 1;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      padding-bottom: 70px;
+      /* 虚拟滚动：固定容器高度 */
+      position: relative;
+      will-change: scroll-position;
+    }
     #screen-friends .empty-list {
       flex: 1;
       overflow-y: auto;
@@ -5605,298 +5586,256 @@ function estimateTokens(text) {
       tabsEl.appendChild(inner);
     }
 
-function renderContacts() {
-  friendList.innerHTML = "";
-
-  if (!state.friendGroups) state.friendGroups = [
-    { id: "g1", name: "♡ 最爱" },
-    { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-    { id: "g3", name: "＊ 关注" }
-  ];
-
-  renderGroupTabs();
-
-  if (!state.contacts.length) {
-    emptyList.classList.remove("hidden");
-    return;
-  }
-  emptyList.classList.add("hidden");
-
-  function closeAllSwipes() {
-    document.querySelectorAll(".friend-swipe-wrap.swiped").forEach(w => w.classList.remove("swiped"));
-  }
-
-  function buildFriendItem(contact) {
-    const wrap = document.createElement("div");
-    wrap.className = "friend-swipe-wrap";
-    wrap.dataset.id = contact.id;
-
-    const item = document.createElement("button");
-    item.className = "friend-item";
-    item.dataset.id = contact.id;
-
-    const avatarWrap = document.createElement("div");
-    avatarWrap.className = "friend-avatar-wrap";
-    const avatar = document.createElement("div");
-    avatar.className = "friend-avatar";
-    if (contact.avatar) {
-      avatar.style.backgroundImage = `url(${contact.avatar})`;
-      avatar.style.backgroundSize = "cover";
-      avatar.style.backgroundPosition = "center";
-      avatar.classList.add("has-custom-avatar");
-    }
-    const unreadCount = contact.unreadCount || 0;
-    if (unreadCount > 0) {
-      const badge = document.createElement("div");
-      badge.className = "friend-avatar-badge";
-      badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
-      avatarWrap.appendChild(avatar);
-      avatarWrap.appendChild(badge);
-    } else {
-      avatarWrap.appendChild(avatar);
-    }
-
-    const main = document.createElement("div");
-    main.className = "friend-main";
-    const titleRow = document.createElement("div");
-    titleRow.className = "friend-title-row";
-    const name = document.createElement("div");
-    name.className = "friend-name";
-    name.textContent = getDisplayName(contact);
-    const time = document.createElement("div");
-    time.className = "friend-time";
-    time.textContent = contact.lastTime || "";
-    titleRow.appendChild(name);
-    titleRow.appendChild(time);
-    const sub = document.createElement("div");
-    sub.className = "friend-sub";
-    let previewText = "暂无记录";
-    if (contact.messages.length) {
-      const lastMsg = contact.messages[contact.messages.length - 1];
-      if (lastMsg.image) previewText = "[图片]";
-      else if (lastMsg.text.startsWith("[EMOJI_STICKER|")) previewText = "[表情包]";
-      else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) previewText = "[转账]";
-      else if (lastMsg.text.startsWith("[VOICE_MSG|") || lastMsg.text.startsWith("[VOICE_MSG:")) previewText = "[语音]";
-      else if (lastMsg.text.startsWith("[VOICE_CALL|")) previewText = "[语音通话]";
-      else previewText = lastMsg.text.replace(/<[^>]*>?/gm, '');
-    }
-    sub.textContent = previewText;
-    main.appendChild(titleRow);
-    main.appendChild(sub);
-    item.appendChild(avatarWrap);
-    item.appendChild(main);
-
-    const actions = document.createElement("div");
-    actions.className = "friend-swipe-actions";
-
-    const pinBtn = document.createElement("button");
-    pinBtn.className = "friend-swipe-btn pin";
-    pinBtn.textContent = contact.isPinned ? "取消置顶" : "置顶";
-    pinBtn.onclick = (e) => {
-      e.stopPropagation();
-      contact.isPinned = !contact.isPinned;
-      renderContacts();
+    // 虚拟滚动配置
+    const VIRTUAL_SCROLL_CONFIG = {
+      itemHeight: 90, // 每个好友项的高度（像素）
+      bufferSize: 5   // 缓冲区：上下各预渲染5条
+    };
+    let virtualScrollState = {
+      startIndex: 0,
+      visibleCount: 0,
+      allItems: [] // 存储所有要渲染的项目数据
     };
 
-    const groupBtn = document.createElement("button");
-    groupBtn.className = "friend-swipe-btn group";
-    groupBtn.textContent = "分组";
-    groupBtn.onclick = (e) => {
-      e.stopPropagation();
-      closeAllSwipes();
-      showGroupPicker(contact);
-    };
+    function renderContacts() {
+      friendList.innerHTML = "";
 
-    const delBtn = document.createElement("button");
-    delBtn.className = "friend-swipe-btn del";
-    delBtn.textContent = "删除";
-    delBtn.onclick = async (e) => {
-      e.stopPropagation();
-      closeAllSwipes();
-      const ok = await sysConfirm(`确定要彻底删除与 ${getDisplayName(contact)} 的所有数据吗？删除后将无法恢复。`, "删除好友", true);
-      if (ok) {
-        state.contacts = state.contacts.filter(c => c.id !== contact.id);
-        if (state.activeContactId === contact.id) state.activeContactId = null;
-        renderContacts();
+      if (!state.friendGroups) state.friendGroups = [
+        { id: "g1", name: "♡ 最爱" },
+        { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
+        { id: "g3", name: "＊ 关注" }
+      ];
+
+      renderGroupTabs();
+
+      if (!state.contacts.length) {
+        emptyList.classList.remove("hidden");
+        return;
       }
-    };
+      emptyList.classList.add("hidden");
 
-    actions.appendChild(pinBtn);
-    actions.appendChild(groupBtn);
-    actions.appendChild(delBtn);
-    wrap.appendChild(item);
-    wrap.appendChild(actions);
-
-    let touchStartX = 0, touchStartY = 0, isSwiping = false, swipeDir = null;
-    item.addEventListener("touchstart", (e) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-      isSwiping = false; swipeDir = null;
-    }, { passive: true });
-    item.addEventListener("touchmove", (e) => {
-      const dx = e.touches[0].clientX - touchStartX;
-      const dy = e.touches[0].clientY - touchStartY;
-      if (!swipeDir) {
-        if (Math.abs(dx) > Math.abs(dy) + 5) swipeDir = "h";
-        else if (Math.abs(dy) > Math.abs(dx) + 5) swipeDir = "v";
+      function closeAllSwipes() {
+        document.querySelectorAll(".friend-swipe-wrap.swiped").forEach(w => w.classList.remove("swiped"));
       }
-      if (swipeDir === "h") isSwiping = true;
-    }, { passive: true });
-    item.addEventListener("touchend", (e) => {
-      if (!swipeDir || swipeDir !== "h") return;
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      if (dx < -40) { closeAllSwipes(); wrap.classList.add("swiped"); }
-      else if (dx > 20) { wrap.classList.remove("swiped"); }
-    });
-    item.addEventListener("click", (e) => {
-      if (isSwiping) { isSwiping = false; return; }
-      if (wrap.classList.contains("swiped")) { closeAllSwipes(); return; }
-      contact.unreadCount = 0;
-      openChat(contact.id);
-    });
-    document.addEventListener("touchstart", (e) => {
-      if (!wrap.contains(e.target) && wrap.classList.contains("swiped")) wrap.classList.remove("swiped");
-    }, { passive: true });
 
-    return wrap;
-  }
+      function buildFriendItem(contact) {
+        const wrap = document.createElement("div");
+        wrap.className = "friend-swipe-wrap";
+        wrap.dataset.id = contact.id;
 
-  function buildSection(label, contacts) {
-    const section = document.createElement("div");
-    section.className = "friend-section";
-    const header = document.createElement("div");
-    header.className = "friend-section-header";
-    const lbl = document.createElement("span");
-    lbl.className = "friend-section-label";
-    lbl.textContent = label;
-    header.appendChild(lbl);
-    const card = document.createElement("div");
-    card.className = "friend-section-card";
-    contacts.forEach(c => card.appendChild(buildFriendItem(c)));
-    section.appendChild(header);
-    section.appendChild(card);
-    return section;
-  }
+        const item = document.createElement("button");
+        item.className = "friend-item";
+        item.dataset.id = contact.id;
 
-  const sort = arr => [...arr].sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
-
-  // ========== 虚拟滚动：收集所有要显示的项 ==========
-  const allItems = [];
-  
-  if (activeGroupTabId === null) {
-    const pinned = sort(state.contacts.filter(c => c.isPinned));
-    const notPinned = sort(state.contacts.filter(c => !c.isPinned));
-    if (pinned.length > 0) allItems.push({ type: 'section', label: "📌 置顶", contacts: pinned });
-    if (notPinned.length > 0) allItems.push({ type: 'section', label: "全部", contacts: notPinned });
-  } else {
-    const group = state.friendGroups.find(g => g.id === activeGroupTabId);
-    const inGroup = state.contacts.filter(c => c.groupId === activeGroupTabId);
-    const pinned = sort(inGroup.filter(c => c.isPinned));
-    const normal = sort(inGroup.filter(c => !c.isPinned));
-    if (pinned.length > 0) allItems.push({ type: 'section', label: "📌 置顶", contacts: pinned });
-    if (normal.length > 0) allItems.push({ type: 'section', label: group ? group.name : "全部", contacts: normal });
-    if (!inGroup.length) {
-      const empty = document.createElement("div");
-      empty.style.cssText = "text-align:center;color:#aaa;font-size:14px;padding:40px 0;";
-      empty.textContent = "该分组暂无好友";
-      friendList.appendChild(empty);
-      return;
-    }
-  }
-
-  // ========== 虚拟滚动核心逻辑 ==========
-  const ITEM_HEIGHT = 90; // 每个好友项的高度（像素）
-  const BUFFER_SIZE = 5;  // 缓冲区大小（渲染可见区域外的5个项）
-  
-  let virtualContainer = document.querySelector('.virtual-scroll-container');
-  if (!virtualContainer) {
-    virtualContainer = document.createElement('div');
-    virtualContainer.className = 'virtual-scroll-container';
-    friendList.appendChild(virtualContainer);
-  }
-  
-  // 计算总高度
-  let totalHeight = 0;
-  const itemHeights = [];
-  allItems.forEach(item => {
-    if (item.type === 'section') {
-      itemHeights.push(45); // section header 高度
-      totalHeight += 45;
-      item.contacts.forEach(() => {
-        itemHeights.push(ITEM_HEIGHT);
-        totalHeight += ITEM_HEIGHT;
-      });
-    }
-  });
-  
-  // 创建幽灵元素（占位符）
-  let phantom = virtualContainer.querySelector('.virtual-scroll-phantom');
-  if (!phantom) {
-    phantom = document.createElement('div');
-    phantom.className = 'virtual-scroll-phantom';
-    virtualContainer.appendChild(phantom);
-  }
-  phantom.style.height = totalHeight + 'px';
-  
-  // 创建内容容器
-  let content = virtualContainer.querySelector('.virtual-scroll-content');
-  if (!content) {
-    content = document.createElement('div');
-    content.className = 'virtual-scroll-content';
-    virtualContainer.appendChild(content);
-  }
-  content.innerHTML = '';
-  
-  // 虚拟滚动渲染函数
-  function renderVirtualItems() {
-    const scrollTop = friendList.scrollTop;
-    const viewportHeight = friendList.clientHeight;
-    const startIndex = Math.max(0, Math.floor(scrollTop / ITEM_HEIGHT) - BUFFER_SIZE);
-    const endIndex = Math.min(itemHeights.length, Math.ceil((scrollTop + viewportHeight) / ITEM_HEIGHT) + BUFFER_SIZE);
-    
-    let currentY = 0;
-    let renderIndex = 0;
-    const fragment = document.createDocumentFragment();
-    
-    allItems.forEach(item => {
-      if (item.type === 'section') {
-        const headerHeight = 45;
-        if (renderIndex >= startIndex && renderIndex < endIndex) {
-          const header = document.createElement('div');
-          header.className = 'friend-section-header';
-          header.style.cssText = `position:absolute;top:${currentY}px;left:0;right:0;height:45px;`;
-          const lbl = document.createElement('span');
-          lbl.className = 'friend-section-label';
-          lbl.textContent = item.label;
-          header.appendChild(lbl);
-          fragment.appendChild(header);
+        const avatarWrap = document.createElement("div");
+        avatarWrap.className = "friend-avatar-wrap";
+        const avatar = document.createElement("div");
+        avatar.className = "friend-avatar";
+        if (contact.avatar) {
+          avatar.style.backgroundImage = `url(${contact.avatar})`;
+          avatar.style.backgroundSize = "cover";
+          avatar.style.backgroundPosition = "center";
+          avatar.classList.add("has-custom-avatar");
         }
-        currentY += headerHeight;
-        renderIndex++;
-        
-        item.contacts.forEach(contact => {
-          if (renderIndex >= startIndex && renderIndex < endIndex) {
-            const elem = buildFriendItem(contact);
-            elem.style.cssText = `position:absolute;top:${currentY}px;left:0;right:0;width:100%;`;
-            fragment.appendChild(elem);
+        const unreadCount = contact.unreadCount || 0;
+        if (unreadCount > 0) {
+          const badge = document.createElement("div");
+          badge.className = "friend-avatar-badge";
+          badge.textContent = unreadCount > 99 ? "99+" : unreadCount;
+          avatarWrap.appendChild(avatar);
+          avatarWrap.appendChild(badge);
+        } else {
+          avatarWrap.appendChild(avatar);
+        }
+
+        const main = document.createElement("div");
+        main.className = "friend-main";
+        const titleRow = document.createElement("div");
+        titleRow.className = "friend-title-row";
+        const name = document.createElement("div");
+        name.className = "friend-name";
+        name.textContent = getDisplayName(contact);
+        const time = document.createElement("div");
+        time.className = "friend-time";
+        time.textContent = contact.lastTime || "";
+        titleRow.appendChild(name);
+        titleRow.appendChild(time);
+        const sub = document.createElement("div");
+        sub.className = "friend-sub";
+        let previewText = "暂无记录";
+        if (contact.messages.length) {
+          const lastMsg = contact.messages[contact.messages.length - 1];
+          if (lastMsg.image) previewText = "[图片]";
+          else if (lastMsg.text.startsWith("[EMOJI_STICKER|")) previewText = "[表情包]";
+          else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) previewText = "[转账]";
+          else if (lastMsg.text.startsWith("[VOICE_MSG|") || lastMsg.text.startsWith("[VOICE_MSG:")) previewText = "[语音]";
+          else if (lastMsg.text.startsWith("[VOICE_CALL|")) previewText = "[语音通话]";
+          else previewText = lastMsg.text.replace(/<[^>]*>?/gm, '');
+        }
+        sub.textContent = previewText;
+        main.appendChild(titleRow);
+        main.appendChild(sub);
+        item.appendChild(avatarWrap);
+        item.appendChild(main);
+
+        const actions = document.createElement("div");
+        actions.className = "friend-swipe-actions";
+
+        const pinBtn = document.createElement("button");
+        pinBtn.className = "friend-swipe-btn pin";
+        pinBtn.textContent = contact.isPinned ? "取消置顶" : "置顶";
+        pinBtn.onclick = (e) => {
+          e.stopPropagation();
+          contact.isPinned = !contact.isPinned;
+          renderContacts();
+        };
+
+        const groupBtn = document.createElement("button");
+        groupBtn.className = "friend-swipe-btn group";
+        groupBtn.textContent = "分组";
+        groupBtn.onclick = (e) => {
+          e.stopPropagation();
+          closeAllSwipes();
+          showGroupPicker(contact);
+        };
+
+        const delBtn = document.createElement("button");
+        delBtn.className = "friend-swipe-btn del";
+        delBtn.textContent = "删除";
+        delBtn.onclick = async (e) => {
+          e.stopPropagation();
+          closeAllSwipes();
+          const ok = await sysConfirm(`确定要彻底删除与 ${getDisplayName(contact)} 的所有数据吗？删除后将无法恢复。`, "删除好友", true);
+          if (ok) {
+            state.contacts = state.contacts.filter(c => c.id !== contact.id);
+            if (state.activeContactId === contact.id) state.activeContactId = null;
+            renderContacts();
           }
-          currentY += ITEM_HEIGHT;
-          renderIndex++;
+        };
+
+        actions.appendChild(pinBtn);
+        actions.appendChild(groupBtn);
+        actions.appendChild(delBtn);
+        wrap.appendChild(item);
+        wrap.appendChild(actions);
+
+        let touchStartX = 0, touchStartY = 0, isSwiping = false, swipeDir = null;
+        item.addEventListener("touchstart", (e) => {
+          touchStartX = e.touches[0].clientX;
+          touchStartY = e.touches[0].clientY;
+          isSwiping = false; swipeDir = null;
+        }, { passive: true });
+        item.addEventListener("touchmove", (e) => {
+          const dx = e.touches[0].clientX - touchStartX;
+          const dy = e.touches[0].clientY - touchStartY;
+          if (!swipeDir) {
+            if (Math.abs(dx) > Math.abs(dy) + 5) swipeDir = "h";
+            else if (Math.abs(dy) > Math.abs(dx) + 5) swipeDir = "v";
+          }
+          if (swipeDir === "h") isSwiping = true;
+        }, { passive: true });
+        item.addEventListener("touchend", (e) => {
+          if (!swipeDir || swipeDir !== "h") return;
+          const dx = e.changedTouches[0].clientX - touchStartX;
+          if (dx < -40) { closeAllSwipes(); wrap.classList.add("swiped"); }
+          else if (dx > 20) { wrap.classList.remove("swiped"); }
         });
+        item.addEventListener("click", (e) => {
+          if (isSwiping) { isSwiping = false; return; }
+          if (wrap.classList.contains("swiped")) { closeAllSwipes(); return; }
+          contact.unreadCount = 0;
+          openChat(contact.id);
+        });
+        document.addEventListener("touchstart", (e) => {
+          if (!wrap.contains(e.target) && wrap.classList.contains("swiped")) wrap.classList.remove("swiped");
+        }, { passive: true });
+
+        return wrap;
       }
-    });
-    
-    content.appendChild(fragment);
-  }
-  
-  // 初始渲染
-  renderVirtualItems();
-  
-  // 监听滚动事件
-  friendList.removeEventListener('scroll', renderVirtualItems);
-  friendList.addEventListener('scroll', renderVirtualItems, { passive: true });
-}
-分组选择弹窗（图四：居中弹窗 tag点击选择 长按改名 确认按钮）
+
+      function buildSection(label, contacts) {
+        const section = document.createElement("div");
+        section.className = "friend-section";
+        const header = document.createElement("div");
+        header.className = "friend-section-header";
+        const lbl = document.createElement("span");
+        lbl.className = "friend-section-label";
+        lbl.textContent = label;
+        header.appendChild(lbl);
+        const card = document.createElement("div");
+        card.className = "friend-section-card";
+        // 虚拟滚动：这里不直接添加所有项目，改为收集数据
+        contacts.forEach(c => {
+          virtualScrollState.allItems.push({ type: 'contact', data: c, section: card });
+        });
+        section.appendChild(header);
+        section.appendChild(card);
+        return section;
+      }
+
+      const sort = arr => [...arr].sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
+
+      // 清空虚拟滚动状态
+      virtualScrollState.allItems = [];
+
+      if (activeGroupTabId === null) {
+        const pinned = sort(state.contacts.filter(c => c.isPinned));
+        const notPinned = sort(state.contacts.filter(c => !c.isPinned));
+        if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
+        if (notPinned.length > 0) friendList.appendChild(buildSection("全部", notPinned));
+      } else {
+        const group = state.friendGroups.find(g => g.id === activeGroupTabId);
+        const inGroup = state.contacts.filter(c => c.groupId === activeGroupTabId);
+        const pinned = sort(inGroup.filter(c => c.isPinned));
+        const normal = sort(inGroup.filter(c => !c.isPinned));
+        if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
+        if (normal.length > 0) friendList.appendChild(buildSection(group ? group.name : "全部", normal));
+        if (!inGroup.length) {
+          const empty = document.createElement("div");
+          empty.style.cssText = "text-align:center;color:#aaa;font-size:14px;padding:40px 0;";
+          empty.textContent = "该分组暂无好友";
+          friendList.appendChild(empty);
+        }
+      }
+
+      // 虚拟滚动初始化
+      initVirtualScroll();
+    }
+
+    // 虚拟滚动初始化函数
+    function initVirtualScroll() {
+      if (virtualScrollState.allItems.length === 0) return;
+
+      const listHeight = friendList.clientHeight;
+      virtualScrollState.visibleCount = Math.ceil(listHeight / VIRTUAL_SCROLL_CONFIG.itemHeight) + VIRTUAL_SCROLL_CONFIG.bufferSize * 2;
+
+      function renderVirtualItems() {
+        const scrollTop = friendList.scrollTop;
+        const startIdx = Math.max(0, Math.floor(scrollTop / VIRTUAL_SCROLL_CONFIG.itemHeight) - VIRTUAL_SCROLL_CONFIG.bufferSize);
+        const endIdx = Math.min(virtualScrollState.allItems.length, startIdx + virtualScrollState.visibleCount);
+
+        // 清空所有卡片的DOM
+        document.querySelectorAll('.friend-section-card').forEach(card => {
+          card.innerHTML = '';
+        });
+
+        // 只渲染可见范围内的项目
+        for (let i = startIdx; i < endIdx; i++) {
+          const item = virtualScrollState.allItems[i];
+          const wrap = buildFriendItem(item.data);
+          item.section.appendChild(wrap);
+        }
+
+        virtualScrollState.startIndex = startIdx;
+      }
+
+      // 首次渲染
+      renderVirtualItems();
+
+      // 监听滚动事件
+      friendList.addEventListener('scroll', renderVirtualItems, { passive: true });
+    }  
+    // 分组选择弹窗（图四：居中弹窗 tag点击选择 长按改名 确认按钮）
     function showGroupPicker(contact) {
       if (!state.friendGroups) return;
 

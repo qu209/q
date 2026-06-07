@@ -5583,8 +5583,13 @@ function estimateTokens(text) {
       tabsEl.appendChild(inner);
     }
 
+    if (!window._friendNodeCache) window._friendNodeCache = new Map();
+
     function renderContacts() {
-      friendList.innerHTML = "";
+      // 核心优化：不再使用 innerHTML = "" 暴力清空，而是安全移除子节点，保护缓存的 DOM
+      while (friendList.firstChild) {
+        friendList.removeChild(friendList.firstChild);
+      }
 
       if (!state.friendGroups) state.friendGroups = [
         { id: "g1", name: "♡ 最爱" },
@@ -5605,6 +5610,25 @@ function estimateTokens(text) {
       }
 
       function buildFriendItem(contact) {
+        let previewText = "暂无记录";
+        if (contact.messages.length) {
+          const lastMsg = contact.messages[contact.messages.length - 1];
+          if (lastMsg.image) previewText = "[图片]";
+          else if (lastMsg.text.startsWith("[EMOJI_STICKER|")) previewText = "[表情包]";
+          else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) previewText = "[转账]";
+          else if (lastMsg.text.startsWith("[VOICE_MSG|") || lastMsg.text.startsWith("[VOICE_MSG:")) previewText = "[语音]";
+          else if (lastMsg.text.startsWith("[VOICE_CALL|")) previewText = "[语音通话]";
+          else previewText = lastMsg.text.replace(/<[^>]*>?/gm, '');
+        }
+
+        // 建立唯一数字签名，只有这些关键数据变了，才重新生成 DOM
+        const signature = `${contact.id}|${contact.avatar}|${contact.unreadCount}|${getDisplayName(contact)}|${contact.lastTime}|${previewText}|${contact.isPinned}`;
+        
+        let cached = window._friendNodeCache.get(contact.id);
+        if (cached && cached.signature === signature) {
+            return cached.element; // 直接复用之前的 DOM 节点，极其丝滑！
+        }
+
         const wrap = document.createElement("div");
         wrap.className = "friend-swipe-wrap";
         wrap.dataset.id = contact.id;
@@ -5648,16 +5672,6 @@ function estimateTokens(text) {
         titleRow.appendChild(time);
         const sub = document.createElement("div");
         sub.className = "friend-sub";
-        let previewText = "暂无记录";
-        if (contact.messages.length) {
-          const lastMsg = contact.messages[contact.messages.length - 1];
-          if (lastMsg.image) previewText = "[图片]";
-          else if (lastMsg.text.startsWith("[EMOJI_STICKER|")) previewText = "[表情包]";
-          else if (lastMsg.text.startsWith("[TRANSFER|") || lastMsg.text.startsWith("[TRANSFER_REPLY|")) previewText = "[转账]";
-          else if (lastMsg.text.startsWith("[VOICE_MSG|") || lastMsg.text.startsWith("[VOICE_MSG:")) previewText = "[语音]";
-          else if (lastMsg.text.startsWith("[VOICE_CALL|")) previewText = "[语音通话]";
-          else previewText = lastMsg.text.replace(/<[^>]*>?/gm, '');
-        }
         sub.textContent = previewText;
         main.appendChild(titleRow);
         main.appendChild(sub);
@@ -5695,6 +5709,7 @@ function estimateTokens(text) {
           if (ok) {
             state.contacts = state.contacts.filter(c => c.id !== contact.id);
             if (state.activeContactId === contact.id) state.activeContactId = null;
+            window._friendNodeCache.delete(contact.id); // 清理缓存
             renderContacts();
           }
         };
@@ -5736,6 +5751,8 @@ function estimateTokens(text) {
           if (!wrap.contains(e.target) && wrap.classList.contains("swiped")) wrap.classList.remove("swiped");
         }, { passive: true });
 
+        // 将新生成的 DOM 存入缓存
+        window._friendNodeCache.set(contact.id, { signature, element: wrap });
         return wrap;
       }
 
@@ -5759,13 +5776,11 @@ function estimateTokens(text) {
       const sort = arr => [...arr].sort((a, b) => (b.lastMsgTimestamp || 0) - (a.lastMsgTimestamp || 0));
 
       if (activeGroupTabId === null) {
-        // 默认页：置顶在上面一组，全部非置顶在下面一组（包括已分组和未分组的所有好友）
         const pinned = sort(state.contacts.filter(c => c.isPinned));
         const notPinned = sort(state.contacts.filter(c => !c.isPinned));
         if (pinned.length > 0) friendList.appendChild(buildSection("📌 置顶", pinned));
         if (notPinned.length > 0) friendList.appendChild(buildSection("全部", notPinned));
       } else {
-        // 分组页：该分组内的置顶 + 普通
         const group = state.friendGroups.find(g => g.id === activeGroupTabId);
         const inGroup = state.contacts.filter(c => c.groupId === activeGroupTabId);
         const pinned = sort(inGroup.filter(c => c.isPinned));
@@ -5779,9 +5794,9 @@ function estimateTokens(text) {
           friendList.appendChild(empty);
         }
       }
-  }
-
-    // 分组选择弹窗（图四：居中弹窗 tag点击选择 长按改名 确认按钮）
+    }
+  
+   // 分组选择弹窗（图四：居中弹窗 tag点击选择 长按改名 确认按钮）
     function showGroupPicker(contact) {
       if (!state.friendGroups) return;
 

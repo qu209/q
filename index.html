@@ -117,6 +117,56 @@
       display: block;
     }
 
+    /* ====== 新增：子页面原生级滑入滑出动画 ====== */
+    .sub-screen {
+      display: block !important;
+      position: fixed;
+      inset: 0;
+      z-index: 20;
+      background: #fff;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .sub-screen.active {
+      transform: translateX(0);
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    /* ====== 新增：一键到底部按钮样式 ====== */
+    .scroll-bottom-btn {
+      position: absolute;
+      right: 16px;
+      bottom: calc(var(--chatbar-h) + 20px + env(safe-area-inset-bottom));
+      width: 40px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 50%;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #111;
+      cursor: pointer;
+      z-index: 10;
+      opacity: 0;
+      transform: translateY(20px) scale(0.9);
+      pointer-events: none;
+      transition: all 0.3s cubic-bezier(0.25, 1, 0.3, 1);
+    }
+    .scroll-bottom-btn.show {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+    }
+    .scroll-bottom-btn:active {
+      background: #e5e5ea;
+    }
+
     /* ====== 三个主页面的滚动布局修复 ====== */
 
     /* 好友页：顶栏固定不动，仅好友列表区域可滚动 */
@@ -4067,6 +4117,19 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
           <button class="btn" id="testPushBtn" style="width: 100%; background: #C1D0DC; color: #fff; font-size: 15px; font-weight: 600; height: 44px; border-radius: 12px;">测试后台推送</button>
         </div>
 
+        <!-- 新增：交互体验设置 -->
+        <div style="font-size: 13px; color: #8e8e93; margin: 0 0 8px 12px;">交互体验</div>
+        <div style="background: #fff; border-radius: 16px; padding: 16px; margin-bottom: 24px;">
+          <div class="toggle-row" style="margin-bottom: 0;">
+            <label style="font-size: 14px; font-weight: 600; color: #222;">开启触觉震动反馈</label>
+            <label class="switch">
+              <input type="checkbox" id="hapticFeedbackToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+          <div style="font-size: 11px; color: #aaa; margin-top: 8px;">发送消息、点赞、长按时会有轻微震动（仅限支持的设备）。</div>
+        </div>
+
       </div>
     </section>
  <section class="screen chat-screen" id="screen-chat">
@@ -4114,6 +4177,12 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
         <div class="chat-empty" id="chatEmpty"></div>
         <div class="messages hidden" id="messages"></div>
       </div>
+      
+      <!-- 新增：一键到底按钮 -->
+      <div class="scroll-bottom-btn" id="scrollBottomBtn">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </div>
+
       <div class="inventory-popup" id="inventoryPopup">
         <div class="inventory-item" id="photoUploadItem">照片</div>
         <div class="inventory-item" id="transferItemBtn">转账</div>
@@ -5498,6 +5567,46 @@ function estimateTokens(text) {
       wallet: document.getElementById("screen-wallet")
     };
 
+    // ====== 新增：动态将二级页面转换为滑动层 ======
+    ["screen-chat", "screen-chat-details", "screen-settings"].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.classList.remove("screen");
+        el.classList.add("sub-screen");
+      }
+    });
+
+    // ====== 新增：全局触觉震动反馈函数 ======
+    function triggerHaptic() {
+      // 检查开关是否开启，以及设备是否支持震动
+      if (state.hapticEnabled !== false && navigator.vibrate) {
+        navigator.vibrate(15); // 短促震动 15ms，模拟原生轻巧反馈
+      }
+    }
+
+    // ====== 新增：一键到底部按钮逻辑 ======
+    const scrollBottomBtn = document.getElementById("scrollBottomBtn");
+    const chatBodyEl = document.getElementById("chatBody");
+    if (chatBodyEl && scrollBottomBtn) {
+      chatBodyEl.addEventListener("scroll", () => {
+        // 距离底部超过 400px 时显示按钮
+        const distToBottom = chatBodyEl.scrollHeight - chatBodyEl.scrollTop - chatBodyEl.clientHeight;
+        if (distToBottom > 400) {
+          scrollBottomBtn.classList.add("show");
+        } else {
+          scrollBottomBtn.classList.remove("show");
+        }
+      });
+
+      scrollBottomBtn.addEventListener("click", () => {
+        triggerHaptic();
+        chatBodyEl.scrollTo({
+          top: chatBodyEl.scrollHeight,
+          behavior: "smooth"
+        });
+      });
+    }
+
     const tabbar = document.getElementById("tabbar");
     const tabs = document.querySelectorAll(".tab-item");
     const friendList = document.getElementById("friendList");
@@ -6352,12 +6461,23 @@ function estimateTokens(text) {
             bubble.addEventListener("touchstart", (e) => {
                 if(state.isMultiSelecting) return;
                 touchStartY = e.touches[0].clientY;
-                longPressTimer = setTimeout(() => { targetMsgIndex = index; document.getElementById("msgMenuMask").classList.add("show"); }, 500);
+                longPressTimer = setTimeout(() => { 
+                    triggerHaptic(); // 触发长按震动
+                    targetMsgIndex = index; 
+                    document.getElementById("msgMenuMask").classList.add("show"); 
+                }, 500);
             }, {passive: true});
             bubble.addEventListener("touchmove", (e) => { if(Math.abs(e.touches[0].clientY - touchStartY) > 10) clearTimeout(longPressTimer); }, {passive: true});
             bubble.addEventListener("touchend", () => clearTimeout(longPressTimer));
             bubble.addEventListener("touchcancel", () => clearTimeout(longPressTimer));
-            bubble.addEventListener("mousedown", () => { if(state.isMultiSelecting) return; longPressTimer = setTimeout(() => { targetMsgIndex = index; document.getElementById("msgMenuMask").classList.add("show"); }, 500); });
+            bubble.addEventListener("mousedown", () => { 
+                if(state.isMultiSelecting) return; 
+                longPressTimer = setTimeout(() => { 
+                    triggerHaptic(); // 触发长按震动
+                    targetMsgIndex = index; 
+                    document.getElementById("msgMenuMask").classList.add("show"); 
+                }, 500); 
+            });
             bubble.addEventListener("mouseup", () => clearTimeout(longPressTimer));
             bubble.addEventListener("mouseleave", () => clearTimeout(longPressTimer));
 
@@ -6562,6 +6682,7 @@ function estimateTokens(text) {
 
     // ================= 发送消息 (更新版，支持带上被引用的尾巴) =================
     function sendMessage() {
+      triggerHaptic(); // 发送消息时触发震动
       const text = chatInput.value.trim();
       const contact = getContact(state.activeContactId);
       if (!contact || !text) return;
@@ -9367,6 +9488,10 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       document.getElementById("tabNameMomentsInput").value = tabNames.moments || "动态";
       document.getElementById("tabNameMeInput").value = tabNames.me || "我";
 
+      // 载入震动设置
+      const hapticToggle = document.getElementById("hapticFeedbackToggle");
+      if (hapticToggle) hapticToggle.checked = state.hapticEnabled !== false;
+
       screens.me.classList.remove("active");
       screens.settings.classList.add("active");
       tabbar.classList.add("hidden");
@@ -9579,8 +9704,11 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
       document.getElementById("tabLabelMoments").textContent = state.tabNames.moments;
       document.getElementById("tabLabelMe").textContent = state.tabNames.me;
 
-      await sysAlert("设置已保存");
+      // 保存震动设置
+      const hapticToggle = document.getElementById("hapticFeedbackToggle");
+      if (hapticToggle) state.hapticEnabled = hapticToggle.checked;
 
+      await sysAlert("设置已保存");
       screens.settings.classList.remove("active");
       screens.me.classList.add("active");
       tabbar.classList.remove("hidden");
@@ -12176,6 +12304,7 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
             if (likeBtn) {
                 likeBtn.addEventListener("click", (e) => {
                     e.stopPropagation();
+                    triggerHaptic(); // 触发点赞震动
                     const myName = state.userName || "我";
                     const myIdx = m.likes.indexOf(myName);
                     if(myIdx !== -1) m.likes.splice(myIdx, 1);

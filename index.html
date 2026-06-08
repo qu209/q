@@ -1749,11 +1749,19 @@
       position: absolute;
       inset: 0;
       background: #f2f2f7;
-      display: none;
+      display: flex;
       flex-direction: column;
       z-index: 200;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+      visibility: hidden;
+      pointer-events: none;
     }
-    .emoji-manager-screen.show { display: flex; }
+    .emoji-manager-screen.show { 
+      transform: translateX(0);
+      visibility: visible;
+      pointer-events: auto;
+    }
 
     .emoji-manager-header {
       height: calc(54px + var(--safe-top));
@@ -1831,11 +1839,19 @@
       position: absolute;
       inset: 0;
       background: #f2f2f7;
-      display: none;
+      display: flex;
       flex-direction: column;
       z-index: 210;
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+      visibility: hidden;
+      pointer-events: none;
     }
-    .emoji-content-screen.show { display: flex; }
+    .emoji-content-screen.show { 
+      transform: translateX(0);
+      visibility: visible;
+      pointer-events: auto;
+    }
     .emoji-content-header {
       height: calc(54px + var(--safe-top));
       padding-top: var(--safe-top);
@@ -2139,10 +2155,21 @@
 
     /* ================= 钱包页面专属样式 ================= */
     .wallet-screen {
+      position: fixed;
+      inset: 0;
       background: #f4f5f7;
-      display: flex;
+      display: flex !important;
       flex-direction: column;
       z-index: 20; /* 提高层级，保证绝对盖住底部导航栏 */
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .wallet-screen.active {
+      transform: translateX(0);
+      visibility: visible;
+      pointer-events: auto;
     }
     .wallet-card {
       margin: 16px;
@@ -2489,8 +2516,24 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
     .moment-comment-send:active { opacity: 0.75; }
 
     /* 发布界面 */
-    .moment-publish-screen { position: fixed; inset: 0; background: #fff; z-index: 100; display: none; flex-direction: column; overflow-y: auto; }
-    .moment-publish-screen.show { display: flex; }
+    .moment-publish-screen { 
+      position: fixed; 
+      inset: 0; 
+      background: #fff; 
+      z-index: 100; 
+      display: flex; 
+      flex-direction: column; 
+      overflow-y: auto; 
+      transform: translateX(100%);
+      transition: transform 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .moment-publish-screen.show { 
+      transform: translateX(0);
+      visibility: visible;
+      pointer-events: auto;
+    }
     
     /*====== 语音录入与语音消息样式 ====== */
     .voice-hold-btn {
@@ -3702,7 +3745,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       </ul>
     </section>
     <!-- ====== 健康 · 经期记录页面 ====== -->
-    <section class="screen wallet-screen" id="screen-health" style="display: none; overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px;">
+    <section class="screen wallet-screen" id="screen-health" style="overflow-y: auto; -webkit-overflow-scrolling: touch; padding-bottom: 80px;">
       <!-- 顶栏 -->
       <div style="position: sticky; top: 0; z-index: 8; height: calc(54px + var(--safe-top)); padding-top: var(--safe-top); background: #fff; border-bottom: 1px solid #f0f0f0;">
         <div style="height: 54px; display: grid; grid-template-columns: 50px 1fr 50px; align-items: center;">
@@ -3838,7 +3881,7 @@ border-radius: 20px 20px 0 0; padding: 24px 20px; box-shadow: 0 -4px 20px rgba(0
       </div>
     </section>
 
-    <section class="screen wallet-screen" id="screen-wallet" style="display: none;">
+    <section class="screen wallet-screen" id="screen-wallet">
       <div style="position: sticky; top: 0; z-index: 8; height: calc(54px + var(--safe-top)); padding-top: var(--safe-top); background: #f4f5f7;">
         <div style="height: 54px; display: grid; grid-template-columns: 50px 1fr 50px; align-items: center;">
           <button class="header-btn" id="walletBackBtn" aria-label="返回">
@@ -11528,7 +11571,6 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
     if(openWalletBtn) {
       openWalletBtn.addEventListener("click", () => {
         screens.me.classList.remove("active");
-        screens.wallet.style.display = "flex";
         screens.wallet.classList.add("active");
         tabbar.classList.add("hidden");
         renderWallet();
@@ -11538,7 +11580,6 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
     if(walletBackBtn) {
       walletBackBtn.addEventListener("click", () => {
         screens.wallet.classList.remove("active");
-        screens.wallet.style.display = "none"; // 立即隐藏，拒绝拖泥带水
         screens.me.classList.add("active");
         tabbar.classList.remove("hidden");
       });
@@ -13052,6 +13093,10 @@ ${imagePromptInstruction}`;
 
     // 判断是否应该显示通知（不在目标聊天界面时才显示）
     function shouldShowNotif(contactId) {
+      // 核心修复：如果页面在后台，无论停留在哪个界面，都必须触发通知逻辑以推送系统通知
+      if (document.visibilityState === "hidden") {
+        return true; 
+      }
       if (
         screens.chat.classList.contains("active") &&
         state.activeContactId === contactId
@@ -13388,7 +13433,6 @@ ${imagePromptInstruction}`;
 
       function openHealthScreen() {
         const healthScreen = document.getElementById('screen-health');
-        healthScreen.style.display = 'block';
         healthScreen.classList.add('active');
         document.getElementById('screen-me').classList.remove('active');
         document.getElementById('tabbar').classList.add('hidden');
@@ -13414,7 +13458,6 @@ ${imagePromptInstruction}`;
       }
 
       function closeHealthScreen() {
-        document.getElementById('screen-health').style.display = 'none';
         document.getElementById('screen-health').classList.remove('active');
         document.getElementById('tabbar').classList.remove('hidden');
         document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));

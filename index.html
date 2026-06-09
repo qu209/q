@@ -6298,25 +6298,29 @@ function estimateTokens(text) {
         else if (isSamePrev && isSameNext) positionClass = "middle";
         else if (isSamePrev && !isSameNext) positionClass = "last";
 
+        // 获取现有的消息节点，如果没有就新建（复用现有节点防止闪屏）
         let row = messagesEl.children[domIndex];
-        
+        if (!row) {
+          row = document.createElement("div");
+          messagesEl.appendChild(row);
+        }
+
+        // 总是动态更新气泡位置（修复连发圆角粘连的问题）
+        row.className = `message-row ${msg.from === "me" ? "me" : "ai"} ${positionClass}`;
+
         // 动态附加多选模式样式
         if (state.isMultiSelecting) messagesEl.classList.add("multi-select-mode");
         else messagesEl.classList.remove("multi-select-mode");
 
-        const signature = (msg.isTyping ? "typing:" : ("text:" + msg.text)) + "|quote:" + (msg.quoteText||"") + "|qs:" + (msg.quoteSender||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|" + state.userAvatar + "|" + contact.avatar + "|" + contact.frameUrl + "|" + contact.showFrameInChat;
-
-        if (!row || row.dataset.signature !== signature) {
-            if (!row) {
-                row = document.createElement("div");
-                messagesEl.appendChild(row);
-            }
-            row.dataset.signature = signature;
-            row.className = `message-row ${msg.from === "me" ? "me" : "ai"} ${positionClass}`;
-            row.innerHTML = "";
+        // 【唯一签名指纹】：加入 quote、多选状态，确保点击复选框能完美局部重绘
+        const signature = (msg.isTyping ? "typing:" : "text:") + msg.text + "|quote:" + (msg.quoteText||"") + "|qs:" + (msg.quoteSender||"") + "|multi:" + state.isMultiSelecting + "|sel:" + state.selectedMsgs.has(index) + "|"
++ state.userAvatar + "|" + contact.avatar + "|" + contact.frameUrl + "|" + contact.showFrameInChat;
+        if (row.dataset.signature !== signature) {
+          row.dataset.signature = signature;
+          row.innerHTML = ""; // 只有在发生了实质性变动时才重绘
 
             const checkbox = document.createElement("div");
-            checkbox.className = "msg-checkbox" + (state.selectedMsgs.has(index) ? " checked" : "");
+           checkbox.className = "msg-checkbox" + (state.selectedMsgs.has(index) ? " checked" : "");
             checkbox.onclick = () => {
                 if (state.selectedMsgs.has(index)) state.selectedMsgs.delete(index);
                 else state.selectedMsgs.add(index);
@@ -6553,17 +6557,41 @@ function estimateTokens(text) {
                     row.appendChild(checkbox);
                     row.appendChild(contentWrap);
                 } else {
+                    checkbox.style.display = "none";
                     row.appendChild(contentWrap);
                 }
             } else {
+                // 按严格顺序把节点放入 row：先头像，再气泡，最后复选框
+                // 配合原本的 flex-direction (AI是 row, ME是 row-reverse)
+                // 就能完美实现：AI气泡在左，复选框在气泡右侧；我的气泡在右，复选框在气泡左侧！
                 row.appendChild(avatar);
                 row.appendChild(contentWrap);
                 row.appendChild(checkbox);
             }
+        } else {
+          // 【如果核心内容完全没变】，只微调头像和时间的显示隐藏，保护内部的 details 标签不闪动
+          const avatar = row.querySelector('.chat-avatar');
+          if (avatar) {
+            avatar.style.visibility = (positionClass === "middle" || positionClass === "last") ? "hidden" : "visible";
+          }
+          
+          const contentWrap = row.querySelector('.message-content');
+          let timeEl = row.querySelector('.message-time');
+          const shouldShowTime = (positionClass === "single" || positionClass === "last") && !msg.isTyping;
+          
+          if (shouldShowTime && !timeEl && contentWrap) {
+             timeEl = document.createElement("div");
+             timeEl.className = "message-time";
+             timeEl.textContent = msg.time || getCurrentTime();
+             contentWrap.appendChild(timeEl);
+          } else if (!shouldShowTime && timeEl) {
+             timeEl.remove();
+          }
         }
         domIndex++;
       });
 
+      // 如果有撤回/删除的情况，清理掉末尾多余的 DOM
       while (messagesEl.children.length > domIndex) {
         messagesEl.removeChild(messagesEl.lastChild);
       }

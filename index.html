@@ -5494,9 +5494,9 @@ function estimateTokens(text) {
         walletCardBg: "",
         contacts: [],
         friendGroups: [
-          { id: "g1", name: "♡ 最爱" },
-          { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-          { id: "g3", name: "＊ 关注" }
+          { id: "g1", name: "-77°C🤍" },
+          { id: "g2", name: "shayan #♡" },
+          { id: "g3", name: "🩶" }
         ]
       };
     }
@@ -5717,9 +5717,9 @@ function estimateTokens(text) {
       const tabsEl = document.getElementById("friendGroupTabs");
       if (!tabsEl) return;
       if (!state.friendGroups) state.friendGroups = [
-        { id: "g1", name: "♡ 最爱" },
-        { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-        { id: "g3", name: "＊ 关注" }
+        { id: "g1", name: "-77°C🤍" },
+        { id: "g2", name: "shayan #♡" },
+        { id: "g3", name: "🩶" }
       ];
       tabsEl.innerHTML = "";
 
@@ -5728,7 +5728,7 @@ function estimateTokens(text) {
       inner.className = "friend-group-tabs-inner";
 
       // 默认tab（也存入state以便改名）
-      if (!state.defaultGroupName) state.defaultGroupName = "· · ·";
+      if (!state.defaultGroupName) state.defaultGroupName = "“24h.”";
       const defTab = document.createElement("button");
       defTab.className = "friend-group-tab" + (activeGroupTabId === null ? " active" : "");
       defTab.textContent = state.defaultGroupName;
@@ -5755,9 +5755,9 @@ function estimateTokens(text) {
       }
 
       if (!state.friendGroups) state.friendGroups = [
-        { id: "g1", name: "♡ 最爱" },
-        { id: "g2", name: "ฅ^•ﻌ•^ฅ 好友" },
-        { id: "g3", name: "＊ 关注" }
+        { id: "g1", name: "-77°C🤍" },
+        { id: "g2", name: "shayan #♡" },
+        { id: "g3", name: "🩶" }
       ];
 
       renderGroupTabs();
@@ -5986,7 +5986,7 @@ function estimateTokens(text) {
         tagsWrap.innerHTML = "";
 
         // "不分组"（默认分组）tag - 也支持长按改名
-        if (!state.defaultGroupName) state.defaultGroupName = "· · ·";
+        if (!state.defaultGroupName) state.defaultGroupName = "“24h.”";
         const noneTag = document.createElement("div");
         noneTag.className = "group-picker-tag" + (selectedId === null ? " selected" : "");
 

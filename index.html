@@ -12221,6 +12221,7 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
     const momentCommentSendBtn = document.getElementById("momentCommentSendBtn");
     let activeMomentIdForComment = null;
     let activeReplyTargetName = null;
+    let targetCommentIndex = -1; // 新增：用于记录长按的评论索引
 
     // 全局点击监听：用于点击空白处收起菜单和输入框
     document.addEventListener("click", (e) => {
@@ -12233,6 +12234,68 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
         if (!momentCommentBar.contains(e.target) && !e.target.classList.contains("comment-pop-btn") && !e.target.closest(".moment-comment-item")) {
             momentCommentBar.classList.remove("show");
             momentCommentInput.blur();
+        }
+    });
+
+    // ====== 新增：朋友圈评论长按菜单事件绑定 ======
+    document.getElementById("momentCommentMenuMask").addEventListener("click", (e) => {
+        if (e.target.id === "momentCommentMenuMask") {
+            document.getElementById("momentCommentMenuMask").classList.remove("show");
+        }
+    });
+
+    // 删除评论
+    document.getElementById("momentCommentMenuDelete").addEventListener("click", async () => {
+        document.getElementById("momentCommentMenuMask").classList.remove("show");
+        if (!activeMomentIdForComment || targetCommentIndex === -1) return;
+        
+        const moment = state.moments.find(x => x.id === activeMomentIdForComment);
+        if (moment) {
+            const ok = await sysConfirm("确定要删除这条评论吗？", "删除评论", true);
+            if (ok) {
+                moment.comments.splice(targetCommentIndex, 1);
+                window._momentNodeCache.delete(moment.id); // 强制重绘
+                renderMoments();
+            }
+        }
+    });
+
+    // 重说评论
+    document.getElementById("momentCommentMenuRetry").addEventListener("click", async () => {
+        document.getElementById("momentCommentMenuMask").classList.remove("show");
+        if (!activeMomentIdForComment || targetCommentIndex === -1) return;
+        
+        const moment = state.moments.find(x => x.id === activeMomentIdForComment);
+        if (moment) {
+            const comment = moment.comments[targetCommentIndex];
+            if (comment.name === "我") return; // 不能重说自己的评论
+            
+            const contact = state.contacts.find(c => getDisplayName(c) === comment.name);
+            if (!contact) {
+                await sysAlert("找不到该角色数据，无法重说");
+                return;
+            }
+
+            // 1. 删除这条评论
+            moment.comments.splice(targetCommentIndex, 1);
+            window._momentNodeCache.delete(moment.id);
+            renderMoments();
+
+            // 2. 重新触发 AI 评论
+            if (comment.replyTo === "我") {
+                // AI 是在回复用户，找到用户上一条评论的内容
+                let userText = "";
+                for (let i = targetCommentIndex - 1; i >= 0; i--) {
+                    if (moment.comments[i].name === "我") {
+                        userText = moment.comments[i].text;
+                        break;
+                    }
+                }
+                triggerAIMomentCommentReply(moment, contact, userText);
+            } else {
+                // AI 是直接评论动态的
+                fetchAICommentForMoment(moment.id, contact.id);
+            }
         }
     });
 
@@ -12288,9 +12351,9 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
             let commentsHtml = '';
             if(m.comments.length > 0) {
                 commentsHtml = `<div class="moment-comments">`;
-                m.comments.forEach((c) => {
+                m.comments.forEach((c, cIdx) => {
                     let textPrefix = c.replyTo ? `<span class="comment-name">${c.name}</span> 回复 <span class="comment-name">${c.replyTo}</span>: ` : `<span class="comment-name">${c.name}</span>: `;
-                    commentsHtml += `<div class="moment-comment-item" data-cname="${c.name}">${textPrefix}${c.text}</div>`;
+                    commentsHtml += `<div class="moment-comment-item" data-cname="${c.name}" data-cidx="${cIdx}">${textPrefix}${c.text}</div>`;
                 });
                 commentsHtml += `</div>`;
             }
@@ -12403,7 +12466,7 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
                 });
             }
 
-            card.querySelectorAll(".moment-comment-item").forEach(item => {
+                        card.querySelectorAll(".moment-comment-item").forEach(item => {
                 item.addEventListener("click", (e) => {
                     e.stopPropagation();
                     const targetName = e.currentTarget.dataset.cname;
@@ -12414,6 +12477,36 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
                     momentCommentBar.classList.add("show");
                     setTimeout(() => momentCommentInput.focus(), 100);
                 });
+
+                // 新增：长按评论弹出菜单
+                let commentLongTimer = null;
+                const startLong = (e) => {
+                    commentLongTimer = setTimeout(() => {
+                        triggerHaptic(); // 触发震动
+                        activeMomentIdForComment = m.id;
+                        targetCommentIndex = parseInt(item.dataset.cidx);
+                        
+                        const commentObj = m.comments[targetCommentIndex];
+                        const retryBtn = document.getElementById("momentCommentMenuRetry");
+                        // 如果是用户自己发的评论，隐藏“重说”按钮
+                        if (commentObj.name === "我") {
+                            retryBtn.style.display = "none";
+                        } else {
+                            retryBtn.style.display = "block";
+                        }
+                        
+                        document.getElementById("momentCommentMenuMask").classList.add("show");
+                    }, 500);
+                };
+                const cancelLong = () => { if(commentLongTimer) clearTimeout(commentLongTimer); };
+
+                item.addEventListener("touchstart", startLong, {passive: true});
+                item.addEventListener("touchmove", cancelLong, {passive: true});
+                item.addEventListener("touchend", cancelLong);
+                item.addEventListener("touchcancel", cancelLong);
+                item.addEventListener("mousedown", startLong);
+                item.addEventListener("mouseup", cancelLong);
+                item.addEventListener("mouseleave", cancelLong);
             });
 
             const imgWrap = card.querySelector(".moment-img-wrap");

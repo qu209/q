@@ -12232,8 +12232,11 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
         
         // 如果点击的不是输入框区域，也不是评论按钮，收起输入框
         if (!momentCommentBar.contains(e.target) && !e.target.classList.contains("comment-pop-btn") && !e.target.closest(".moment-comment-item")) {
-            momentCommentBar.classList.remove("show");
-            momentCommentInput.blur();
+            if (momentCommentBar.classList.contains("show")) {
+                momentCommentBar.classList.remove("show");
+                momentCommentInput.blur();
+                document.getElementById("tabbar").classList.remove("hidden"); // 恢复底栏
+            }
         }
     });
 
@@ -12462,26 +12465,21 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
                     activeReplyTargetName = null;
                     momentCommentInput.placeholder = "评论";
                     momentCommentBar.classList.add("show");
+                    document.getElementById("tabbar").classList.add("hidden"); // 隐藏底栏
                     setTimeout(() => momentCommentInput.focus(), 100);
                 });
             }
 
-                        card.querySelectorAll(".moment-comment-item").forEach(item => {
-                item.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    const targetName = e.currentTarget.dataset.cname;
-                    if (targetName === "我") return; 
-                    activeMomentIdForComment = m.id;
-                    activeReplyTargetName = targetName;
-                    momentCommentInput.placeholder = `回复 ${targetName}`;
-                    momentCommentBar.classList.add("show");
-                    setTimeout(() => momentCommentInput.focus(), 100);
-                });
-
-                // 新增：长按评论弹出菜单
+            card.querySelectorAll(".moment-comment-item").forEach(item => {
                 let commentLongTimer = null;
+                let commentTouchStartY = 0;
+                let isLongPressed = false;
+
                 const startLong = (e) => {
+                    isLongPressed = false;
+                    if(e.touches) commentTouchStartY = e.touches[0].clientY;
                     commentLongTimer = setTimeout(() => {
+                        isLongPressed = true;
                         triggerHaptic(); // 触发震动
                         activeMomentIdForComment = m.id;
                         targetCommentIndex = parseInt(item.dataset.cidx);
@@ -12498,15 +12496,37 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
                         document.getElementById("momentCommentMenuMask").classList.add("show");
                     }, 500);
                 };
+
+                const moveLong = (e) => {
+                    if(e.touches && Math.abs(e.touches[0].clientY - commentTouchStartY) > 10) {
+                        if(commentLongTimer) clearTimeout(commentLongTimer);
+                    }
+                };
+
                 const cancelLong = () => { if(commentLongTimer) clearTimeout(commentLongTimer); };
 
                 item.addEventListener("touchstart", startLong, {passive: true});
-                item.addEventListener("touchmove", cancelLong, {passive: true});
+                item.addEventListener("touchmove", moveLong, {passive: true});
                 item.addEventListener("touchend", cancelLong);
                 item.addEventListener("touchcancel", cancelLong);
                 item.addEventListener("mousedown", startLong);
+                item.addEventListener("mousemove", cancelLong);
                 item.addEventListener("mouseup", cancelLong);
                 item.addEventListener("mouseleave", cancelLong);
+
+                item.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    if (isLongPressed) return; // 如果触发了长按，则不执行点击回复
+                    
+                    const targetName = e.currentTarget.dataset.cname;
+                    if (targetName === "我") return; 
+                    activeMomentIdForComment = m.id;
+                    activeReplyTargetName = targetName;
+                    momentCommentInput.placeholder = `回复 ${targetName}`;
+                    momentCommentBar.classList.add("show");
+                    document.getElementById("tabbar").classList.add("hidden"); // 隐藏底栏
+                    setTimeout(() => momentCommentInput.focus(), 100);
+                });
             });
 
             const imgWrap = card.querySelector(".moment-img-wrap");
@@ -12571,6 +12591,7 @@ document.getElementById("voiceBtn").addEventListener("click", async () => {
         
         momentCommentInput.value = "";
         momentCommentBar.classList.remove("show");
+        document.getElementById("tabbar").classList.remove("hidden"); // 恢复底栏
         activeMomentIdForComment = null;
         activeReplyTargetName = null;
     });
